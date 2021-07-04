@@ -11,7 +11,8 @@
 #define X2 540
 #define Y1 300
 #define BKG 0
-#define CR_CL 2
+#define CR_CMP 6
+#define CR_All 8
 #define scale 2
 
 #define h_floor 50
@@ -19,6 +20,7 @@
 #define d_body 0.2
 #define h_body 0.03
 #define r_wheel 0.015
+#define r_joint 0.0075
 
 //inserisco altre define che identificano la forma dei parametri da cercare 
 struct DOF{
@@ -32,9 +34,7 @@ struct DOF{
 
 struct DOF state;
 
-gsl_matrix* R_op;
-gsl_vector* P_op;
-gsl_vector* P_ris;
+
 
 int figure[12];
 BITMAP * CR;
@@ -50,19 +50,19 @@ void   init_s()
     clear_to_color(CR,15);
     line(CR,0,(CR->h-h_floor*scale),(CR->w),(CR->h-h_floor*scale),1);
     blit(CR,screen,0,0,X1*scale,0,CR->w,CR->h);
+    // parte di inizializzazione pre-extern variable
     state.q1=0;
     state.q2=0;
     state.q3=0;
     state.q4=0;
-    state.q5=0;
+    state.q5=3.14/2;
     state.q6=0;
-    R_op=gsl_matrix_alloc(4,4);
-    P_op=gsl_vector_alloc(4);
-    //P_int=gsl_matrix_alloc(3,1);
-    P_ris=gsl_vector_alloc(4);
+    
 
 
 }
+
+//funzione che converte i metri in pixel tale che un metroo sono 1000 pixel con scala
 int MToPx(double val,int xy)
 {
     if (xy==0)
@@ -78,21 +78,27 @@ int MToPx(double val,int xy)
         return((int)floor(val*1000*scale));
     }
 }
+//funzione di utilita per il calcolo di una posizione su un Corpo rigido 
 void calc_pos(double x,double y, gsl_matrix* R,gsl_vector* p,gsl_vector*ris)
 {
-    gsl_vector_set(P_op,0,x);
-    gsl_vector_set(P_op,1,y);
-    gsl_vector_set(P_op,2,0);
-    gsl_vector_set(P_op,3,1);
+    gsl_vector_set(p,0,x);
+    gsl_vector_set(p,1,y);
+    gsl_vector_set(p,2,0);
+    gsl_vector_set(p,3,1);
     gsl_blas_dgemv(CblasNoTrans,1.0,R,p,0.0,ris);
 }
+//funzione per il calcolo dei PX per disegnare il corpo, a seguire c'è
+//quella per il link 1 e poi per il secondo
 void  body_kin(int position[])
 {   
-    //cos(a),-sin(a),0
-    //sin(a),cos(a),0
-    //0,0,1
+    gsl_matrix* R_op;
+    gsl_vector* P_op;
+    gsl_vector* P_ris;
     double value;
-    //struct fig body;
+
+    R_op=gsl_matrix_alloc(4,4);
+    P_op=gsl_vector_alloc(4);
+    P_ris=gsl_vector_alloc(4);
     value=cos(state.q3);
     gsl_matrix_set(R_op,0,0,value);
     value=-sin(state.q3);
@@ -149,13 +155,66 @@ void  body_kin(int position[])
     }
 void L1_kin(int position[])
 {
+    //recupero la posizione del primo giunto direttamente dal vettore prec. calcolato
     
+    position[0]=position[4];
+    position[1]=position[5];
+
+    position[2]=  MToPx(cos(state.q3)*(0.1 + 0.06 *cos(state.q4)) + 
+    (-0.1 + 0.1* cos(state.q3) - 0.03*sin(state.q3)) - 
+   sin(state.q3)* (0.015 + 0.06 *sin(state.q4)),0);
+    position[3]= MToPx( (0.015 + 0.03 *cos(state.q3) + 0.1* sin(state.q3)) + (0.1 + 
+      0.06* cos(state.q4))* sin(state.q3) + cos(state.q3) *(0.015 + 0.06* sin(state.q4)),1);
+      
+   /* printf("L1x:%f\n",cos(state.q3)*(0.1 + 0.06 *cos(state.q4)) + 
+    (-0.1 + 0.1* cos(state.q3) - 0.03*sin(state.q3)) - 
+   sin(state.q3)* (0.015 + 0.06 *sin(state.q4)));
+      printf("L1y:%f\n", (0.015 + 0.03 *cos(state.q3) + 0.1* sin(state.q3)) + (0.1 + 
+      0.06* cos(state.q4))* sin(state.q3) + cos(state.q3) *(0.015 + 0.06* sin(state.q4)));*/
+}
+void L2_kin(int position[])
+{
+    //recupero la posizione del primo giunto direttamente dal vettore prec. calcolato
+    
+    position[0]=position[2];
+    position[1]=position[3];
+
+    position[2]=  MToPx(
+      (-0.1  + 0.1* cos(state.q3) - 0.03* sin(state.q3)) + 
+   cos(state.q3) *(0.1 + 0.06* cos(state.q5) *sin(state.q4) + 
+      cos(state.q4) *(0.06 + 0.06 *sin(state.q5))) - 
+   sin(state.q3)* (0.015 - 0.06 *cos(state.q4)* cos(state.q5) + 
+      sin(state.q4) *(0.06 + 0.06 *sin(state.q5)))
+        ,0);
+    position[3]= MToPx( 
+     (0.015 + 0.03* cos(state.q3) + 0.1* sin(state.q3)) + 
+   sin(state.q3)* (0.1 + 0.06* cos(state.q5)* sin(state.q4) + 
+      cos(state.q4)* (0.06 + 0.06 *sin(state.q5))) + 
+   cos(state.q3)* (0.015 - 0.06 *cos(state.q4)* cos(state.q5) + 
+      sin(state.q4)* (0.06 + 0.06 *sin(state.q5)))
+      ,1);
+     /* printf("L2x:%f\n",(-0.1  + 0.1* cos(state.q3) - 0.03* sin(state.q3)) + 
+   cos(state.q3) *(0.1 + 0.06* cos(state.q5) *sin(state.q4) + 
+      cos(state.q4) *(0.06 + 0.06 *sin(state.q5))) - 
+   sin(state.q3)* (0.015 - 0.06 *cos(state.q4)* cos(state.q5) + 
+      sin(state.q4) *(0.06 + 0.06 *sin(state.q5))));
+      printf("L2y:%f\n",(0.015 + 0.03* cos(state.q3) + 0.1* sin(state.q3)) + 
+   sin(state.q3)* (0.1 + 0.06* cos(state.q5)* sin(state.q4) + 
+      cos(state.q4)* (0.06 + 0.06 *sin(state.q5))) + 
+   cos(state.q3)* (0.015 - 0.06 *cos(state.q4)* cos(state.q5) + 
+      sin(state.q4)* (0.06 + 0.06 *sin(state.q5))));*/
 }
 void update_CR()
 {   
     body_kin(figure);
-    polygon(CR,5,figure,CR_CL);
-    circle(CR,figure[10],figure[11],MToPx(r_wheel,2),CR_CL);
+    polygon(CR,5,figure,CR_CMP);
+    circlefill(CR,figure[10],figure[11],MToPx(r_wheel,2),CR_All);
+    circlefill(CR,figure[4],figure[5],MToPx(r_joint,2),CR_All);
+    L1_kin(figure);
+    line(CR,figure[0],figure[1],figure[2],figure[3],CR_CMP);
+    circlefill(CR,figure[2],figure[3],MToPx(r_joint,2),CR_All);
+    L2_kin(figure);
+    line(CR,figure[0],figure[1],figure[2],figure[3],CR_CMP);
     blit(CR,screen,0,0,X1*scale,0,CR->w,CR->h);
 
 }
