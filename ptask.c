@@ -52,12 +52,12 @@ int time_cmp (struct timespec t1, struct timespec t2)
 //	Task management functions
 //----------------------------
 
-void ptask_init (int scheduler) 
+void pt_ptask_init (int scheduler) 
 {
 	policy = scheduler;
 }
 
-int task_create(void* (*task) (void*), int i, int period, int drel, int prio)
+int pt_task_create(void* (*task) (void*), int i, int period, int drel, int prio)
 {
 pthread_attr_t		myatt;
 struct sched_param	mypar;
@@ -81,7 +81,7 @@ int					tret;
 	
 }
 
-int get_task_index(void* arg)
+int pt_get_index(void* arg)
 {
 struct task_par	*tpar;
 
@@ -89,17 +89,17 @@ struct task_par	*tpar;
 	return tpar->arg;
 }
 
-int get_task_period(int i)
+int pt_get_period(int i)
 {
 	return tp[i].period;
 }
 
-int get_task_dmiss(int i)
+int pt_get_dmiss(int i)
 {
 	return tp[i].dmiss;
 }
 
-void set_activation(int i)
+void pt_set_activation(int i)
 {
 struct timespec	t;
 	
@@ -110,7 +110,7 @@ struct timespec	t;
 	time_add_ms(&(tp[i].dl), tp[i].deadline);	
 }
 
-int deadline_miss(int i)
+int pt_deadline_miss(int i)
 {
 struct timespec	now;
 
@@ -122,14 +122,14 @@ struct timespec	now;
 	return 0;
 }
 
-void wait_for_period (int i)
+void pt_wait_for_period (int i)
 {
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &(tp[i].at), NULL);
 	time_add_ms(&(tp[i].at), tp[i].period);
 	time_add_ms(&(tp[i].dl), tp[i].period);
 }
 
-void wait_for_task_end (int i)
+void pt_wait_for_end (int i)
 {
 	pthread_join(tid[i], NULL);
 }
