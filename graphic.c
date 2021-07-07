@@ -22,6 +22,8 @@
 #define r_wheel 0.015
 #define r_joint 0.0075
 
+extern float* get_state();
+
 //inserisco altre define che identificano la forma dei parametri da cercare 
 struct DOF{
     float q1;
