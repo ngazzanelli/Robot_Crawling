@@ -16,9 +16,9 @@ struct task_par {
 	struct timespec dl;		
 };
 
-struct task_par		tp[NT];
-pthread_t			tid[NT];
-int					policy = SCHED_FIFO;
+static struct task_par		tp[NT];
+pthread_t					tid[NT];
+int							policy = SCHED_FIFO;
 //----------------------------
 //	Time management functions
 //----------------------------
