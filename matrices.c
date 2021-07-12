@@ -174,17 +174,17 @@ void update_G1(gsl_vector *G1, state robot){
 	gsl_vector_set(G1, 1, value);
 }
 
-void update_C1(gsl_matrix *C1, state robot){
+void update_C1(gsl_matrix *C1, state robot, dot_state dot_robot){
 	float value;
 	float q3, q4, q5, dotq1, dotq2, dotq3, dotq4, dotq5;
 	q3 = robot.q3;
 	q4 = robot.q4;
 	q5 = robot.q5;
-	dotq1 = robot.dotq1;
-	dotq2 = robot.dotq2;
-	dotq3 = robot.dotq3;
-	dotq4 = robot.dotq4;
-	dotq5 = robot.dotq5;
+	dotq1 = dot_robot.dotq1;
+	dotq2 = dot_robot.dotq2;
+	dotq3 = dot_robot.dotq3;
+	dotq4 = dot_robot.dotq4;
+	dotq5 = dot_robot.dotq5;
 
 	//PRIMA RIGA
 	value = (0.000375*dotq1 - 5.625*pow(10, -6)*dotq3)*cos(q3 + q4) +
