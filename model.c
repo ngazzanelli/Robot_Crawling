@@ -40,10 +40,17 @@ void get_state(state* s){
     pthread_mutex_unlock(&mux);
 }
 
+extern void update_M1(gsl_matrix *M1, stet robot);
+extern void update_M2(gsl_matrix *M2, stet robot);
+extern void update_C1(gsl_matrix *C1, stet robot);
+extern void update_C2(gsl_matrix *C2, stet robot);
+extern void update_G1(gsl_vector *G1, stet robot);
+extern void update_G2(gsl_vector *G2, stet robot);
+extern void print_matrix(gsl_matrix *m);
 
 void dynamics(void* arg){
 
-
+    
 
 
 
