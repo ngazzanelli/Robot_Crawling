@@ -1,3 +1,4 @@
+#include "matrices.h"
 #include <math.h>
 #include <stdio.h>
 #include <gsl/gsl_matrix.h>
@@ -144,7 +145,6 @@ void update_S2(float S2[4][2], state robot){
 	cos(q4)*(1.0 + 1.0*sin(q5)));
 	S2[3][1] = value;
 }
-
 
 void update_M1(float M1[2][2], state robot){
 	float value;
@@ -2213,6 +2213,14 @@ float* sub(float *a, float *b, float *c, int dim){
   return c;
 }
 
+float* scal(float *a, float b, float *c, int dim){
+  int i;
+
+  for(i=0; i<dim; i++)
+    c[i] = a[i]*b;
+  return c;
+}
+
 float* mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
   int i, j;
 
@@ -2235,6 +2243,15 @@ void print_matrix(int row, int column, float m[row][column]){
     }
 }
 
+void matrix_set_zero(int row, int column, float m[row][column]){
+	int i, j;
+	
+	for(i=0; i<row; i++)
+		for(j=0; j<column, j++)
+			m[i][j] = 0;
+		
+}
+/*
 int main(){
 	int i;
 
@@ -2256,7 +2273,7 @@ int main(){
 	G1 = gsl_vector_alloc(2);
 	G2 = gsl_vector_alloc(2);*/
 
-	update_S2(S2, rob);
+	/*update_S2(S2, rob);
 	print_matrix(4, 2, S2);
 
 	/*for(i = 0; i < 1000000; i++){
@@ -2274,7 +2291,7 @@ int main(){
 		rob.q4++;
 		rob.q5++;
 		rob.q6++;
-	}*/
+	}
 
 	return 0;
-}
+}*/
