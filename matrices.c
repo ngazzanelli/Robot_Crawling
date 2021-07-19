@@ -10,15 +10,26 @@ typedef struct {
     float q4;
     float q5;
     float q6;
-    float dotq1;
+    /*float dotq1;
     float dotq2;
     float dotq3;
     float dotq4;
     float dotq5;
-    float dotq6;
+    float dotq6;*/
     float energy;
     float dt3;
 } state;
+
+typedef struct {
+    float dq1;
+    float dq2;
+    float dq3;
+    float dq4;
+    float dq5;
+    float dq6;
+} dot_state;
+dot_state dot_robot;
+
 
 void update_kyn(gsl_matrix *Tsee, state robot){
 	float value;
@@ -180,11 +191,11 @@ void update_C1(gsl_matrix *C1, state robot, dot_state dot_robot){
 	q3 = robot.q3;
 	q4 = robot.q4;
 	q5 = robot.q5;
-	dotq1 = dot_robot.dotq1;
-	dotq2 = dot_robot.dotq2;
-	dotq3 = dot_robot.dotq3;
-	dotq4 = dot_robot.dotq4;
-	dotq5 = dot_robot.dotq5;
+	dotq1 = dot_robot.dq1;
+	dotq2 = dot_robot.dq2;
+	dotq3 = dot_robot.dq3;
+	dotq4 = dot_robot.dq4;
+	dotq5 = dot_robot.dq5;
 
 	//PRIMA RIGA
 	value = (0.000375*dotq1 - 5.625*pow(10, -6)*dotq3)*cos(q3 + q4) +
@@ -412,7 +423,7 @@ void update_M2(gsl_matrix *M2, state robot){
  	gsl_matrix_set(M2, 1, 1, value);
 }
 
-void update_C2(gsl_matrix *C2, state robot){
+void update_C2(gsl_matrix *C2, state robot, dot_state dot_robot){
 
 	float value;
 	float q1, q2, q3, q4, q5, q6;
@@ -424,12 +435,12 @@ void update_C2(gsl_matrix *C2, state robot){
 	q4 = robot.q4;
 	q5 = robot.q5;
 	q6 = robot.q6;
-    dotq1 = robot.dotq1;
-    dotq2 = robot.dotq2;
-    dotq3 = robot.dotq3;
-    dotq4 = robot.dotq4;
-    dotq5 = robot.dotq5;
-    dotq6 = robot.dotq6;
+    dotq1 = dot_robot.dq1;
+    dotq2 = dot_robot.dq2;
+    dotq3 = dot_robot.dq3;
+    dotq4 = dot_robot.dq4;
+    dotq5 = dot_robot.dq5;
+    dotq6 = dot_robot.dq6;
 
 //C2(0,0)
 	value = 0.000375*dotq1*cos(q3 + q4) + 0.000018*dotq5*cos(q5) -

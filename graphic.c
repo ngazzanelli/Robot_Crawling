@@ -227,7 +227,7 @@ void update_graphic()
     
 }
 // main esistente solo per il testing 
-int main()
+/*int main()
 {
     init_s();
     update_CR();
@@ -240,5 +240,5 @@ int main()
     return(0);
 
 
-}
+}*/
 

@@ -2,6 +2,7 @@
 #define	PTHASK_H
 
 #include <time.h>
+#include <pthread.h>
 
 //	Time management functions
 extern void time_copy (struct timespec *td, struct timespec ts);

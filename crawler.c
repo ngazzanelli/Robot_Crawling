@@ -1,4 +1,4 @@
-#include <pthread.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "qlearn.h"
 #include "ptask.h"
@@ -132,12 +132,14 @@ int next_desired_state(int a){
     if (qd.t1d < TH1MIN) qd.t1d = TH1MIN;
     if (qd.t2d > TH2MAX) qd.t2d = TH2MAX;
     if (qd.t2d < TH2MIN) qd.t2d = TH2MIN;
+
+    return angles2state(qd.t1d, qd.t2d);
 }
 
 
 // Learning loop 
 void* qlearning(void* arg){
-
+    printf("qlearning task started\n");
     int i;      // thread index
     int s, a, r, snew;
     long step = 0;
@@ -147,7 +149,8 @@ void* qlearning(void* arg){
     i = pt_get_index(arg);
     pt_set_activation(i);
 
-    while (!get_stop()){
+
+    while (1 /*!get_stop()*/){
         step++;
 
         get_state(&robot);
@@ -168,13 +171,13 @@ void* qlearning(void* arg){
         if (step % 1000 == 0)
             ql_reduce_exploration();
     }
-
+    printf("qlearning task finshed\n");
     return NULL;
 }
 
-extern void* interpreter(void* arg);
+//extern void* interpreter(void* arg);
 extern void* dynamics(void*arg);
-extern void* graphics(void* arg);
+//extern void* graphics(void* arg);
 
 int main(){
        
@@ -182,16 +185,16 @@ int main(){
 
     srand(time(NULL));
     init_global_variables();
-    init_state();
+    //init_state();
     ql_init(NSTATES, NACTIONS);  //49 states, 4 actions
 
     pt_task_create(dynamics, 1, PER, DL, PRI);
-    pt_task_create(graphics, 2, PER, DL, PRI);
-    pt_task_create(interpreter, 3, PER, DL, PRI);
+    //pt_task_create(graphics, 2, PER, DL, PRI);
+    //pt_task_create(interpreter, 3, PER, DL, PRI);
     pt_task_create(qlearning, 4, PER, DL, PRI);
 
-    for(i=1; i<=4; i++){
-		  wait_for_task_end(i);
-		  //printf("fine ciclo %d\n", i);
+    for(i = 1; i <= 4; i++){
+		  pt_wait_for_end(i);
+		  printf("fine ciclo %d\n", i);
     }
 }
