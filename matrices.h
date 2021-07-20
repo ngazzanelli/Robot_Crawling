@@ -8,12 +8,6 @@ typedef struct {
     float q4;
     float q5;
     float q6;
-    /*float dotq1;
-    float dotq2;
-    float dotq3;
-    float dotq4;
-    float dotq5;
-    float dotq6;*/
     float energy;
     float dt3;
 } state;

@@ -1,9 +1,9 @@
 #include <math.h>
 #include <stdio.h>
-/*#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_permutation.h>
-#include <gsl/gsl_linalg.h>*/
+#include <gsl/gsl_linalg.h>
 #include "ptask.h"
 #include <pthread.h>
 #include "matrices.h"
@@ -72,7 +72,7 @@ extern int get_stop();
 void generate_tau(gsl_vector *tau){
 
 }
-/*
+
 gsl_matrix* compute_inverse(gsl_matrix *m){
 
     gsl_permutation *p;
@@ -117,7 +117,8 @@ void* dynamics(void* arg){
     while(/*!get_stop()*/1){
 
         update_kyn(Tsee, robot);
-        y_ee = gsl_matrix_get(Tsee, 1, 3);
+        //y_ee = gsl_matrix_get(Tsee, 1, 3);
+        y_ee = Tsee[1][3];
 
         if(y_ee <=0){
             update_M1(M, robot);
