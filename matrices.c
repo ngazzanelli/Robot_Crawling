@@ -2166,7 +2166,7 @@ void update_C2(float C2[2][2], state robot, dot_state dot_robot){
 	C2[1][1] = value;
 }
 
-float* sum(float *a, float *b, float *c, int dim){
+float* vector_sum(float *a, float *b, float *c, int dim){
   int i;
 
   for(i=0; i<dim; i++)
@@ -2174,7 +2174,7 @@ float* sum(float *a, float *b, float *c, int dim){
   return c;
 }
 
-float* sub(float *a, float *b, float *c, int dim){
+float* vector_sub(float *a, float *b, float *c, int dim){
   int i;
 
   for(i=0; i<dim; i++)
@@ -2182,7 +2182,7 @@ float* sub(float *a, float *b, float *c, int dim){
   return c;
 }
 
-float* scal(float *a, float b, float *c, int dim){
+float* vector_scal(float *a, float b, float *c, int dim){
   int i;
 
   for(i=0; i<dim; i++)
@@ -2190,7 +2190,7 @@ float* scal(float *a, float b, float *c, int dim){
   return c;
 }
 
-float* mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
+float* matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
   int i, j;
 
   for(i=0; i<d1; i++){
@@ -2201,7 +2201,7 @@ float* mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
   return y;
 }
 
-void print_matrix(int row, int column, float m[row][column]){
+void matrix_print(int row, int column, float m[row][column]){
 
     int i, j;
 
@@ -2212,6 +2212,15 @@ void print_matrix(int row, int column, float m[row][column]){
     }
 }
 
+void vector_print(int column, float v[column]){
+	int i;
+
+	for (i = 0; i < column; i++){
+		printf("%g ", v[i]);
+		printf("\n");
+	}
+}
+
 void matrix_set_zero(int row, int column, float m[row][column]){
 	int i, j;
 	
@@ -2220,6 +2229,14 @@ void matrix_set_zero(int row, int column, float m[row][column]){
 			m[i][j] = 0;
 		
 }
+
+
+
+
+
+
+
+/********************************TEST OK *************************************/
 /*
 int main(){
 	int i;
@@ -2233,17 +2250,24 @@ int main(){
 	float Tsee[4][4], M1[2][2], C1[2][2], S2[4][2], M2[2][2], C2[2][2];
 	float G1[2], G2[2];
 
-	Tsee = gsl_matrix_alloc(4,4);
-	M1 = gsl_matrix_alloc(2,2);
-	M2 = gsl_matrix_alloc(2,2);
-	C1 = gsl_matrix_alloc(2,2);
-	S2 = gsl_matrix_alloc(4,2);
-	C2 = gsl_matrix_alloc(2,2);
-	G1 = gsl_vector_alloc(2);
-	G2 = gsl_vector_alloc(2);
-
 	update_S2(S2, rob);
-	print_matrix(4, 2, S2);
+	update_kyn(Tsee, rob);
+	update_M1(M1, rob);
+	update_C1(C1, rob, dot_rob);
+	update_G1(G1, rob);
+	update_S2(S2, rob);
+	update_G2(G2, rob);
+	update_M2(M2, rob);
+	update_C2(C2, rob, dot_rob);
+
+	matrix_print(4, 2, S2);
+	matrix_print(2, 2, M1);
+	matrix_print(2, 2, C1);
+	matrix_print(2, 2, M2);
+	matrix_print(2, 2, C2);
+	vector_print(2, G1);
+	vector_print(2, G2);
+
 
 	for(i = 0; i < 1000000; i++){
 		update_kyn(Tsee, rob);
@@ -2263,4 +2287,5 @@ int main(){
 	}
 
 	return 0;
-}*/
+}
+*/
