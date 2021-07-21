@@ -11,9 +11,22 @@
 #define X2 540
 #define Y1 300
 #define BKG 0
-#define CR_CMP 6
-#define CR_All 8
+#define CR_CMP_R 160
+#define CR_CMP_G 82
+#define CR_CMP_B 45
+#define CR_All_R 105
+#define CR_All_G 105
+#define CR_All_B 105
 #define scale 2
+
+//valori di OFFSET bitmap MQ
+#define W_mq 16
+#define H_mq 7
+#define X_OFF 37
+#define Y_OFF 15
+//elementi da togliere perchè nella define di qlearning
+#define N_state 36
+#define N_action 4
 
 #define h_floor 50
 #define w_centre 150
@@ -40,18 +53,39 @@ struct DOF state;
 
 int figure[12];
 BITMAP * CR;
-
+BITMAP * MQ;
+float MQ_[N_state][N_action];
+int conv_col(int col,int cscale)
+{
+    if(col*cscale>=255)
+    {
+        return(255);
+    }
+    else
+    {
+        return(col*cscale);
+    }
+}
 void   init_s()
 {
     char s[20];
+    int col,VB,VR,VG,c_scale=1,i,j;
     //inizializzazione finestra allegro 
     allegro_init();
+    set_color_depth(32);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_win*scale,H_win*scale,0,0);
     clear_to_color(screen,BKG);
     CR=create_bitmap((X2-X1)*scale,Y1*scale);
-    clear_to_color(CR,15);
+    VB=255;
+    VR=255;//valore da settare
+    VG=conv_col(VR,c_scale);
+    col=makecol(VR,VG,VB);
+    clear_to_color(CR,makecol(255,255,255));
     line(CR,0,(CR->h-h_floor*scale),(CR->w),(CR->h-h_floor*scale),1);
     blit(CR,screen,0,0,X1*scale,0,CR->w,CR->h);
+    MQ=create_bitmap(X1*scale,Y1*scale);
+    clear_to_color(MQ,makecol(255,255,255));
+    blit(MQ,screen,0,0,0,0,MQ->w,MQ->h);
     // parte di inizializzazione pre-extern variable
     state.q1=0;
     state.q2=0;
@@ -59,6 +93,15 @@ void   init_s()
     state.q4=0;
     state.q5=3.14/2;
     state.q6=0;
+    for(i=0;i<N_state;i++)
+    {
+        for(j=0;j<N_action;j++)
+        {
+            MQ_[i][j]=-4*i+j;
+            //printf("%d ",4*i+j);
+        }
+        //printf("\n");
+    }
     
 
 
@@ -209,16 +252,54 @@ void L2_kin(int position[])
 void update_CR()
 {   
     body_kin(figure);
-    polygon(CR,5,figure,CR_CMP);
-    circlefill(CR,figure[10],figure[11],MToPx(r_wheel,2),CR_All);
-    circlefill(CR,figure[4],figure[5],MToPx(r_joint,2),CR_All);
+    polygon(CR,5,figure,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    circlefill(CR,figure[10],figure[11],MToPx(r_wheel,2),makecol(CR_All_R,CR_All_G,CR_All_B));
+    circlefill(CR,figure[4],figure[5],MToPx(r_joint,2),makecol(CR_All_R,CR_All_G,CR_All_B));
     L1_kin(figure);
-    line(CR,figure[0],figure[1],figure[2],figure[3],CR_CMP);
-    circlefill(CR,figure[2],figure[3],MToPx(r_joint,2),CR_All);
+    line(CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    circlefill(CR,figure[2],figure[3],MToPx(r_joint,2),makecol(CR_All_R,CR_All_G,CR_All_B));
     L2_kin(figure);
-    line(CR,figure[0],figure[1],figure[2],figure[3],CR_CMP);
+    line(CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
     blit(CR,screen,0,0,X1*scale,0,CR->w,CR->h);
 
+}
+void update_MQ(float * matrix,float step)
+{
+    int i,j,val;
+    textout_ex(MQ, font, "Matrice Q", 70, 5, makecol(0,0,0), makecol(255,255,255));
+    for(i=0;i<N_state;i++)
+    {
+        for(j=0;j<N_action;j++)
+        {
+            if(matrix[i*N_action+j]>0)
+            {
+                val=(int)floor(matrix[i*N_action+j]/step);
+                if(val>255)
+                    val=255;
+                printf("la cella %d,%d ha %d\n",i,j,val);
+                rectfill(MQ,
+                scale*(W_mq)*j+X_OFF,
+                scale*H_mq*i+Y_OFF,
+                scale*W_mq*(j+1)+X_OFF,
+                scale*H_mq*(i+1)+Y_OFF,
+                makecol(255-val,255-val,255));
+            }
+            if(matrix[i*N_action+j]<0)
+            {
+                val=(int)floor(-matrix[i*N_action+j]/step);
+                if(val>255)
+                    val=255;
+                printf("la cella %d,%d ha %d\n",i,j,val);
+                rectfill(MQ,
+                scale*(W_mq)*j+X_OFF,
+                scale*H_mq*i+Y_OFF,
+                scale*W_mq*(j+1)+X_OFF,
+                scale*H_mq*(i+1)+Y_OFF,
+                makecol(255,255-val,255-val));
+            }
+        }
+    }
+    blit(MQ,screen,0,0,0,0,MQ->w,MQ->h);
 }
 void update_graphic()
 {
@@ -227,11 +308,13 @@ void update_graphic()
     
 }
 // main esistente solo per il testing 
-/*int main()
+int main()
 {
+    int a;
     init_s();
     update_CR();
-    int a;
+    update_MQ((float*)&MQ_,0.5);
+    
     do{
         scanf("%d",&a);
     }while(a==0); 
@@ -240,5 +323,6 @@ void update_graphic()
     return(0);
 
 
-}*/
+}
+
 
