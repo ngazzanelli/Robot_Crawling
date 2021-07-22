@@ -2,13 +2,14 @@
 #include <math.h>
 #include <stdio.h>
 #include "ptask.h"
+#include <string.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
 
 #define W_win 640
 #define H_win 480
-#define X1 140
-#define X2 540
+#define X1 120
+#define X2 520
 #define Y1 300
 #define BKG 0
 #define CR_CMP_R 160
@@ -19,13 +20,33 @@
 #define CR_All_B 105
 #define scale 2
 
-//valori di OFFSET bitmap MQ
+//valori di OFFSET bitmap MQ e P_data
 #define W_mq 16
 #define H_mq 7
 #define X_OFF 37
 #define Y_OFF 15
+#define X_TEXT 35
+#define Y_TEXT 5
+#define X_TEXT_data 15
+#define Y_TEXT_data 50
+#define FB 10
+
+//elementi per aggiornamento della tabella degli stati
+#define N_ST_SV 5
+#define X_Mat_S_OFF 355
+#define Y_Mat_S_OFF  25
+#define Y_Lab_S_OFF 5
+#define X_Lab_S_OFF 405
+#define L_S_rect 25
+#define C_S_rect 13
+#define C_S_RAD 10
+#define G_X_OFF 15
+#define G_Y_OFF 170
+#define Len_Ax_X 300
+#define Len_Ax_Y 140
 //elementi da togliere perchè nella define di qlearning
 #define N_state 36
+#define N_state_x_ang 6
 #define N_action 4
 
 #define h_floor 50
@@ -51,10 +72,16 @@ struct DOF state;
 
 
 
-int figure[12];
-BITMAP * CR;
-BITMAP * MQ;
-float MQ_[N_state][N_action];
+static int figure[12];
+static int Stat_lp[N_ST_SV];
+static int Reward_lp[Len_Ax_X];
+static int Sl_count=0;
+static int Rew_count=0;
+static BITMAP * CR;
+static BITMAP * MQ;
+static BITMAP * P_data;
+static BITMAP* GRP_STAT;
+static float MQ_[N_state][N_action];
 int conv_col(int col,int cscale)
 {
     if(col*cscale>=255)
@@ -86,6 +113,19 @@ void   init_s()
     MQ=create_bitmap(X1*scale,Y1*scale);
     clear_to_color(MQ,makecol(255,255,255));
     blit(MQ,screen,0,0,0,0,MQ->w,MQ->h);
+    P_data=create_bitmap((W_win-X2)*scale,Y1*scale);
+    clear_to_color(P_data,makecol(255,255,255));
+    blit(P_data,screen,0,0,X2*scale,0,P_data->w,P_data->h);
+    
+    GRP_STAT=create_bitmap((W_win-X1)*scale,(Y1)*scale);
+    printf("%d\n",W_win);
+    clear_to_color(GRP_STAT,makecol(255,255,255));
+    blit(GRP_STAT,screen,0,0,X1*scale,Y1*scale,GRP_STAT->w,GRP_STAT->h);
+    //inizializzazione vettore ciclico S_loop
+    for(i=0;i<N_ST_SV;i++)
+    {
+        Stat_lp[i]=-1;
+    }
     // parte di inizializzazione pre-extern variable
     state.q1=0;
     state.q2=0;
@@ -97,6 +137,7 @@ void   init_s()
     {
         for(j=0;j<N_action;j++)
         {
+
             MQ_[i][j]=-4*i+j;
             //printf("%d ",4*i+j);
         }
@@ -122,6 +163,124 @@ int MToPx(double val,int xy)
         
         return((int)floor(val*1000*scale));
     }
+}
+void update_data(float alpha,
+                float gam,
+                float eps,
+                float decay,
+                float dis,
+                int epoch ){
+    char str[25];
+/*
+    static float alpha;		// learning rate    
+    static float gam;		// discount factor
+    static float epsilon; 	// actual exploration probability
+    static float decay;		// decay rate for epsilon
+    */
+    sprintf(str,">Learning Rate:%.4f",alpha);
+    textout_ex(P_data, font, str, X_TEXT_data*scale, Y_TEXT_data*scale, makecol(
+0,0,0), makecol(255,255,255));
+    sprintf(str,">Discount Factor:%.4f",gam);
+    textout_ex(P_data, font, str, X_TEXT_data*scale, Y_TEXT_data*2*scale, makecol(
+0,0,0), makecol(255,255,255));
+    
+    textout_ex(P_data, font,">Actual Exploration", X_TEXT_data*scale,3* Y_TEXT_data*scale, makecol(
+0,0,0), makecol(255,255,255));
+    sprintf(str,"Probability:%.4f",eps);
+    textout_ex(P_data, font, str, X_TEXT_data*scale,(3* Y_TEXT_data+FB)*scale, makecol(
+0,0,0), makecol(255,255,255));
+   
+    textout_ex(P_data, font,">Decay Rate for", X_TEXT_data*scale,4* Y_TEXT_data*scale, makecol(
+0,0,0), makecol(255,255,255));
+    sprintf(str," Epsilon:%.4f",decay);
+    textout_ex(P_data, font, str,X_TEXT_data*scale,(4*Y_TEXT_data+FB)*scale, makecol(
+0,0,0), makecol(255,255,255));
+sprintf(str,">Distance:%.4f",dis);
+    textout_ex(P_data, font, str, X_TEXT_data*scale, 5*Y_TEXT_data*scale, makecol(
+0,0,0), makecol(255,255,255));
+    sprintf(str,">Epoch:%d",epoch);
+    textout_ex(P_data, font, str, X_TEXT_data*scale, 6*Y_TEXT_data*scale, makecol(
+0,0,0), makecol(255,255,255));
+
+
+blit(P_data,screen,0,0,X2*scale,0,P_data->w,P_data->h);
+}
+
+
+void update_STAT(int new_state)
+{
+    
+    int i,j,k,col;
+    Stat_lp[Sl_count]=new_state;
+    Sl_count=(Sl_count+1)%N_ST_SV;
+    textout_ex(GRP_STAT, font, "State Matrix", X_Lab_S_OFF*scale, Y_Lab_S_OFF*scale, makecol(
+0,0,0), makecol(255,255,255));
+    for(i=0;i<N_state_x_ang;i++)
+    {
+        for(j=0;j<N_state_x_ang;j++)
+        {
+            rect(GRP_STAT,(X_Mat_S_OFF+i*L_S_rect)*scale,
+            (Y_Mat_S_OFF+j*L_S_rect)*scale,
+            (X_Mat_S_OFF+(i+1)*L_S_rect)*scale,
+            (Y_Mat_S_OFF+(j+1)*L_S_rect)*scale,
+            makecol(0,0,0));
+            for(k=0;k<N_ST_SV;k++)
+            {
+                //printf("Lo stato %d vale %d mentre lo stato attuale vale %d\n",k,Stat_lp[k],i*N_state_x_ang+j);
+                if(Stat_lp[k]==(i*N_state_x_ang+j))
+                {
+                    col=245*k/N_ST_SV;
+                    circlefill(GRP_STAT,
+                    (X_Mat_S_OFF+i*L_S_rect+C_S_rect)*scale,
+                    (Y_Mat_S_OFF+j*L_S_rect+C_S_rect)*scale,
+                    C_S_RAD,
+                    makecol(col,col,col)
+                    );
+                }
+            }
+            //printf("%d ",4*i+j);
+        }
+        //printf("\n");
+    }
+    
+}
+void update_graph(float reward,int flag,int min_range,int max_range){
+   line(GRP_STAT,G_X_OFF*scale,G_Y_OFF*scale,G_X_OFF*scale,(G_Y_OFF-Len_Ax_Y)*scale,makecol(0,0,0));
+   line(GRP_STAT,G_X_OFF*scale,G_Y_OFF*scale,(G_X_OFF+Len_Ax_X)*scale,G_Y_OFF*scale,makecol(0,0,0));
+   if(flag==1)
+   {
+    if(Rew_count>Len_Ax_X)
+    {
+        for(int i=0;i<Len_Ax_X;i++)
+        {
+            Reward_lp[i]=-1;
+        } 
+    }
+    else
+    {
+        if(reward>max_range)
+            Reward_lp[Rew_count]=max_range;
+        else if(reward<min_range)
+            Reward_lp[Rew_count]=min_range;
+        else
+            Reward_lp[Rew_count]=reward;
+        for(int i=0;i<Len_Ax_X;i++)
+        {
+            if(Reward_lp[i]>0)
+            {
+                
+            }
+        } 
+    }
+   }
+}
+void update_GRP_STAT(int state)
+{
+    clear_to_color(GRP_STAT,makecol(255,255,255));
+    update_STAT(state);
+    update_graph(10,1);
+    blit(GRP_STAT,screen,0,0,X1*scale,Y1*scale,GRP_STAT->w,GRP_STAT->h);
+    
 }
 //funzione di utilita per il calcolo di una posizione su un Corpo rigido 
 void calc_pos(double x,double y, gsl_matrix* R,gsl_vector* p,gsl_vector*ris)
@@ -266,7 +425,8 @@ void update_CR()
 void update_MQ(float * matrix,float step)
 {
     int i,j,val;
-    textout_ex(MQ, font, "Matrice Q", 70, 5, makecol(0,0,0), makecol(255,255,255));
+    
+    textout_ex(MQ, font, "Matrice Q", X_TEXT*scale, Y_TEXT*scale, makecol(0,0,0), makecol(255,255,255));
     for(i=0;i<N_state;i++)
     {
         for(j=0;j<N_action;j++)
@@ -278,10 +438,10 @@ void update_MQ(float * matrix,float step)
                     val=255;
                 printf("la cella %d,%d ha %d\n",i,j,val);
                 rectfill(MQ,
-                scale*(W_mq)*j+X_OFF,
-                scale*H_mq*i+Y_OFF,
-                scale*W_mq*(j+1)+X_OFF,
-                scale*H_mq*(i+1)+Y_OFF,
+                scale*((W_mq)*j+X_OFF),
+                scale*(H_mq*i+Y_OFF),
+                scale*(W_mq*(j+1)+X_OFF),
+                scale*(H_mq*(i+1)+Y_OFF),
                 makecol(255-val,255-val,255));
             }
             if(matrix[i*N_action+j]<0)
@@ -314,7 +474,17 @@ int main()
     init_s();
     update_CR();
     update_MQ((float*)&MQ_,0.5);
-    
+    update_data(0.5,0,20.2,0,0,0);
+    update_GRP_STAT(10);
+    update_GRP_STAT(11);
+    update_GRP_STAT(12);
+    update_GRP_STAT(13);
+    update_GRP_STAT(14);
+    update_GRP_STAT(15);
+    update_GRP_STAT(16);
+    update_GRP_STAT(17);
+    update_GRP_STAT(18);
+    update_GRP_STAT(19);
     do{
         scanf("%d",&a);
     }while(a==0); 
