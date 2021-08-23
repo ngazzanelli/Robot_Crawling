@@ -1,9 +1,9 @@
 #include <math.h>
 #include <stdio.h>
-/*#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_permutation.h>
-#include <gsl/gsl_linalg.h>*/
+#include <gsl/gsl_linalg.h>
 #include "ptask.h"
 #include <pthread.h>
 #include "matrices.h"
@@ -72,7 +72,7 @@ extern int get_stop();
 void generate_tau(gsl_vector *tau){
 
 }
-/*
+
 gsl_matrix* compute_inverse(gsl_matrix *m){
 
     gsl_permutation *p;
@@ -117,7 +117,8 @@ void* dynamics(void* arg){
     while(/*!get_stop()*/1){
 
         update_kyn(Tsee, robot);
-        y_ee = gsl_matrix_get(Tsee, 1, 3);
+        //y_ee = gsl_matrix_get(Tsee, 1, 3);
+        y_ee = Tsee[1][3];
 
         if(y_ee <=0){
             update_M1(M, robot);
@@ -133,22 +134,22 @@ void* dynamics(void* arg){
         //M_inv = compute_inverse(M);
         
         //qdotdot_ind = M_inv*(tau-G-C*qdot_ind1);    //accelerazione attuale variabili indipendenti 
-        sub(tau, G, ris1, 2);
-        mul(qdot_ind1, ris2, 2, 2, C);
-        sum(ris1, ris2, ris3, 2);
-        mul(ris3, qdotdot_ind, 2, 2, M_inv);    
+        vector_sub(tau, G, ris1, 2);
+        matvec_mul(qdot_ind1, ris2, 2, 2, C);
+        vector_sum(ris1, ris2, ris3, 2);
+        matvec_mul(ris3, qdotdot_ind, 2, 2, M_inv);    
 
         //qdot_ind2 = qdot_ind1 + dt*qdotdot_ind;     //velocità attuale variabili indipendenti 
-        scal(qdotdot_ind, dt, ris1, 2);
-        sum(qdot_ind1, ris1, qdot_ind2, 2);
+        vector_scal(qdotdot_ind, dt, ris1, 2);
+        vector_sum(qdot_ind1, ris1, qdot_ind2, 2);
 
         //q_ind2 = q_ind1 + dt*qdot_ind1;             //posizione attuale variabili indipendenti 
-        scal(qdot_ind1, dt, ris1, 2);
-        sum(q_ind1, ris1, q_ind2, 2);
+        vector_scal(qdot_ind1, dt, ris1, 2);
+        vector_sum(q_ind1, ris1, q_ind2, 2);
 
         //q_dip2 = q_dip1 + dt*qdot_dip1;             //posizione attuale variabili dipendenti 
-        scal(qdot_dip1, dt, ris4, 4);
-        sum(q_dip1, ris1, q_dip2, 4);
+        vector_scal(qdot_dip1, dt, ris4, 4);
+        vector_sum(q_dip1, ris1, q_dip2, 4);
 
         if(y_ee <=0)
             matrix_set_zero(4, 2, S);
@@ -156,7 +157,7 @@ void* dynamics(void* arg){
             update_S2(S, robot);
 
         //qdot_dip2 = S*qdot_ind2;                    //velocità attuale variabili dipendenti
-        mul(qdot_ind2, qdot_dip2, 4, 2, S);
+        matvec_mul(qdot_ind2, qdot_dip2, 4, 2, S);
 
         pt_deadline_miss(i);
         pt_wait_for_period(i);
