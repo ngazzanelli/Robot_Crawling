@@ -27,15 +27,13 @@ void update_kyn(float Tsee[4][4], state robot){
   	Tsee[0][2] = value;
 
 
-  	value = 1.0*(-0.1 + q1 + 0.1*cos(q3) - 0.03*sin(q3)) +
-			cos(q3)*(0.1 + 0.06*cos(q5)*sin(q4) +
-			cos(q4)*(0.06 + 0.06*sin(q5))) -
-			sin(q3)*(0.015 - 0.06*cos(q4)*cos(q5) +
-			sin(q4)*(0.06 + 0.06*sin(q5)));
+  	value = -(15.0/2.0) + q1 + (15*cos(q3))/2.0 - 3.0*sin(q3) -
+			sin(q3)*(3.0/2.0 - 6.0*cos(q4 + q5) + 6.0*sin(q4)) +
+			cos(q3)*(15.0/2.0 + 6.0*cos(q4) + 6.0*sin(q4 + q5));
 	Tsee[0][3] = value;
 
 
-	value = 0.0 - cos(q3)*cos(q4 + q5) + sin(q3)*sin(q4 + q5);
+	value = -cos(q3)*cos(q4 + q5) + sin(q3)*sin(q4 + q5);
 	Tsee[1][0] = value;
 
 	value = cos(q4 + q5)*sin(q3) + cos(q3)*sin(q4 + q5);
@@ -44,11 +42,9 @@ void update_kyn(float Tsee[4][4], state robot){
 	value = 0.0;
 	Tsee[1][2] =  value;
 
-	value = 1.0*(0.015 + q2 + 0.03*cos(q3) + 0.1*sin(q3)) + 
-		sin(q3)*(0.1 + 0.06*cos(q5)*sin(q4) +
-		cos(q4)*(0.06 + 0.06*sin(q5))) +
-		cos(q3)*(0.015 - 0.06*cos(q4)*cos(q5) +
-		sin(q4)*(0.06 + 0.06*sin(q5)));
+	value = 1.5 + q2 + 3.0*cos(q3) + (15*sin(q3))/2 +
+			cos(q3)*(3.0/2.0 - 6*cos(q4 + q5) + 6*sin(q4)) +
+			sin(q3)*(15.0/2.0 + 6*cos(q4) + 6*sin(q4 + q5));
 	Tsee[1][3] =  value;
 
 	//Terza e quarta riga
@@ -1772,6 +1768,25 @@ void matrix_set_zero(int row, int column, float m[row][column]){
 		
 }
 
+void matrix_inverse(float A[2][2], float res[2][2]){
+	float det, a, b, c, d;
+	a = A[0][0];
+	b = A[0][1];
+	c = A[1][0];
+	d = A[1][1];
+
+	det = a*d - b*c;
+
+	if(det == 0){
+		printf("Matrice non  invertibile: il determinante è nullo.\n");
+		return;
+	}
+
+	res[0][0] = d/det;
+	res[0][1] = -b/det;
+	res[1][0] = -c/det;
+	res[1][1] = a/det;
+}
 
 
 
@@ -1779,12 +1794,13 @@ void matrix_set_zero(int row, int column, float m[row][column]){
 
 
 /********************************TEST OK *************************************/
-/*
+
 int main(){
 	int i;
 
 	state rob;
 	dot_state dot_rob;
+	float inv_test[2][2];
 
 	rob.q1 = 1;
 	rob.q2 = 2;
@@ -1812,7 +1828,11 @@ int main(){
 	update_M2(M2, rob);
 	update_C2(C2, rob, dot_rob);
 
-	matrix_print(4, 2, S2);
+	matrix_print(4, 4, Tsee);
+	matrix_inverse(M1, inv_test);
+	matrix_print(2, 2, M1);
+	matrix_print(2, 2, inv_test);
+	/*matrix_print(4, 2, S2);
 	matrix_print(2, 2, M1);
 	matrix_print(2, 2, C1);
 	matrix_print(2, 2, M2);
@@ -1821,7 +1841,7 @@ int main(){
 	vector_print(2, G2);
 
 
-	for(i = 0; i < 1000000; i++){
+	/*for(i = 0; i < 1000000; i++){
 		update_kyn(Tsee, rob);
 		update_M1(M1, rob);
 		update_C1(C1, rob);
@@ -1836,8 +1856,7 @@ int main(){
 		rob.q4++;
 		rob.q5++;
 		rob.q6++;
-	}
+	}*/
 
 	return 0;
 }
-*/
