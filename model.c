@@ -68,33 +68,106 @@ void get_state(state* s){
 }
 
 extern int get_stop();
+
 /*
 void generate_tau(gsl_vector *tau){
 
 }
+*/
 
-gsl_matrix* compute_inverse(gsl_matrix *m){
+//La funzione genera la traiettoria da inseguire e restituisce in res:
+/*
+    res[0] => variabile di giunto desiderata
+    res[1] => velocità di giunto desiderata
+    res[2] => accelerazione di giunto desiderata
+*/
+void trajectory_generator(float t, int joint, int direction, float res[3]){
 
-    gsl_permutation *p;
-    gsl_matrix *inv;
-    int s;
-    int size;
+    static float T = 1;
+    static float old_q1 = 0;
+    static float old_q2 = 0;
 
-    size = m->size1;
-    p = gsl_permutation_alloc(size);
-    // Compute the LU decomposition of this matrix
-    gsl_linalg_LU_decomp(m, p, &s);
+    float qi, qf;
+    float a0, a3, a4, a5;
 
-    // Compute the  inverse of the LU decomposition
-    inv = gsl_matrix_alloc(size, size);
-    gsl_linalg_LU_invert(m, p, inv);
+    if(joint == 0){
+        qi = old_q1;
+        qf = direction ? (old_q1 + M_PI/9) : (old_q1 - M_PI/9);
+    } else {
+        qi = old_q2;
+        qf = direction ? (old_q2 + M_PI/9) : (old_q2 - M_PI/9);
+    }
 
-    gsl_permutation_free(p);
+    a0 = qi;
+    a3 =  10*(qf - qi)/pow(T, 3);
+    a4 = -15*(qf - qi)/pow(T, 4);
+    a5 =   6*(qf - qi)/pow(T, 5);
 
-    return inv;
+    if(joint == 0)
+        old_q1 = qf;
+    else 
+        old_q2 = qf;
+
+    if(t < T){
+        res[0] = a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
+        res[1] = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
+        res[2] = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
+    }
+    else{
+        res[0] = qf;
+        res[1] = res[2] = 0;
+    }
+    
+/*
+    if(joint == 0){
+        dq1 = qf;
+        if(t < T){
+            tq1 = a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
+            dtq1 = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
+            ddtq1 = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
+        }
+        else{
+            tq1 = qf;
+            dtq1 = ddtq1 = 0;
+        }
+        res[0] = tq1;
+        res[1] = dtq1;
+        res[2] = ddtq1;
+        tq2 = dq2;
+
+    }else{
+        dq2 = qf;
+    if(joint == 0)
+        dq1 = qf;
+    else 
+        dq2 = qf;
+
+    if(t < T){
+        res[0] = a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
+        res[1] = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
+        res[2] = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
+    }
+    else{
+        res[0] = qf;
+        res[1] = res[2] = 0;
+    }
+                tq2 =  a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
+            dtq2 = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
+            ddtq2 = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
+        }
+        else{
+            tq2 = qf;
+            dtq2 = ddtq2 = 0;
+        }
+        res[0] = tq2;
+        res[1] = dtq2;
+        res[2] = ddtq2;
+        tq1 = dq1;
+    }
+*/
 
 }
-*/
+
 void* dynamics(void* arg){
     printf("dynamic task started\n");
     int i;      // thread index
@@ -166,16 +239,3 @@ void* dynamics(void* arg){
     printf("dynamic task finished\n");
     return NULL;
 }
-
-/*int main(){
-    gsl_matrix *M, *M_inv;
-    M = gsl_matrix_alloc(3, 3);
-    M_inv = gsl_matrix_alloc(3, 3);
-
-    gsl_matrix_set(M, 0, 0, 5);
-    gsl_matrix_set(M, 1, 1, 5);
-    gsl_matrix_set(M, 2, 2, 5);
-
-    M_inv = compute_inverse(M);
-    print_matrix(M_inv);
-}*/
