@@ -12,7 +12,6 @@ typedef struct {
     float dt3;
 } state;
 
-
 typedef struct {
     float dq1;
     float dq2;
@@ -22,7 +21,7 @@ typedef struct {
     float dq6;
 } dot_state;
 
-
+// Funzioni per la dinamica
 extern void update_kyn(float Tsee[4][4], state robot);
 extern void update_S2(float S2[4][2], state robot);
 extern void update_M1(float M1[2][2], state robot);
@@ -32,10 +31,11 @@ extern void update_G2(float G2[2], state robot);
 extern void update_M2(float M2[2][2], state robot);
 extern void update_C2(float C2[2][2], state robot, dot_state dot_robot);
 
-extern float* vector_sum(float *a, float *b, float *c, int dim);
-extern float* vector_sub(float *a, float *b, float *c, int dim);
-extern float* vector_scal(float *a, float b, float *c, int dim);
-extern float* matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]);
+// Funzioni di calcolo matriciale
+extern void vector_sum(float *a, float *b, float *c, int dim);
+extern void vector_sub(float *a, float *b, float *c, int dim);
+extern void vector_scal(float *a, float b, float *c, int dim);
+extern void matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]);
 extern void matrix_print(int row, int column, float m[row][column]);
 extern void vector_print(int column, float v[column]);
 extern void matrix_set_zero(int row, int column, float m[row][column]);
