@@ -4,6 +4,7 @@
 #include "ptask.h"
 #include "matrices.h"
 
+#define DT  10   //[ms]
 // Queste probabilmente non serviranno se si suppone che i parametri non possano essere cambiati 
 // (sono impliciti nella risoluzione della dinamica)
 #define L1      0.06     // link1 length [m]
@@ -79,19 +80,26 @@ extern int get_stop();
 extern int get_pause();
 
 void update_coefficients(float coef1[4], float coef2[4], target qd){
-    float 
+    
 }
 
-void generate_tau(float tau[2]){
+void compute_qdt(float qdt[2], float coef1[4], float coef2[4], float t){
+
+}
+
+void generate_tau(float tau[2], state robot){
     static int step;
     static float coefficients1[4];
     static float coefficients2[4];
-
+    float qd_t[2];  //variabili di giunto desiderate all'istante t
+    float t;        //variabile per l'istante temporale
     get_desired_joint(&qd);
     if(qd.flag == 1){
         step = 0;
-        update_coefficients(coefficients1, coefficients2, qd);
+        update_coefficients(coefficients1, coefficients2, qd, robot);
     }
+    t = step*DT*0.001;
+    compute_qdt(qd_t, coefficients1, coefficients2, t);
 
     step++;
 }
