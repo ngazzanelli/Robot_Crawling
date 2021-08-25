@@ -1779,13 +1779,7 @@ void matrix_inverse(float A[2][2], float res[2][2]){
 	res[1][1] = a/det;
 }
 
-
-
-
-
-
 /********************************TEST OK *************************************/
-
 int main(){
 	int i;
 

@@ -1,11 +1,7 @@
 #include <math.h>
 #include <stdio.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_permutation.h>
-#include <gsl/gsl_linalg.h>
-#include "ptask.h"
 #include <pthread.h>
+#include "ptask.h"
 #include "matrices.h"
 
 // Queste probabilmente non serviranno se si suppone che i parametri non possano essere cambiati 
@@ -21,29 +17,27 @@ typedef struct {
     float q2d;
     int flag;
 } target;
-
+static target qd;
+//Funzione dal crawler per l'aggiornamento dello stato desiderato
 extern void get_desired_joint(target* t);
 
-// Struttura per lo stato reale del robot
-state robot;
-
+// Strutture per lo stato reale del robot
+state robot_globale;       
 dot_state dot_robot;
-
-
+//Semaforo usato per accedere allo stato reale "robot"
 static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
-
 
 void init_state(){
 
     pthread_mutex_lock(&mux);
-    robot.q1 = 0;
-    robot.q2 = 0;
-    robot.q3 = 0;
-    robot.q4 = 0;
-    robot.q5 = 0;
-    robot.q6 = 0;
-    robot.energy = 0;
-    robot.dt3 = 0;
+    robot_globale.q1 = 0;
+    robot_globale.q2 = 0;
+    robot_globale.q3 = 0;
+    robot_globale.q4 = 0;
+    robot_globale.q5 = 0;
+    robot_globale.q6 = 0;
+    robot_globale.energy = 0;
+    robot_globale.dt3 = 0;
     pthread_mutex_unlock(&mux);
 
     dot_robot.dq1 = 0;
@@ -56,24 +50,51 @@ void init_state(){
 
 void get_state(state* s){
     pthread_mutex_lock(&mux);
-    s->q1 = robot.q1;
-    s->q2 = robot.q2;
-    s->q3 = robot.q3;
-    s->q4 = robot.q4;
-    s->q5 = robot.q5;
-    s->q6 = robot.q6;
-    s->energy = robot.energy;
-    s->dt3 = robot.dt3;
+    s->q1 = robot_globale.q1;
+    s->q2 = robot_globale.q2;
+    s->q3 = robot_globale.q3;
+    s->q4 = robot_globale.q4;
+    s->q5 = robot_globale.q5;
+    s->q6 = robot_globale.q6;
+    s->energy = robot_globale.energy;
+    s->dt3 = robot_globale.dt3;
     pthread_mutex_unlock(&mux);
 }
 
-extern int get_stop();
-
-/*
-void generate_tau(gsl_vector *tau){
-
+void set_state(state s){
+pthread_mutex_lock(&mux);
+    robot_globale.q1 = s.q1;
+    robot_globale.q2 = s.q2;
+    robot_globale.q3 = s.q3;
+    robot_globale.q4 = s.q4;
+    robot_globale.q5 = s.q5;
+    robot_globale.q6 = s.q6 ;
+    robot_globale.energy = s.energy;
+    robot_globale.dt3 = s.dt3;
+    pthread_mutex_unlock(&mux);
 }
-*/
+
+//Funzione dall'interprete
+extern int get_stop();
+extern int get_pause();
+
+void update_coefficients(float coef1[4], float coef2[4], target qd){
+    float 
+}
+
+void generate_tau(float tau[2]){
+    static int step;
+    static float coefficients1[4];
+    static float coefficients2[4];
+
+    get_desired_joint(&qd);
+    if(qd.flag == 1){
+        step = 0;
+        update_coefficients(coefficients1, coefficients2, qd);
+    }
+
+    step++;
+}
 
 //La funzione genera la traiettoria da inseguire e restituisce in res:
 /*
@@ -81,7 +102,7 @@ void generate_tau(gsl_vector *tau){
     res[1] => velocità di giunto desiderata
     res[2] => accelerazione di giunto desiderata
 */
-void trajectory_generator(float t, int joint, int direction, float res[3]){
+void generate_trajectory(float t, int joint, int direction, float res[3]){
 
     static float T = 1;
     static float old_q1 = 0;
@@ -169,10 +190,13 @@ void trajectory_generator(float t, int joint, int direction, float res[3]){
 }
 
 void* dynamics(void* arg){
+
     printf("dynamic task started\n");
-    int i;      // thread index
+    int i;            // thread index
     float y_ee;
     float dt = 0.001; // 1 ms
+    state robot;
+    get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
     float q_ind1[2], q_ind2[2], q_dip1[4], q_dip2[4], ris1[2], ris2[2], ris3[2], ris4[4];
     float qdotdot_ind[2];
@@ -185,53 +209,56 @@ void* dynamics(void* arg){
     i = pt_get_index(arg);
     pt_set_activation(i);
 
-    init_state();
+    while(!get_stop()){
 
-    while(/*!get_stop()*/1){
+        //controllo se l'applicazione è in pausa
+        if(!get_pause()){
 
-        update_kyn(Tsee, robot);
-        //y_ee = gsl_matrix_get(Tsee, 1, 3);
-        y_ee = Tsee[1][3];
+            update_kyn(Tsee, robot);
+            y_ee = Tsee[1][3];
+            if(y_ee >0){
+                update_M1(M, robot);
+                update_C1(C, robot, dot_robot);
+                update_G1(G, robot);
+            }else{
+                update_M2(M, robot);
+                update_C2(C, robot, dot_robot);
+                update_G2(G, robot);
+            }
 
-        if(y_ee <=0){
-            update_M1(M, robot);
-            update_C1(C, robot, dot_robot);
-            update_G1(G, robot);
-        }else{
-            update_M2(M, robot);
-            update_C2(C, robot, dot_robot);
-            update_G2(G, robot);
+            generate_tau(tau);
+            matrix_inverse(M, M_inv);
+            
+            //qdotdot_ind = M_inv*(tau-G-C*qdot_ind1);    //accelerazione attuale variabili indipendenti 
+            vector_sub(tau, G, ris1, 2);
+            matvec_mul(qdot_ind1, ris2, 2, 2, C);
+            vector_sum(ris1, ris2, ris3, 2);
+            matvec_mul(ris3, qdotdot_ind, 2, 2, M_inv);    
+
+            //qdot_ind2 = qdot_ind1 + dt*qdotdot_ind;     //velocità attuale variabili indipendenti 
+            vector_scal(qdotdot_ind, dt, ris1, 2);
+            vector_sum(qdot_ind1, ris1, qdot_ind2, 2);
+
+            //q_ind2 = q_ind1 + dt*qdot_ind1;             //posizione attuale variabili indipendenti 
+            vector_scal(qdot_ind1, dt, ris1, 2);
+            vector_sum(q_ind1, ris1, q_ind2, 2);
+
+            //q_dip2 = q_dip1 + dt*qdot_dip1;             //posizione attuale variabili dipendenti 
+            vector_scal(qdot_dip1, dt, ris4, 4);
+            vector_sum(q_dip1, ris1, q_dip2, 4);
+
+            if(y_ee >0)
+                matrix_set_zero(4, 2, S);
+            else
+                update_S2(S, robot);
+
+            //qdot_dip2 = S*qdot_ind2;                    //velocità attuale variabili dipendenti
+            matvec_mul(qdot_ind2, qdot_dip2, 4, 2, S);
+
+            //Aggiorniamo lo stato globale condiviso con gli altri task
+            set_state(robot);
         }
-
-        //generate_tau(tau);
-        //M_inv = compute_inverse(M);
         
-        //qdotdot_ind = M_inv*(tau-G-C*qdot_ind1);    //accelerazione attuale variabili indipendenti 
-        vector_sub(tau, G, ris1, 2);
-        matvec_mul(qdot_ind1, ris2, 2, 2, C);
-        vector_sum(ris1, ris2, ris3, 2);
-        matvec_mul(ris3, qdotdot_ind, 2, 2, M_inv);    
-
-        //qdot_ind2 = qdot_ind1 + dt*qdotdot_ind;     //velocità attuale variabili indipendenti 
-        vector_scal(qdotdot_ind, dt, ris1, 2);
-        vector_sum(qdot_ind1, ris1, qdot_ind2, 2);
-
-        //q_ind2 = q_ind1 + dt*qdot_ind1;             //posizione attuale variabili indipendenti 
-        vector_scal(qdot_ind1, dt, ris1, 2);
-        vector_sum(q_ind1, ris1, q_ind2, 2);
-
-        //q_dip2 = q_dip1 + dt*qdot_dip1;             //posizione attuale variabili dipendenti 
-        vector_scal(qdot_dip1, dt, ris4, 4);
-        vector_sum(q_dip1, ris1, q_dip2, 4);
-
-        if(y_ee <=0)
-            matrix_set_zero(4, 2, S);
-        else
-            update_S2(S, robot);
-
-        //qdot_dip2 = S*qdot_ind2;                    //velocità attuale variabili dipendenti
-        matvec_mul(qdot_ind2, qdot_dip2, 4, 2, S);
-
         pt_deadline_miss(i);
         pt_wait_for_period(i);
     }

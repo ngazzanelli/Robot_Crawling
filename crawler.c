@@ -51,8 +51,10 @@ typedef struct {
 } target;
 static target qd;
 
-
+//Funzioni dall'interprete
 extern int get_stop();
+extern int get_pause();
+//Funzioni dal modello
 extern void get_state(state* s);
 
 
@@ -65,7 +67,7 @@ void init_global_variables(){
     dt2 = DTH2;
     n2 = (t2max - t2min)/dt2 + 1;
 }
-
+/*
 void set_desired_joint(int s){
     int i, j;    
     
@@ -78,7 +80,7 @@ void set_desired_joint(int s){
     pthread_mutex_unlock(&mux);
 
 }
-
+*/
 void get_desired_joint(target* t){
   pthread_mutex_lock(&mux);
   t->t1d = qd.t1d;
@@ -112,6 +114,7 @@ int get_reward(int s, int snew, state robot){
 }
 
 int next_desired_state(int a){
+    pthread_mutex_lock(&mux);
     switch(a){
         case TH1UP: 
             qd.t1d += DTH1;
@@ -132,15 +135,20 @@ int next_desired_state(int a){
     if (qd.t1d < TH1MIN) qd.t1d = TH1MIN;
     if (qd.t2d > TH2MAX) qd.t2d = TH2MAX;
     if (qd.t2d < TH2MIN) qd.t2d = TH2MIN;
-
+    qd.flag = 1;
+    pthread_mutex_unlock(&mux);
     return angles2state(qd.t1d, qd.t2d);
 }
 
 
 // Learning loop 
 void* qlearning(void* arg){
+
     printf("qlearning task started\n");
     int i;      // thread index
+    int pause;  // Serve per saltare entrambe le sezioni in 
+                // cui è diviso il corpo del while per 
+                // evitare di chiamare due volte get_pause()
     int s, a, r, snew;
     long step = 0;
     float newerr, err = 0;
@@ -150,34 +158,44 @@ void* qlearning(void* arg){
     pt_set_activation(i);
 
 
-    while (1 /*!get_stop()*/){
-        step++;
+    while (!get_stop()){
 
-        get_state(&robot);
-        s = angles2state(robot.q4, robot.q5);
-        a = ql_egreedy_policy(s);
-        //printf("Ottenuta l'azione\n");
-        snew = next_desired_state(a);
-        //printf("Ottenuto il nuovo stato\n");
+        //Controllo se l'applicazione è in pausa
+        pause = get_pause();
+        if(!pause){
+            step++;
 
-        pt_deadline_miss(i);
-        pt_wait_for_period(i);
-        
-        r = get_reward(s, snew, robot);
-        //printf("Ottenuto il reward\n");
-        newerr = ql_updateQ(s, a, r, snew);
-        //printf("Aggioranta matrice Q\n");
-        //err +=  (newerr - err)/step;
-        if (step % 1000 == 0)
-            ql_reduce_exploration();
+            get_state(&robot);
+            s = angles2state(robot.q4, robot.q5);
+            a = ql_egreedy_policy(s);
+            //printf("Ottenuta l'azione\n");
+            snew = next_desired_state(a);   //Questa funzione aggiorna 
+                                            //anche le variabili di giunto desiderate "qd"
+            //printf("Ottenuto il nuovo stato\n");
+        }
+            pt_deadline_miss(i);
+            pt_wait_for_period(i);
+
+        if(!pause){  
+            r = get_reward(s, snew, robot);
+            //printf("Ottenuto il reward\n");
+            newerr = ql_updateQ(s, a, r, snew);
+            //printf("Aggioranta matrice Q\n");
+            //err +=  (newerr - err)/step;
+            if (step % 1000 == 0)
+                ql_reduce_exploration();
+        }
     }
     printf("qlearning task finshed\n");
     return NULL;
 }
 
 //extern void* interpreter(void* arg);
-extern void* dynamics(void*arg);
 //extern void* graphics(void* arg);
+
+//Funzioni dal model.c
+extern void init_state();
+extern void* dynamics(void*arg);
 
 int main(){
        
@@ -185,7 +203,7 @@ int main(){
 
     srand(time(NULL));
     init_global_variables();
-    //init_state();
+    init_state();
     ql_init(NSTATES, NACTIONS);  //49 states, 4 actions
 
     pt_task_create(dynamics, 1, PER, DL, PRI);
