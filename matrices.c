@@ -1725,6 +1725,15 @@ void vector_copy(float* src, float* dest, int dim){
 
 	for(i = 0; i < dim; ++i)
 		dest[i] = src[i];
+
+	return;
+}
+
+void vector_set_zero(float *v, int dim){
+	int i;
+
+	for(i=0; i<dim; ++i)
+		v[i] = 0;
 	
 	return;
 }

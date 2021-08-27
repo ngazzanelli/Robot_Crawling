@@ -39,6 +39,7 @@ extern void vector_copy(float* src, float* dest, int dim);
 extern void matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]);
 extern void matrix_print(int row, int column, float m[row][column]);
 extern void vector_print(int column, float v[column]);
+extern void vector_set_zero(float *v, int dim);
 extern void matrix_set_zero(int row, int column, float m[row][column]);
 extern void matrix_inverse(float A[2][2], float res[2][2]);
 

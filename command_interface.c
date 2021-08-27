@@ -30,10 +30,25 @@ int com_state;
    //case 3: arresto del sistema 
 
 int get_pause(){
-    return 0;
+    int temp ;
+    pthread_mutex_lock(&mux_int);
+    temp = com_state;
+    pthread_mutex_unlock(&mux_int);
+    if(temp == 2)
+        return 1;
+    else
+        return 0;
 }
+
 int get_stop(){
-    return 0;
+    int temp ;
+    pthread_mutex_lock(&mux_int);
+    temp = com_state;
+    pthread_mutex_unlock(&mux_int);
+    if(temp == 3)
+        return 1;
+    else
+        return 0;
 }
 
 
@@ -83,25 +98,25 @@ void init_com_inter()
     set_com_variable(0);
 }
 
-void key_mamager(int * exec)
+void key_manager(int * exec)
 {
     char cm;
     cm=get_scancode();
     switch(cm)
     {
         case KEY_S:
-        printf("hai premuto il tasto S\n");
-        set_com_variable(1);
-        break;
+            printf("hai premuto il tasto S\n");
+            set_com_variable(1);
+            break;
         case KEY_P:
-        printf("hai premuto il tasto P\n");
-        set_com_variable(2);
-        break;
+            printf("hai premuto il tasto P\n");
+            set_com_variable(2);
+            break;
         case KEY_E:
-        printf("hai premuto il tasto E\n");
-        set_com_variable(3);  
-        *exec=0;
-        break;   
+            printf("hai premuto il tasto E\n");
+            set_com_variable(3);  
+            *exec=0;
+            break;   
     }
 }
 void* interface(void * arg)
@@ -114,7 +129,7 @@ void* interface(void * arg)
 
     while(exec)
     {
-        key_mamager(&exec);
+        key_manager(&exec);
         pt_deadline_miss(i);
         pt_wait_for_period(i);
         if(exec==0)

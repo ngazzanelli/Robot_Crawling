@@ -37,6 +37,7 @@ extern void* interface(void * arg);
 
 //qui devono essere aggiunte le extern per lo stato vero e per 
 //il thread della dinamica
+extern void init_state();
 extern void get_state(state* rob);
 extern void* dynamics(void* arg);
 
@@ -150,7 +151,7 @@ void *update_graphic(void *arg)
             tmp[4] = rob.q5;
             tmp[5] = rob.q6;
 
-            printf("il valore del primo el di FS è %f\n",FState[0]);
+            //printf("il valore di q è: [%f %f %f %f %f %f]\n",tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5]);
             for(j=0;j<num_graph;j++)
                 update_gr(Graph[j],j,Graph_points,&Graph_first_p[j],&Graph_elem_num[j],Graph_sym_range[j],/*FState[j]*/tmp[j]);
             //levare il for ed utilizzare le variabili di stato vero nell'ultimo elemento della 
@@ -187,6 +188,7 @@ int main()
     set_FALSE_ST(i_FS);
     set_com_variable(0);
 
+    //init_state();
     printf("creo il task di interfaccia::\n");
     ris=pt_task_create( interface, 1, PER, DL, PRI);
     printf("con il risultato %d\n",ris);
@@ -195,7 +197,7 @@ int main()
     printf("creo il task di gestione della grafica\n");
     pt_task_create( update_graphic, 3, PER, DL, PRI);
     printf("creo il task per la risoluzione della dinamica\n");
-    pt_task_create( dynamics, 4, PER, DL, PRI);
+    pt_task_create( dynamics, 4, 1, DL, PRI);
     for(i = 1; i <= 3; i++){
 		  pt_wait_for_end(i);
 		  printf("fine ciclo %d\n", i);
