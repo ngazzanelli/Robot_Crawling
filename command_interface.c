@@ -4,6 +4,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "ptask.h"
+#include "qlearn.h"
 
 #define PI 3.14
 #define PASSO 0.01
@@ -132,6 +133,11 @@ void get_com_variable(int *ic) //LA MODIFICHEREI METTENDO IL RITORNO DI TIPO INT
     pthread_mutex_unlock(&mux_int);
 }
 
+//Funzioni esterne da altri moduli
+extern void init_state();
+//extern voif init_graphics();
+//extern void init_qlearning();
+
 // Funzione per ottenere il codice del tasto premuto da tastiera 
 char get_scancode()
 {
@@ -162,11 +168,17 @@ void key_manager(int *exec)
             break;
         case KEY_S:
             printf("hai premuto il tasto S\n");
-            set_com_variable(1);
+            if(com_state == 0){
+                set_com_variable(1);
+                init_state();
+                //init_graphics();
+                //init_qlearning();
+            }
             break;
         case KEY_P:
             printf("hai premuto il tasto P\n");
-            set_com_variable(2);
+            if(com_state == 1) set_com_variable(2);
+            if(com_state == 2) set_com_variable(1);
             break;
         case KEY_E:
             printf("hai premuto il tasto E\n");
@@ -174,7 +186,7 @@ void key_manager(int *exec)
             *exec=0;
             break;   
         case KEY_UP:
-            if(get_reset()){
+            if(com_state == 0){
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected(); //si salva in locale per problemi di mutua esclusione
                 // Passiamo quindi al successivo parametro
@@ -211,7 +223,7 @@ void key_manager(int *exec)
             }
             break;
         case KEY_DOWN:
-            if(get_reset()){
+            if(com_state == 0){
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected();
                 // Passiamo quindi al successivo parametro
@@ -248,11 +260,11 @@ void key_manager(int *exec)
             }
             break;
         case KEY_RIGHT:
-            if(get_reset())
+            if(com_state == 0)
                 value += step;
             break;
         case KEY_LEFT:
-            if(get_reset())
+            if(com_state == 0)
                 value -= step;
             break;
         default: break;

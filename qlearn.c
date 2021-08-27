@@ -82,9 +82,39 @@ void ql_set_expl_range(float e_ini, float e_fin)
 	eps_ini = e_ini;
 	eps_fin = e_fin;
 }
+void ql_set_epsini(float e_ini)
+{
+	eps_ini = e_ini;
+}
+void ql_get_epsfin(float e_fin)
+{
+	eps_fin = e_fin; 
+}
 void ql_set_expl_decay(float d)
 {
 	decay = d;
+}
+
+// Get parameters functions
+float ql_get_learning_rate()
+{
+	return alpha;
+}
+float ql_get_discount_factor()
+{
+	return gam;
+}
+float ql_get_epsini()
+{
+	return eps_ini; 
+}
+float ql_get_epsfin()
+{
+	return eps_fin; 
+}
+float ql_get_expl_decay()
+{
+	return decay;
 }
 
 // Reduce exploration

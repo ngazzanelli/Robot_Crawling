@@ -44,7 +44,7 @@ $(OBJ3).o: $(OBJ3).c ptask.h
 $(OBJ4).o: $(OBJ4).c $(OBJ7).c ptask.h matrices.h
 	$(CC) $(CFLAGS) -c $(OBJ4).c
 
-$(OBJ5).o: $(OBJ5).c ptask.h 
+$(OBJ5).o: $(OBJ5).c qlearn.h ptask.h 
 	$(CC) $(CFLAGS) -c $(OBJ5).c
 
 $(OBJ6).o: $(OBJ6).c ptask.h 

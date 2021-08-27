@@ -180,9 +180,8 @@ void* dynamics(void* arg){
     pt_set_activation(i);
 
     while(!get_stop()){
-        
-        //controllo se l'applicazione è in pausa
-        if(!get_pause()){
+        //controllo se l'applicazione è in pausa o in reset
+        if(!get_pause() && !get_reset()){
             printf("il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
             
             update_kyn(Tsee, robot);
