@@ -197,7 +197,7 @@ void* qlearning(void* arg){
 extern void init_state();
 extern void* dynamics(void*arg);
 
-int main(){
+/*int main(){
        
     int i;
 
@@ -215,4 +215,4 @@ int main(){
 		  pt_wait_for_end(i);
 		  printf("fine ciclo %d\n", i);
     }
-}
+}*/

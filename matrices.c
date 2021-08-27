@@ -1720,6 +1720,15 @@ void vector_scal(float *a, float b, float *c, int dim){
     c[i] = a[i]*b;
 }
 
+void vector_copy(float* src, float* dest, int dim){
+	int i;
+
+	for(i = 0; i < dim; ++i)
+		dest[i] = src[i];
+	
+	return;
+}
+
 void matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
   int i, j;
 
@@ -1780,7 +1789,7 @@ void matrix_inverse(float A[2][2], float res[2][2]){
 }
 
 /********************************TEST OK *************************************/
-int main(){
+/*int main(){
 	int i;
 
 	state rob;
@@ -1841,7 +1850,7 @@ int main(){
 		rob.q4++;
 		rob.q5++;
 		rob.q6++;
-	}*/
+	}
 
 	return 0;
-}
+}*/

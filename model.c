@@ -19,9 +19,11 @@ static target qd;
 //Funzione dal crawler per l'aggiornamento dello stato desiderato
 extern void get_desired_joint(target* t);
 
-// Strutture per lo stato reale del robot
-state robot_globale;       
-dot_state dot_robot;
+// Strutture per lo stato reale del robot: dichiarate static perchè possono essere accedute solo tramite
+// funzioni di interfaccia
+static state robot_globale;       
+static dot_state dot_robot;
+
 //Semaforo usato per accedere allo stato reale "robot"
 static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
 
@@ -60,7 +62,7 @@ void get_state(state* s){
 }
 
 void set_state(state s){
-pthread_mutex_lock(&mux);
+    pthread_mutex_lock(&mux);
     robot_globale.q1 = s.q1;
     robot_globale.q2 = s.q2;
     robot_globale.q3 = s.q3;
@@ -216,6 +218,28 @@ void* dynamics(void* arg){
 
             //qdot_dip2 = S*qdot_ind2;                    //velocità attuale variabili dipendenti
             matvec_mul(qdot_ind2, qdot_dip2, 4, 2, S);
+
+            //Aggiorniamo lo stato al passo precedente 
+            vector_copy(q_dip2, q_dip1, 4);
+            vector_copy(q_ind2, q_ind1, 2);
+            vector_copy(qdot_dip2, qdot_dip1, 4);
+            vector_copy(qdot_ind2, qdot_ind1, 2);
+            
+
+            //Aggiorniamo lo stato locale utilizzato soltanto per l'integrazione
+            robot.q1 = q_dip2[0];
+            robot.q2 = q_dip2[1];
+            robot.q3 = q_dip2[2];
+            robot.q4 = q_ind2[0];
+            robot.q5 = q_ind2[1];
+            robot.q6 = q_dip2[3];
+
+            dot_robot.q1 = qdot_dip2[0]; 
+            dot_robot.q2 = qdot_dip2[1];
+            dot_robot.q3 = qdot_dip2[2];
+            dot_robot.q4 = qdot_ind2[0];
+            dot_robot.q5 = qdot_ind2[1];
+            dot_robot.q6 = qdot_dip2[3];
 
             //Aggiorniamo lo stato globale condiviso con gli altri task
             set_state(robot);

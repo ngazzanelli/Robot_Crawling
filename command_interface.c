@@ -29,6 +29,14 @@ int com_state;
    //ma non eseguono il flusso originale
    //case 3: arresto del sistema 
 
+int get_pause(){
+    return 0;
+}
+int get_stop(){
+    return 0;
+}
+
+
 //inizio get set per lo stato falso 
 void set_FALSE_ST(float *i)
 {

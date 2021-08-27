@@ -37,11 +37,12 @@ extern void* interface(void * arg);
 
 //qui devono essere aggiunte le extern per lo stato vero e per 
 //il thread della dinamica
-
+extern void get_state(state* rob);
+extern void* dynamics(void* arg);
 
 //makecol(255,255,255)
 
-void print_axes(BITMAP* Graph,int G_n)
+void print_axes(BITMAP* Graph, int G_n)
 {
     char s[20];
     line(Graph,X_off*scale,(H_BMS/2)*scale,(X_point+X_off)*scale,(H_BMS/2)*scale,makecol(0,0,0));
@@ -49,7 +50,8 @@ void print_axes(BITMAP* Graph,int G_n)
     sprintf(s,"joint var %d",G_n+1);
     textout_ex(Graph, font, s, X_TEXT_OFF*scale, Y_off*scale, makecol(0,0,0), makecol(255,255,255));
 }
-void init_G_DC(BITMAP* Graph[],int Graph_points[num_graph][X_point*scale],int Graph_first_p[],int Graph_elem_num[],float Graph_sym_range[])
+
+void init_G_DC(BITMAP* Graph[], int Graph_points[num_graph][X_point*scale], int Graph_first_p[], int Graph_elem_num[], float Graph_sym_range[])
 {
     int i;
     allegro_init();
@@ -57,7 +59,8 @@ void init_G_DC(BITMAP* Graph[],int Graph_points[num_graph][X_point*scale],int Gr
     set_color_depth(32);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_win*scale,H_win*scale,0,0);
     clear_to_color(screen,BKG);
-    for(i=0;i<num_graph;i++)
+
+    for(i=0; i<num_graph; i++)
     {
         Graph[i]=create_bitmap(W_BMS*scale,H_BMS*scale);
         clear_to_color(Graph[i],makecol(255,255,255));
@@ -127,6 +130,10 @@ void *update_graphic(void *arg)
     ti = pt_get_index(arg);
     pt_set_activation(ti);
     init_G_DC(Graph,Graph_points,Graph_first_p,Graph_elem_num,Graph_sym_range);
+
+    state rob;
+    float tmp[num_graph];
+
     while (exec)
     {
         get_com_variable(&ex_stat);
@@ -134,10 +141,18 @@ void *update_graphic(void *arg)
          //printf("la variabile di ex_stat vale %d\n",ex_stat);
         if(ex_stat==1)
         {   //da sostituire la get per lo stato reale
-            get_FALSE_ST(FState);
+            //get_FALSE_ST(FState);
+            get_state(&rob);
+            tmp[0] = rob.q1;
+            tmp[1] = rob.q2;
+            tmp[2] = rob.q3;
+            tmp[3] = rob.q4;
+            tmp[4] = rob.q5;
+            tmp[5] = rob.q6;
+
             printf("il valore del primo el di FS è %f\n",FState[0]);
             for(j=0;j<num_graph;j++)
-                update_gr(Graph[j],j,Graph_points,&Graph_first_p[j],&Graph_elem_num[j],Graph_sym_range[j],FState[j]);
+                update_gr(Graph[j],j,Graph_points,&Graph_first_p[j],&Graph_elem_num[j],Graph_sym_range[j],/*FState[j]*/tmp[j]);
             //levare il for ed utilizzare le variabili di stato vero nell'ultimo elemento della 
             //update
         }
@@ -179,7 +194,9 @@ int main()
     pt_task_create( wave_gener, 2, PER, DL, PRI);
     printf("creo il task di gestione della grafica\n");
     pt_task_create( update_graphic, 3, PER, DL, PRI);
-       for(i = 1; i <= 3; i++){
+    printf("creo il task per la risoluzione della dinamica\n");
+    pt_task_create( dynamics, 4, PER, DL, PRI);
+    for(i = 1; i <= 3; i++){
 		  pt_wait_for_end(i);
 		  printf("fine ciclo %d\n", i);
     }

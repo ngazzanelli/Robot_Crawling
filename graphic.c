@@ -527,6 +527,7 @@ void *update_graphic(void *arg)
 }*/
 
 // main esistente solo per il testing 
+/*
 int main()
 {
     int a;
@@ -553,6 +554,6 @@ int main()
     return(0);
 
 
-}
+}*/
 
 

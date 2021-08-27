@@ -35,6 +35,7 @@ extern void update_C2(float C2[2][2], state robot, dot_state dot_robot);
 extern void vector_sum(float *a, float *b, float *c, int dim);
 extern void vector_sub(float *a, float *b, float *c, int dim);
 extern void vector_scal(float *a, float b, float *c, int dim);
+extern void vector_copy(float* src, float* dest, int dim);
 extern void matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]);
 extern void matrix_print(int row, int column, float m[row][column]);
 extern void vector_print(int column, float v[column]);
