@@ -4,8 +4,14 @@
 #include "ptask.h"
 #include "matrices.h"
 
-#define DT  1  //Intervallo di integrazione della Dinamica     [ms]
-#define T   1   // Intervallo di generazione della traiettoria  [s]
+
+#define DT  1    //Intervallo di integrazione della Dinamica        [ms]
+#define T   1   // Intervallo di generazione della traiettoria      [s]
+
+/******************** COSTANTI DEL CONTROLLO **********************/
+#define KC  10 
+#define KD  10
+
 
 //Struttura per lo stato desiderato del robot
 typedef struct {
@@ -126,14 +132,24 @@ void compute_qdt(float qdt[2], float dot_qdt[2], float dotdot_qdt[2], float coef
     return;
 }
 
-void generate_tau(float tau[2], state robot){
+void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float G[2]){
     static int step;
     static float coefficients1[4];
     static float coefficients2[4];
-    float qd_t[2];          //variabili di giunto desiderate all'istante t
-    float dot_qdt[2];       //velocità di giunto desiderate all'istante t
-    float dotdot_qdt[2];    //accelerazioni di giunto desiderate all'istante t
-    float t;                //variabile per l'istante temporale
+
+    float e[2];
+    float dot_e[2];
+    float s[2];
+    float dot_qr_t[2];      //Velocità di giunto di riferimento all'istante t
+    float dotdot_qr_t[2];   //Accelerazioni di giunto di riferimento all'istannte t
+    float q_t[2];           //Variabili di giunto all'istante t
+    float dot_q_t[2];       //Velocità di giunto all'istante t
+    float dotdot_q_t[2];    //Accelerazioni di giunto all'istante t
+    float qd_t[2];          //Variabili di giunto desiderate all'istante t
+    float dot_qd_t[2];      //Velocità di giunto desiderate all'istante t
+    float dotdot_qd_t[2];   //Accelerazioni di giunto desiderate all'istante t
+    float t;                //Variabile per l'istante temporale
+    float ris1[2], ris2[2], ris3[2], ris4[2], ris5[2], ris6[2], ris7[2]; // Variabili di appoggio per le operazioni
 
     get_desired_joint(&qd);
 
@@ -143,10 +159,37 @@ void generate_tau(float tau[2], state robot){
     }
 
     t = step*DT*0.001;
-    compute_qdt(qd_t, dot_qdt, dotdot_qdt, coefficients1, coefficients2, t);
+    q_t[0] = robot.q4;
+    q_t[1] = robot.q5;
+    dot_q_t[0] = dot_robot.dq4;
+    dot_q_t[1] = dot_robot.dq5;
+    compute_qdt(qd_t, dot_qd_t, dotdot_qd_t, coefficients1, coefficients2, t);
 
-    tau[0] = 0;
-    tau[1] = 0;
+    // e = q_d - q;
+    vector_sub(qd_t, q_t, e, 2);
+
+    // q_r_dot = q_d_dot + k_c * e
+    vector_scal(e, KC, ris1, 2);
+    vector_sum(dot_qd_t, ris1, dot_qr_t, 2);
+
+    // s = q_r_dot - q_dot
+    vector_sub(dot_qr_t, dot_q_t, s, 2);
+
+    // e_dot = qd_dot - q_dot
+    vector_sub(dot_qd_t, dot_q_t, dot_e, 2);
+
+    // qr_dotdot = qd_dotdot + k_c*e_dot
+    vector_scal(dot_e, KC, ris1, 2);
+    vector_sum(dotdot_qd_t, ris1, dotdot_qr_t, 2);
+
+    // tau = M * q_r_dotdot + C * q_r_dot + G + e + k_d * s
+    vector_scal(s, KD, ris1, 2);
+    vector_sum(e, ris1, ris2, 2);
+    vector_sum(G, ris2, ris3, 2);
+    matvec_mul(dot_qr_t, ris5, 2, 2, C);
+    vector_sum(ris5, ris4, ris6, 2);
+    matvec_mul(dotdot_qr_t, ris7, 2, 2, M);
+    vector_sum(ris7, ris6, tau, 2);
 
     step++;
     return;
@@ -186,19 +229,22 @@ void* dynamics(void* arg){
             
             update_kyn(Tsee, robot);
             y_ee = Tsee[1][3];
+            printf("Y = %f\n", y_ee);
             if(y_ee > 0){
+                printf("Sono dentro y > 0\n");
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
                 //vector_set_zero(G, 2);
             }else{
+                printf("Sono dentro y <= 0\n");
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
                 update_G2(G, robot);
                 //vector_set_zero(G, 2);
             }
 
-            generate_tau(tau, robot);
+            generate_tau(tau, robot, M, C, G);
             matrix_inverse(M, M_inv);
             
             //qdotdot_ind = M_inv*(tau-G-C*qdot_ind1);    //accelerazione attuale variabili indipendenti 
