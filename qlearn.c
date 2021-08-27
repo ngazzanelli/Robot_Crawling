@@ -86,7 +86,7 @@ void ql_set_epsini(float e_ini)
 {
 	eps_ini = e_ini;
 }
-void ql_get_epsfin(float e_fin)
+void ql_set_epsfin(float e_fin)
 {
 	eps_fin = e_fin; 
 }

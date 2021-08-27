@@ -75,6 +75,19 @@ int get_pause(){
         return 0;
 }
 
+
+int get_play(){
+    int temp ;
+    pthread_mutex_lock(&mux_int);
+    temp = com_state;
+    pthread_mutex_unlock(&mux_int);
+    if(temp == 1)
+        return 1;
+    else
+        return 0;
+}
+
+
 int get_stop(){
     int temp ;
     pthread_mutex_lock(&mux_int);
@@ -161,30 +174,37 @@ void key_manager(int *exec)
     char cm;
     cm=get_scancode();
     switch(cm){
+
         case KEY_R:
             printf("hai premuto il tasto R\n");
             set_com_variable(0);
             //TODO: gestire il reset dei vari task
             break;
+
         case KEY_S:
             printf("hai premuto il tasto S\n");
-            if(com_state == 0){
-                set_com_variable(1);
+            if(get_reset()){
                 init_state();
                 //init_graphics();
                 //init_qlearning();
+                set_com_variable(1);
             }
             break;
+
         case KEY_P:
             printf("hai premuto il tasto P\n");
-            if(com_state == 1) set_com_variable(2);
-            if(com_state == 2) set_com_variable(1);
+            if(get_play())
+                set_com_variable(2);
+            else if(get_pause())
+                set_com_variable(1);
             break;
+
         case KEY_E:
             printf("hai premuto il tasto E\n");
             set_com_variable(3);  
             *exec=0;
-            break;   
+            break;
+
         case KEY_UP:
             if(com_state == 0){
                 // Per prima cosa salviamo il valore precedentemente selezionato
@@ -222,6 +242,7 @@ void key_manager(int *exec)
                 }
             }
             break;
+
         case KEY_DOWN:
             if(com_state == 0){
                 // Per prima cosa salviamo il valore precedentemente selezionato
@@ -259,14 +280,17 @@ void key_manager(int *exec)
                 }
             }
             break;
+
         case KEY_RIGHT:
             if(com_state == 0)
                 value += step;
             break;
+
         case KEY_LEFT:
             if(com_state == 0)
                 value -= step;
             break;
+
         default: break;
     }
 }

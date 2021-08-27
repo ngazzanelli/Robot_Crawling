@@ -181,7 +181,7 @@ void* dynamics(void* arg){
 
     while(!get_stop()){
         //controllo se l'applicazione è in pausa o in reset
-        if(!get_pause() && !get_reset()){
+        if(get_play()){
             printf("il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
             
             update_kyn(Tsee, robot);
@@ -189,13 +189,13 @@ void* dynamics(void* arg){
             if(y_ee > 0){
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
-                //update_G1(G, robot);
-                vector_set_zero(G, 2);
+                update_G1(G, robot);
+                //vector_set_zero(G, 2);
             }else{
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
-                //update_G2(G, robot);
-                vector_set_zero(G, 2);
+                update_G2(G, robot);
+                //vector_set_zero(G, 2);
             }
 
             generate_tau(tau, robot);
