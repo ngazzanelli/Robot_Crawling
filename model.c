@@ -4,13 +4,8 @@
 #include "ptask.h"
 #include "matrices.h"
 
-#define DT  10   //[ms]
-// Queste probabilmente non serviranno se si suppone che i parametri non possano essere cambiati 
-// (sono impliciti nella risoluzione della dinamica)
-#define L1      0.06     // link1 length [m]
-#define L2      0.06     // link2 length [m]
-#define RH      0.03     // robot height [m]
-#define RL      0.2     // robot length [m]
+#define DT  10  //Intervallo di integrazione della Dinamica     [ms]
+#define T   1   // Intervallo di generazione della traiettoria  [s]
 
 //Struttura per lo stato desiderato del robot
 typedef struct {
@@ -19,6 +14,8 @@ typedef struct {
     int flag;
 } target;
 static target qd;
+
+
 //Funzione dal crawler per l'aggiornamento dello stato desiderato
 extern void get_desired_joint(target* t);
 
@@ -79,123 +76,80 @@ pthread_mutex_lock(&mux);
 extern int get_stop();
 extern int get_pause();
 
-void update_coefficients(float coef1[4], float coef2[4], target qd){
-    
+void update_coefficients(float coef1[4], float coef2[4], state robot){
+
+    //Prelevo lo stato attuale in modo da generare la traiettoria a partire da dove si trova il robot
+    float qi_1 = robot.q4;
+    float qi_2 = robot.q5;
+
+    //Prelevo la posizione finale desiderata dalla variabile globale qd che è stata aggiornata in generate_tau
+    float qf_1 = qd.q1d;
+    float qf_2 = qd.q2d;
+
+    //Update coefficienti per il primo giunto
+    coef1[0] = qi_1;
+    coef1[1] =  10*(qf_1 - qi_1)/pow(T, 3);
+    coef1[2] = -15*(qf_1 - qi_1)/pow(T, 4);
+    coef1[3] =   6*(qf_1 - qi_1)/pow(T, 5);
+
+    //Update coefficienti per il secondo giunto
+    coef2[0] = qi_2;
+    coef2[1] =  10*(qf_2 - qi_2)/pow(T, 3);
+    coef2[2] = -15*(qf_2 - qi_2)/pow(T, 4);
+    coef2[3] =   6*(qf_2 - qi_2)/pow(T, 5);
+
+    return;
+
 }
 
-void compute_qdt(float qdt[2], float coef1[4], float coef2[4], float t){
+void compute_qdt(float qdt[2], float dot_qdt[2], float dotdot_qdt[2], float coef1[4], float coef2[4], float t){
+    if(t <= T){
+        //Posizioni di giunto desiderate
+        qdt[0] = coef1[0] + coef1[1]*pow(t, 3) + coef1[2]*pow(t, 4) + coef1[3]*pow(t, 5);
+        qdt[1] = coef2[0] + coef2[1]*pow(t, 3) + coef2[2]*pow(t, 4) + coef2[3]*pow(t, 5);
+        //Velocità di giunto desiderate
+        dot_qdt[0] = 3*coef1[1]*pow(t, 2) + 4*coef1[2]*pow(t, 3) + 5*coef1[3]*pow(t, 4);
+        dot_qdt[1] = 3*coef2[1]*pow(t, 2) + 4*coef2[2]*pow(t, 3) + 5*coef2[3]*pow(t, 4);
+        //Accelerazioni di giunto desiderate
+        dotdot_qdt[0] = 6*coef1[1]*t + 12*coef1[2]*pow(t, 2) + 20*coef1[3]*pow(t, 3);
+        dotdot_qdt[1] = 6*coef2[1]*t + 12*coef2[2]*pow(t, 2) + 20*coef2[3]*pow(t, 3);
+    }
+    else{
+        qdt[0] = qd.q1d;
+        qdt[1] = qd.q2d;
+        dot_qdt[0] = dot_qdt[1] = 0;
+        dotdot_qdt[0] = dotdot_qdt[1] = 0;
+    }
 
+    return;
 }
 
 void generate_tau(float tau[2], state robot){
     static int step;
     static float coefficients1[4];
     static float coefficients2[4];
-    float qd_t[2];  //variabili di giunto desiderate all'istante t
-    float t;        //variabile per l'istante temporale
+    float qd_t[2];          //variabili di giunto desiderate all'istante t
+    float dot_qdt[2];       //velocità di giunto desiderate all'istante t
+    float dotdot_qdt[2];    //accelerazioni di giunto desiderate all'istante t
+    float t;                //variabile per l'istante temporale
+
     get_desired_joint(&qd);
+
     if(qd.flag == 1){
         step = 0;
-        update_coefficients(coefficients1, coefficients2, qd, robot);
+        update_coefficients(coefficients1, coefficients2, robot);
     }
+
     t = step*DT*0.001;
-    compute_qdt(qd_t, coefficients1, coefficients2, t);
+    compute_qdt(qd_t, dot_qdt, dotdot_qdt, coefficients1, coefficients2, t);
+
+    tau[0] = 0;
+    tau[1] = 0;
 
     step++;
+    return;
 }
 
-//La funzione genera la traiettoria da inseguire e restituisce in res:
-/*
-    res[0] => variabile di giunto desiderata
-    res[1] => velocità di giunto desiderata
-    res[2] => accelerazione di giunto desiderata
-*/
-void generate_trajectory(float t, int joint, int direction, float res[3]){
-
-    static float T = 1;
-    static float old_q1 = 0;
-    static float old_q2 = 0;
-
-    float qi, qf;
-    float a0, a3, a4, a5;
-
-    if(joint == 0){
-        qi = old_q1;
-        qf = direction ? (old_q1 + M_PI/9) : (old_q1 - M_PI/9);
-    } else {
-        qi = old_q2;
-        qf = direction ? (old_q2 + M_PI/9) : (old_q2 - M_PI/9);
-    }
-
-    a0 = qi;
-    a3 =  10*(qf - qi)/pow(T, 3);
-    a4 = -15*(qf - qi)/pow(T, 4);
-    a5 =   6*(qf - qi)/pow(T, 5);
-
-    if(joint == 0)
-        old_q1 = qf;
-    else 
-        old_q2 = qf;
-
-    if(t < T){
-        res[0] = a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
-        res[1] = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
-        res[2] = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
-    }
-    else{
-        res[0] = qf;
-        res[1] = res[2] = 0;
-    }
-    
-/*
-    if(joint == 0){
-        dq1 = qf;
-        if(t < T){
-            tq1 = a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
-            dtq1 = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
-            ddtq1 = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
-        }
-        else{
-            tq1 = qf;
-            dtq1 = ddtq1 = 0;
-        }
-        res[0] = tq1;
-        res[1] = dtq1;
-        res[2] = ddtq1;
-        tq2 = dq2;
-
-    }else{
-        dq2 = qf;
-    if(joint == 0)
-        dq1 = qf;
-    else 
-        dq2 = qf;
-
-    if(t < T){
-        res[0] = a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
-        res[1] = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
-        res[2] = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
-    }
-    else{
-        res[0] = qf;
-        res[1] = res[2] = 0;
-    }
-                tq2 =  a0 + a3*pow(t, 3) + a4*pow(t, 4) + a5*pow(t, 5);
-            dtq2 = 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4);
-            ddtq2 = 6*a3*t + 12*a4*pow(t, 2) + 20*a5*pow(t, 3);
-        }
-        else{
-            tq2 = qf;
-            dtq2 = ddtq2 = 0;
-        }
-        res[0] = tq2;
-        res[1] = dtq2;
-        res[2] = ddtq2;
-        tq1 = dq1;
-    }
-*/
-
-}
 
 void* dynamics(void* arg){
 
@@ -234,7 +188,7 @@ void* dynamics(void* arg){
                 update_G2(G, robot);
             }
 
-            generate_tau(tau);
+            generate_tau(tau, robot);
             matrix_inverse(M, M_inv);
             
             //qdotdot_ind = M_inv*(tau-G-C*qdot_ind1);    //accelerazione attuale variabili indipendenti 
