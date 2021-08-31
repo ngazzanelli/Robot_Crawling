@@ -166,23 +166,25 @@ void init_com_inter()
     set_com_variable(0);
 }
 
+float value; //Dice qual è il valore del parametro attualmente selezionato
 void key_manager(int *exec)
 {
     int p;          //Serve per gestire il cambio di parametro del qlearning
-    float value;    //Dice qual è il valore del parametro attualmente selezionato
     float step;     //Dice di quanto incrementare/decrementare value
     char cm;
-    cm=get_scancode();
+
+
+    cm = get_scancode();
     switch(cm){
 
         case KEY_R:
-            printf("hai premuto il tasto R\n");
+            printf("INTERFACE: hai premuto il tasto R\n");
             set_com_variable(0);
             //TODO: gestire il reset dei vari task
             break;
 
         case KEY_S:
-            printf("hai premuto il tasto S\n");
+            printf("INTERFACE: hai premuto il tasto S\n");
             if(get_reset()){
                 init_state();
                 //init_graphics();
@@ -192,7 +194,7 @@ void key_manager(int *exec)
             break;
 
         case KEY_P:
-            printf("hai premuto il tasto P\n");
+            printf("INTERFACE: hai premuto il tasto P\n");
             if(get_play())
                 set_com_variable(2);
             else if(get_pause())
@@ -200,13 +202,14 @@ void key_manager(int *exec)
             break;
 
         case KEY_E:
-            printf("hai premuto il tasto E\n");
+            printf("INTERFACE: hai premuto il tasto E\n");
             set_com_variable(3);  
             *exec=0;
             break;
 
         case KEY_UP:
             if(com_state == 0){
+                printf("INTERFACE: hai premuto il tasto UP\n");
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected(); //si salva in locale per problemi di mutua esclusione
                 // Passiamo quindi al successivo parametro
@@ -245,6 +248,7 @@ void key_manager(int *exec)
 
         case KEY_DOWN:
             if(com_state == 0){
+                printf("INTERFACE: hai premuto il tasto DOWN\n");
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected();
                 // Passiamo quindi al successivo parametro
@@ -282,13 +286,17 @@ void key_manager(int *exec)
             break;
 
         case KEY_RIGHT:
-            if(com_state == 0)
+            if(com_state == 0){
+                printf("INTERFACE: hai premuto il tasto RIGHT\n");
                 value += step;
+            }
             break;
 
         case KEY_LEFT:
-            if(com_state == 0)
+            if(com_state == 0){
+                printf("INTERFACE: hai premuto il tasto LEFT\n");
                 value -= step;
+            }
             break;
 
         default: break;
@@ -297,11 +305,12 @@ void key_manager(int *exec)
 
 void* interface(void * arg)
 {
-    printf("interpreter task started\n");
+    printf("INTERPRETER: task started\n");
     int i,  exec = 1;
     i = pt_get_index(arg);
     pt_set_activation(i);
-    
+    set_com_variable(0);
+    value = ql_get_learning_rate();
 
     while(exec)
     {
@@ -313,7 +322,7 @@ void* interface(void * arg)
             printf("ho finito \n");
         }
     }
-    printf("interpreter task end\n");
+    printf("INTERPRETER: task end\n");
     return NULL;
 }
 

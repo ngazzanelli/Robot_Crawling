@@ -40,6 +40,7 @@ extern void* interface(void * arg);
 extern void init_state();
 extern void get_state(state* rob);
 extern void* dynamics(void* arg);
+extern void* update_graphic(void* arg);
 
 //makecol(255,255,255)
 
@@ -117,7 +118,7 @@ void update_gr(BITMAP* Graph,int G_n,int points[num_graph][X_point*scale],int* p
     
 
 }
-void *update_graphic(void *arg)
+void *update_graphic_DC(void *arg)
 {
     
     int ti,exec=1,ex_stat,j;
@@ -179,6 +180,7 @@ void *update_graphic(void *arg)
  
     return NULL;
 }
+/*
 int main()
 {
     int i,ris;
@@ -224,11 +226,11 @@ int main()
     do{
         scanf("%d",&a);
     }while(a==0); 
-    printf("sono passato \n");*/
+    printf("sono passato \n");
     allegro_exit();
     return 0;
 }
-/*
+
 
 
 }*/

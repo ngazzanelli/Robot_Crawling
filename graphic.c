@@ -96,11 +96,12 @@ void   init_s()
     int i,j;
     //inizializzazione finestra allegro 
     allegro_init();
+    install_keyboard();
     set_color_depth(32);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_win*scale,H_win*scale,0,0);
     clear_to_color(screen,BKG);
     // parte di inizializzazione pre-extern variable
-    joint_var.q1=0;
+    /*joint_var.q1=0;
     joint_var.q2=0;
     joint_var.q3=0;
     joint_var.q4=3.14/2;
@@ -115,7 +116,7 @@ void   init_s()
             //printf("%d ",4*i+j);
         }
         //printf("\n");
-    }
+    }*/
     
 
 
@@ -352,6 +353,7 @@ void L2_kin(int position[],state s)
 
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
+    //printf("SONO DENTRO UPDATE_CR\n");
     int figure[12];
     clear_to_color(BM_CR,makecol(255,255,255));
     line(BM_CR,0,(BM_CR->h-h_floor*scale),(BM_CR->w),(BM_CR->h-h_floor*scale),1);
@@ -417,10 +419,11 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
 }
 
 
-/*
+
 void *update_graphic(void *arg)
 {
    
+    printf("GRAPHIC: task started\n");    
     int ti;
     state rob;
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
@@ -434,11 +437,13 @@ void *update_graphic(void *arg)
 
     ti = pt_get_index(arg);
     pt_set_activation(ti);
+
     while (!get_stop())
     {
+
         if(get_play())
         {
-
+            //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);
             update_CR(CR,rob);
 
@@ -448,11 +453,12 @@ void *update_graphic(void *arg)
         pt_wait_for_period(ti);
         
     } 
-}*/
+    printf("GRAPHIC: task finished\n");
+}
 
 // main esistente solo per il testing 
 
-int main()
+/*int main()
 {
     int a;
     float prova;
@@ -494,6 +500,6 @@ int main()
     return(0);
 
 
-}
+}*/
 
 

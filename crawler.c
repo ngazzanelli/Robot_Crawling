@@ -54,6 +54,7 @@ static target qd;
 //Funzioni dall'interprete
 extern int get_stop();
 extern int get_pause();
+extern int get_play();
 //Funzioni dal modello
 extern void get_state(state* s);
 
@@ -106,7 +107,7 @@ int get_reward(int s, int snew, state robot){
 
     int r;
 
-    r = (int)(robot.dth3 * RSCALE - robot.energy);
+    r = (int)(10*robot.dth3 * RSCALE - robot.energy);
     if (snew == s) 
         r += RHIT;        // hit the limit angle
 
@@ -144,9 +145,9 @@ int next_desired_state(int a){
 // Learning loop 
 void* qlearning(void* arg){
 
-    printf("qlearning task started\n");
+    printf("QLEARN: task started\n");
     int i;      // thread index
-    int pause;  // Serve per saltare entrambe le sezioni in 
+    int play;  // Serve per saltare entrambe le sezioni in 
                 // cui è diviso il corpo del while per 
                 // evitare di chiamare due volte get_pause()
     int s, a, r, snew;
@@ -156,17 +157,21 @@ void* qlearning(void* arg){
 
     i = pt_get_index(arg);
     pt_set_activation(i);
-
-
+    ql_init(NSTATES, NACTIONS);
+    init_global_variables();
+    printf("QLEARN: inizio ciclo while\n");
     while (!get_stop()){
 
         //Controllo se l'applicazione è in pausa
-        pause = get_pause();
-        if(!pause){
+        play = get_play();
+        if(play){
+            //printf("QLEARN: sono dentro all'if\n");
             step++;
 
             get_state(&robot);
+            //printf("Ottenuto stato attuale variabili di giunto del robot\n");
             s = angles2state(robot.q4, robot.q5);
+            printf("Quantizzato lo stato: s = %d\n", s);
             a = ql_egreedy_policy(s);
             //printf("Ottenuta l'azione\n");
             snew = next_desired_state(a);   //Questa funzione aggiorna 
@@ -176,43 +181,51 @@ void* qlearning(void* arg){
             pt_deadline_miss(i);
             pt_wait_for_period(i);
 
-        if(!pause){  
+        if(play){  
             r = get_reward(s, snew, robot);
-            //printf("Ottenuto il reward\n");
+            printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
             //printf("Aggioranta matrice Q\n");
             //err +=  (newerr - err)/step;
+            if (step % 100 == 0)
+                ql_print_Qmatrix();
             if (step % 1000 == 0)
                 ql_reduce_exploration();
+                
         }
     }
-    printf("qlearning task finshed\n");
+    printf("QLEARN: task finshed\n");
     return NULL;
 }
-
-//extern void* interpreter(void* arg);
-//extern void* graphics(void* arg);
 
 //Funzioni dal model.c
 extern void init_state();
 extern void* dynamics(void*arg);
+extern void* interface(void* arg);
+extern void* update_graphic(void* arg);
+extern void* update_graphic_DC(void* arg);
 
-/*int main(){
+
+
+int main(){
        
-    int i;
+    int i,ris;
 
-    srand(time(NULL));
-    init_global_variables();
     init_state();
-    ql_init(NSTATES, NACTIONS);  //49 states, 4 actions
-
-    pt_task_create(dynamics, 1, PER, DL, PRI);
-    //pt_task_create(graphics, 2, PER, DL, PRI);
-    //pt_task_create(interpreter, 3, PER, DL, PRI);
-    pt_task_create(qlearning, 4, PER, DL, PRI);
-
+    printf("MAIN: creo il task di interfaccia::\n");
+    ris = pt_task_create( interface, 1, PER, DL, PRI);
+    //printf("con il risultato %d\n",ris);
+    printf("MAIN: creo il task di gestione della grafica\n");
+    ris = pt_task_create( update_graphic, 2, PER, DL, PRI);
+    //printf("con il risultato %d\n",ris);
+    printf("MAIN: creo il task di qlearning\n");
+    ris = pt_task_create( qlearning, 3, 100, DL, PRI);
+    //printf("con il risultato %d\n",ris);
+    printf("MAIN: creo il task per la risoluzione della dinamica\n");
+    ris = pt_task_create( dynamics, 4, 0.1, DL, PRI);
+    //printf("con il risultato %d\n",ris);
     for(i = 1; i <= 4; i++){
-		  pt_wait_for_end(i);
-		  printf("fine ciclo %d\n", i);
+          pt_wait_for_end(i);
+          printf("MAIN: fine ciclo %d\n", i);
     }
-}*/
+}

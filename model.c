@@ -6,7 +6,7 @@
 
 
 #define DT  1    //Intervallo di integrazione della Dinamica        [ms]
-#define T   1   // Intervallo di generazione della traiettoria      [s]
+#define T   0.1   // Intervallo di generazione della traiettoria      [s]
 
 /******************** COSTANTI DEL CONTROLLO **********************/
 #define KC  10 
@@ -83,6 +83,8 @@ void set_state(state s){
 //Funzione dall'interprete
 extern int get_stop();
 extern int get_pause();
+extern int get_play();
+extern int get_reset();
 
 void update_coefficients(float coef1[4], float coef2[4], state robot){
 
@@ -153,12 +155,22 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
 
     get_desired_joint(&qd);
 
+    /*******DEBUG****
+    if(step == 0){
+        qd.flag = 1;
+        qd.q1d  = M_PI/5;
+        qd.q2d = 0;
+    }
+    else
+        qd.flag = 0;
+    ****************/
+
     if(qd.flag == 1){
         step = 0;
         update_coefficients(coefficients1, coefficients2, robot);
     }
 
-    t = step*DT*0.001;
+    t = step*DT*0.0001;
     q_t[0] = robot.q4;
     q_t[1] = robot.q5;
     dot_q_t[0] = dot_robot.dq4;
@@ -187,7 +199,7 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
     vector_sum(e, ris1, ris2, 2);
     vector_sum(G, ris2, ris3, 2);
     matvec_mul(dot_qr_t, ris5, 2, 2, C);
-    vector_sum(ris5, ris4, ris6, 2);
+    vector_sum(ris5, ris3, ris6, 2);
     matvec_mul(dotdot_qr_t, ris7, 2, 2, M);
     vector_sum(ris7, ris6, tau, 2);
 
@@ -198,11 +210,11 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
 
 void* dynamics(void* arg){
 
-    printf("dynamic task started\n");
+    printf("DYNAMIC: task started\n");
     init_state();
     int i;            // thread index
     float y_ee;
-    float dt = 0.001; // 1 ms
+    float dt = 0.0001; // 1 ms
     state robot;
     get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
@@ -225,19 +237,19 @@ void* dynamics(void* arg){
     while(!get_stop()){
         //controllo se l'applicazione è in pausa o in reset
         if(get_play()){
-            printf("il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
-            
+            printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
+
             update_kyn(Tsee, robot);
             y_ee = Tsee[1][3];
             printf("Y = %f\n", y_ee);
             if(y_ee > 0){
-                printf("Sono dentro y > 0\n");
+                //printf("Sono dentro y > 0\n");
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
                 //vector_set_zero(G, 2);
             }else{
-                printf("Sono dentro y <= 0\n");
+                //printf("Sono dentro y <= 0\n");
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
                 update_G2(G, robot);
@@ -245,6 +257,8 @@ void* dynamics(void* arg){
             }
 
             generate_tau(tau, robot, M, C, G);
+            //printf("G = [%f; %f]\n", G[0], G[1]);
+            //printf("TAU = [%f; %f]\n", tau[0], tau[1]);
             matrix_inverse(M, M_inv);
             
             //qdotdot_ind = M_inv*(tau-G-C*qdot_ind1);    //accelerazione attuale variabili indipendenti 
@@ -281,12 +295,15 @@ void* dynamics(void* arg){
 
 
             //Aggiorniamo lo stato locale utilizzato soltanto per l'integrazione
+            robot.dt3 = q_dip2[0] - robot.q1;
             robot.q1 = q_dip2[0];
             robot.q2 = q_dip2[1];
             robot.q3 = q_dip2[2];
             robot.q4 = q_ind2[0];
             robot.q5 = q_ind2[1];
             robot.q6 = q_dip2[3];
+            robot.energy++;
+
 
             dot_robot.dq1 = qdot_dip2[0]; 
             dot_robot.dq2 = qdot_dip2[1];
@@ -298,11 +315,15 @@ void* dynamics(void* arg){
             //Aggiorniamo lo stato globale condiviso con gli altri task
             set_state(robot);
         }
-        
+
+        //Riprendiamo il valore dello stato globale se siamo in reset
+        if(get_reset())
+            get_state(&robot);
+
         pt_deadline_miss(i);
         pt_wait_for_period(i);
     }
 
-    printf("dynamic task finished\n");
+    printf("DYNAMIC: task finished\n");
     return NULL;
 }
