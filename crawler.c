@@ -30,7 +30,7 @@ static float dt1, dt2;
 static int n2;          // # of theta2 quantiations 
 
 static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
-
+static pthread_mutex_t mux_reward = PTHREAD_MUTEX_INITIALIZER;
 // Struttura per lo stato reale del robot
 typedef struct {
     float q1;
@@ -49,7 +49,12 @@ typedef struct {
     float t2d;
     int flag;
 } target;
+typedef struct {
+    int reward;
+    int flag;
+} reward_for_plot;
 static target qd;
+static reward_for_plot rw;
 
 //Funzioni dall'interprete
 extern int get_stop();
@@ -90,7 +95,19 @@ void get_desired_joint(target* t){
   qd.flag = 0;
   pthread_mutex_unlock(&mux);
 }
-
+void get_reward_for_plot(reward_for_plot* t){
+  pthread_mutex_lock(&mux_reward);
+  t->reward = rw.reward;  
+  t->flag = rw.flag;
+  rw.flag = 0;
+  pthread_mutex_unlock(&mux_reward);
+}
+void set_reward_for_plot(int r){
+  pthread_mutex_lock(&mux_reward);
+  rw.reward = r;  
+  rw.flag = 1;
+  pthread_mutex_unlock(&mux_reward);
+}
 
 // Angles to state (non serve la matrice T di transizione dello stato)
 int angles2state(float t1, float t2){
@@ -183,6 +200,7 @@ void* qlearning(void* arg){
 
         if(play){  
             r = get_reward(s, snew, robot);
+            set_reward_for_plot(r);
             printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
             ql_copy_Q();

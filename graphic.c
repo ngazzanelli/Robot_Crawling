@@ -74,9 +74,12 @@
 extern int get_stop();
 extern int get_pause();
 extern int get_play();
+//Funzione per la conversione da variabili di giunto 
+//a stato quantizzato e per il calcolo della reward
+extern int angles2state(float t1, float t2);
 //funzioni per l'accesso alle variabilili globali 
 extern void get_state(state* s);
-extern void ql_get_Q(float ** dest);
+extern void ql_get_Q(float * dest);
 
 
 state joint_var;
@@ -426,7 +429,7 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti;
+    int ti,s,i=0;
     state rob;
     float Matrix_Q[49][4];
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
@@ -451,6 +454,9 @@ void *update_graphic(void *arg)
             update_CR(CR,rob);
             ql_get_Q(Matrix_Q);
             update_MQ(MQ,Matrix_Q,50);
+            /*s=angles2state(rob.q4,rob.q5);
+            update_GRP_STAT(GRP_STAT,i,0,10,-10,1);
+            */
 
         }
         
