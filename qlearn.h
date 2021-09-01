@@ -2,6 +2,8 @@
 #define QLEARN_H
 
 extern float frand(float xmin, float xmax);
+extern void ql_get_Q(float *dest);
+extern void ql_copy_Q();
 extern void ql_init(int ns, int na);
 extern void ql_set_learning_rate(float alpha);
 extern void ql_set_discount_factor(float gam);

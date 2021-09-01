@@ -40,7 +40,7 @@ typedef struct {
     float q5;
     float q6;
     float energy;   //energia spesa utile per il reward
-    float dth3;     //variazione dell'angolo della ruota per il reward  
+    float dt3;    //variazione dell'angolo della ruota per il reward  
 } state;
 
 // Struttura per lo stato desiderato del robot
@@ -107,7 +107,7 @@ int get_reward(int s, int snew, state robot){
 
     int r;
 
-    r = (int)(10*robot.dth3 * RSCALE - robot.energy);
+    r = (int)( ( (robot.dt3 > 0) ? 50 : -10) * RSCALE - 1);
     if (snew == s) 
         r += RHIT;        // hit the limit angle
 
@@ -185,13 +185,14 @@ void* qlearning(void* arg){
             r = get_reward(s, snew, robot);
             printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
+            ql_copy_Q();
             //printf("Aggioranta matrice Q\n");
             //err +=  (newerr - err)/step;
             if (step % 100 == 0)
                 ql_print_Qmatrix();
             if (step % 1000 == 0)
                 ql_reduce_exploration();
-                
+              
         }
     }
     printf("QLEARN: task finshed\n");
@@ -222,7 +223,7 @@ int main(){
     ris = pt_task_create( qlearning, 3, 100, DL, PRI);
     //printf("con il risultato %d\n",ris);
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
-    ris = pt_task_create( dynamics, 4, 0.1, DL, PRI);
+    ris = pt_task_create( dynamics, 4, 1, DL, PRI);
     //printf("con il risultato %d\n",ris);
     for(i = 1; i <= 4; i++){
           pt_wait_for_end(i);

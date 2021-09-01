@@ -170,7 +170,7 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
         update_coefficients(coefficients1, coefficients2, robot);
     }
 
-    t = step*DT*0.0001;
+    t = step*DT*0.001;
     q_t[0] = robot.q4;
     q_t[1] = robot.q5;
     dot_q_t[0] = dot_robot.dq4;
@@ -214,7 +214,7 @@ void* dynamics(void* arg){
     init_state();
     int i;            // thread index
     float y_ee;
-    float dt = 0.0001; // 1 ms
+    float dt = 0.001; // 1 ms
     state robot;
     get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
@@ -302,7 +302,7 @@ void* dynamics(void* arg){
             robot.q4 = q_ind2[0];
             robot.q5 = q_ind2[1];
             robot.q6 = q_dip2[3];
-            robot.energy++;
+            //robot.energy++;
 
 
             dot_robot.dq1 = qdot_dip2[0]; 

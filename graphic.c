@@ -76,6 +76,7 @@ extern int get_pause();
 extern int get_play();
 //funzioni per l'accesso alle variabilili globali 
 extern void get_state(state* s);
+extern void ql_get_Q(float ** dest);
 
 
 state joint_var;
@@ -387,12 +388,13 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
     {
         for(j=0;j<N_action;j++)
         {
+
             if(matrix[i*N_action+j]>0)
             {
                 val=(int)floor(matrix[i*N_action+j]/step);
                 if(val>255)
                     val=255;
-                printf("la cella %d,%d ha %d\n",i,j,val);
+                //printf("GRAPHIC:la cella %d,%d ha %d\n",i,j,val);
                 rectfill(BM_MQ,
                 scale*((W_mq)*j+X_OFF),
                 scale*(H_mq*i+Y_OFF),
@@ -405,7 +407,7 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
                 val=(int)floor(-matrix[i*N_action+j]/step);
                 if(val>255)
                     val=255;
-                printf("la cella %d,%d ha %d\n",i,j,val);
+                //printf("la cella %d,%d ha %d\n",i,j,val);
                 rectfill(BM_MQ,
                 scale*(W_mq)*j+X_OFF,
                 scale*H_mq*i+Y_OFF,
@@ -426,6 +428,7 @@ void *update_graphic(void *arg)
     printf("GRAPHIC: task started\n");    
     int ti;
     state rob;
+    float Matrix_Q[49][4];
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
     //inizializzo allegro e lo scermo 
     init_s();
@@ -446,6 +449,8 @@ void *update_graphic(void *arg)
             //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);
             update_CR(CR,rob);
+            ql_get_Q(Matrix_Q);
+            update_MQ(MQ,Matrix_Q,50);
 
         }
         
