@@ -185,13 +185,14 @@ void* qlearning(void* arg){
             r = get_reward(s, snew, robot);
             printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
+            ql_copy_Q();
             //printf("Aggioranta matrice Q\n");
             //err +=  (newerr - err)/step;
             if (step % 100 == 0)
                 ql_print_Qmatrix();
             if (step % 1000 == 0)
                 ql_reduce_exploration();
-                
+              
         }
     }
     printf("QLEARN: task finshed\n");

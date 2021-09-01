@@ -1,6 +1,7 @@
 
 #include "qlearn.h"
 #include <stdlib.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -16,7 +17,13 @@
 // QL matrices
 //static int T[MAXSTA][MAXACT];	// transition matrix	INUTILE
 //static int R[MAXSTA][MAXACT];	// reward matrix		INUTILE
-static float Q[MAXSTA][MAXACT];	// Q matric
+static float Q[MAXSTA][MAXACT];	// Q matrix
+static float Q_copy[MAXSTA][MAXACT];	// Q matrix for graphic
+										// (si usa per non accedere
+										// a troppe sezioni critiche 
+										// ogni volta che il crawler
+										// sta imparando)
+static pthread_mutex_t mux_Qmatrix = PTHREAD_MUTEX_INITIALIZER;
 
 // Global variables
 static int nsta;		// actual # of states
@@ -38,6 +45,25 @@ float range;
 	range = (xmax - xmin);
 	return (xmin + range*(float)rand()/RAND_MAX);
 }
+
+void ql_copy_Q(){
+	int s,a;
+	pthread_mutex_lock(&mux_Qmatrix);
+	for (s=0; s<nsta; s++)
+		for(a=0; a<nact; a++)
+			Q_copy[s][a] = Q[s][a];
+	pthread_mutex_unlock(&mux_Qmatrix);
+}
+
+void ql_get_Q(float *dest){//da verificare che in dest ci sia abbastanza spazio
+	int s,a;
+	pthread_mutex_lock(&mux_Qmatrix);
+	for (s=0; s<nsta; s++)
+		for(a=0; a<nact; a++)
+			dest[s*4+a] = Q_copy[s][a];
+	pthread_mutex_unlock(&mux_Qmatrix);
+}
+
 
 // Initialization
 void ql_init(int ns, int na)
@@ -64,7 +90,7 @@ int s, a;
 	decay = DECAY0;
 
 	for (s=0; s<nsta; s++)
-		for(a=0;a<nact;a++)
+		for(a=0; a<nact; a++)
 			Q[s][a] = 0;
 }
 
@@ -145,8 +171,8 @@ float ql_best_action(int s)
 int a, ba;
 float m;
 
-	m = Q[s][0];	// initialized with Q value for action 0
 	ba = 0;			// initialized best action with action 0
+	m = Q[s][0];	// initialized with Q value for action 0
 
 	for (a=1; a<nact; a++)
 		if (Q[s][a] > m){

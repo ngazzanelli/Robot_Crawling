@@ -25,7 +25,7 @@ OBJS = $(OBJ1).o $(OBJ2).o $(OBJ3).o $(OBJ4).o $(OBJ5).o $(OBJ6).o $(OBJ7).o $(O
 #---------------------------------------------
 # LIBS are the external libraries to be used
 #--------------------------------------------
-LIBS =  -lgsl -lgslcblas -pthread -lrt -lm `allegro-config --libs`
+LIBS =  -pthread -lrt -lm `allegro-config --libs`
 #---------------------------------------------
 # Dependencies
 #--------------------------------------------
