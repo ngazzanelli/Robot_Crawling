@@ -28,10 +28,9 @@
 
 //definizioni degli elementi esterni 
 
-extern void get_com_variable(int* ic);
-extern void set_com_variable(int ic);
-extern void get_FALSE_ST(float *i);
-extern void set_FALSE_ST(float *i);
+extern void get_sys_state(int* ic);
+extern void set_sys_state(int ic);
+
 extern void* wave_gener(void *arg);
 extern void* interface(void * arg);
 
@@ -122,7 +121,7 @@ void *update_graphic_DC(void *arg)
 {
     
     int ti,exec=1,ex_stat,j;
-    float FState[6];
+    //float FState[6];
     BITMAP * Graph[num_graph];
     int Graph_points[num_graph][X_point*scale];
     int Graph_first_p[num_graph];
@@ -138,7 +137,7 @@ void *update_graphic_DC(void *arg)
 
     while (exec)
     {
-        get_com_variable(&ex_stat);
+        get_sys_state(&ex_stat);
         //if(ex_stat!=0)
          //printf("la variabile di ex_stat vale %d\n",ex_stat);
         if(ex_stat==1)

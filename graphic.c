@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include "ptask.h"
 #include <string.h>
-
 #include "matrices.h"
 
 #define W_win 640 //larghezza della finestra
@@ -69,6 +68,12 @@
 #define r_wheel 0.015
 #define r_joint 0.0075
 
+//struttura per il passaggio della reward
+typedef struct {
+    int reward;
+    int flag;
+} reward_for_plot;
+
 
 //Funzioni dall'interprete
 extern int get_stop();
@@ -77,6 +82,8 @@ extern int get_play();
 //Funzione per la conversione da variabili di giunto 
 //a stato quantizzato e per il calcolo della reward
 extern int angles2state(float t1, float t2);
+
+extern void get_reward_for_plot(reward_for_plot* t);
 //funzioni per l'accesso alle variabilili globali 
 extern void get_state(state* s);
 extern void ql_get_Q(float * dest);
@@ -176,9 +183,15 @@ void update_STAT(BITMAP* BM_SG,int new_state)
 {
     static int Sl_count=0;
     static int Stat_lp[N_ST_SV];
-    int i,j,k,col;
+    int i,j,k,col,ind;
     Stat_lp[Sl_count]=new_state;
+    printf("il nuovo stato vale %d\n",new_state);
     Sl_count=(Sl_count+1)%N_ST_SV;
+    for(k=0;k<N_ST_SV;k++)
+    {
+        ind=(k+Sl_count)%N_ST_SV;
+        printf("Lo stato %d vale %d\n",ind,Stat_lp[k]); 
+    }
     textout_ex(BM_SG, font, "State Matrix", X_Lab_S_OFF*scale, Y_Lab_S_OFF*scale, makecol(0,0,0), makecol(255,255,255));
     for(i=0;i<N_state_x_ang;i++)
     {
@@ -191,10 +204,10 @@ void update_STAT(BITMAP* BM_SG,int new_state)
             makecol(0,0,0));
             for(k=0;k<N_ST_SV;k++)
             {
-                //printf("Lo stato %d vale %d mentre lo stato attuale vale %d\n",k,Stat_lp[k],i*N_state_x_ang+j);
-                if(Stat_lp[k]==(i*N_state_x_ang+j))
+                ind=(k+Sl_count-1)%N_ST_SV;
+                if(Stat_lp[ind]==(i*N_state_x_ang+j))
                 {
-                    col=245*k/N_ST_SV;
+                    col=245*ind/N_ST_SV;
                     circlefill(BM_SG,
                     (X_Mat_S_OFF+i*L_S_rect+C_S_rect)*scale,
                     (Y_Mat_S_OFF+j*L_S_rect+C_S_rect)*scale,
@@ -431,6 +444,7 @@ void *update_graphic(void *arg)
     printf("GRAPHIC: task started\n");    
     int ti,s,i=0;
     state rob;
+    reward_for_plot rew;
     float Matrix_Q[49][4];
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
     //inizializzo allegro e lo scermo 
@@ -454,9 +468,10 @@ void *update_graphic(void *arg)
             update_CR(CR,rob);
             ql_get_Q(Matrix_Q);
             update_MQ(MQ,Matrix_Q,50);
-            /*s=angles2state(rob.q4,rob.q5);
-            update_GRP_STAT(GRP_STAT,i,0,10,-10,1);
-            */
+            s = angles2state(rob.q4,rob.q5);
+            get_reward_for_plot(&rew);
+            update_GRP_STAT(GRP_STAT,s,rew.reward,10,-10,rew.flag);
+            
 
         }
         

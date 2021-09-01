@@ -49,10 +49,12 @@ typedef struct {
     float t2d;
     int flag;
 } target;
+
 typedef struct {
     int reward;
     int flag;
 } reward_for_plot;
+
 static target qd;
 static reward_for_plot rw;
 
@@ -116,7 +118,7 @@ int angles2state(float t1, float t2){
 
     i = (t1 - t1min)/dt1;
     j = (t2 - t2min)/dt2;
-    //printf("i=%d, j=%d, n2=%d, ret = %d\n", i, j, n2, i*n2+j);
+    printf("i=%d, j=%d, n2=%d, ret = %d\n", i, j, n2, i*n2+j);
     return i*n2 + j;
 }
 
@@ -188,7 +190,7 @@ void* qlearning(void* arg){
             get_state(&robot);
             //printf("Ottenuto stato attuale variabili di giunto del robot\n");
             s = angles2state(robot.q4, robot.q5);
-            printf("Quantizzato lo stato: s = %d\n", s);
+            //printf("Quantizzato lo stato: s = %d\n", s);
             a = ql_egreedy_policy(s);
             //printf("Ottenuta l'azione\n");
             snew = next_desired_state(a);   //Questa funzione aggiorna 
@@ -201,7 +203,7 @@ void* qlearning(void* arg){
         if(play){  
             r = get_reward(s, snew, robot);
             set_reward_for_plot(r);
-            printf("Ottenuto il reward r = %d\n", r);
+            //printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
             ql_copy_Q();
             //printf("Aggioranta matrice Q\n");

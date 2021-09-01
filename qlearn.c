@@ -149,7 +149,7 @@ void ql_reduce_exploration()
 {
 	eps_norm = decay*eps_norm;
 	epsilon = eps_fin + eps_norm*(eps_ini - eps_fin);
-	printf("Ho ridotto epsilon = %f\n", epsilon);
+	//printf("Ho ridotto epsilon = %f\n", epsilon);
 
 }
 
