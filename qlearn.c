@@ -191,8 +191,8 @@ float x;
 
 	ba = ql_best_action(s);
 	ra = rand()%nact;
-	printf("l'azione casuale è %d\n", ra);
-	printf("epsilon = %f\n", epsilon);
+	//printf("L'azione casuale è %d\n", ra);
+	//printf("Epsilon = %f\n", epsilon);
 	x = frand(0, 1);
 	if (x < epsilon) return ra;
 	else return ba;

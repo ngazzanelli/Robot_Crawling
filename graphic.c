@@ -185,12 +185,12 @@ void update_STAT(BITMAP* BM_SG,int new_state)
     static int Stat_lp[N_ST_SV];
     int i,j,k,col,ind;
     Stat_lp[Sl_count]=new_state;
-    printf("il nuovo stato vale %d\n",new_state);
+    printf("GRAPHIC: il nuovo stato vale %d\n",new_state);
     Sl_count=(Sl_count+1)%N_ST_SV;
     for(k=0;k<N_ST_SV;k++)
     {
         ind=(k+Sl_count)%N_ST_SV;
-        printf("Lo stato %d vale %d\n",ind,Stat_lp[k]); 
+        printf("GRAPHIC: Lo stato %d vale %d\n",ind,Stat_lp[k]); 
     }
     textout_ex(BM_SG, font, "State Matrix", X_Lab_S_OFF*scale, Y_Lab_S_OFF*scale, makecol(0,0,0), makecol(255,255,255));
     for(i=0;i<N_state_x_ang;i++)
@@ -445,7 +445,7 @@ void *update_graphic(void *arg)
     int ti,s,i=0;
     state rob;
     reward_for_plot rew;
-    float Matrix_Q[49][4];
+    float Matrix_Q[49*4];
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
     //inizializzo allegro e lo scermo 
     init_s();
