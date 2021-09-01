@@ -88,6 +88,7 @@ int s, a;
 	eps_ini = EPSINI;
 	eps_fin = EPSFIN;
 	decay = DECAY0;
+	epsilon = EPSINI;
 
 	for (s=0; s<nsta; s++)
 		for(a=0; a<nact; a++)
@@ -148,7 +149,7 @@ void ql_reduce_exploration()
 {
 	eps_norm = decay*eps_norm;
 	epsilon = eps_fin + eps_norm*(eps_ini - eps_fin);
-	//printf("Ho ridotto epsilon = %f\n", epsilon);
+	printf("Ho ridotto epsilon = %f\n", epsilon);
 
 }
 
@@ -190,6 +191,8 @@ float x;
 
 	ba = ql_best_action(s);
 	ra = rand()%nact;
+	printf("l'azione casuale è %d\n", ra);
+	printf("epsilon = %f\n", epsilon);
 	x = frand(0, 1);
 	if (x < epsilon) return ra;
 	else return ba;

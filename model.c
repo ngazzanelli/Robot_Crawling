@@ -237,11 +237,11 @@ void* dynamics(void* arg){
     while(!get_stop()){
         //controllo se l'applicazione è in pausa o in reset
         if(get_play()){
-            printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
+            //printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
 
             update_kyn(Tsee, robot);
             y_ee = Tsee[1][3];
-            printf("Y = %f\n", y_ee);
+            //printf("Y = %f\n", y_ee);
             if(y_ee > 0){
                 //printf("Sono dentro y > 0\n");
                 update_M1(M, robot);
