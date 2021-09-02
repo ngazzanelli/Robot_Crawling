@@ -51,12 +51,13 @@ typedef struct {
 } target;
 
 typedef struct {
+    int state;
     int reward;
     int flag;
-} reward_for_plot;
+} rs_for_plot;
 
 static target qd;
-static reward_for_plot rw;
+static rs_for_plot rw;
 
 //Funzioni dall'interprete
 extern int get_stop();
@@ -97,15 +98,17 @@ void get_desired_joint(target* t){
   qd.flag = 0;
   pthread_mutex_unlock(&mux);
 }
-void get_reward_for_plot(reward_for_plot* t){
+void get_rs_for_plot(rs_for_plot* t){
   pthread_mutex_lock(&mux_reward);
+  t->state = rw.state;
   t->reward = rw.reward;  
   t->flag = rw.flag;
   rw.flag = 0;
   pthread_mutex_unlock(&mux_reward);
 }
-void set_reward_for_plot(int r){
+void set_rs_for_plot(int r,int s){
   pthread_mutex_lock(&mux_reward);
+  rw.state = s;
   rw.reward = r;  
   rw.flag = 1;
   pthread_mutex_unlock(&mux_reward);
@@ -169,7 +172,7 @@ void* qlearning(void* arg){
     int play;  // Serve per saltare entrambe le sezioni in 
                 // cui è diviso il corpo del while per 
                 // evitare di chiamare due volte get_pause()
-    int s, a, r, snew;
+    int s, a, r=0, snew;
     long step = 0;
     float newerr, err = 0;
     state robot;
@@ -190,6 +193,7 @@ void* qlearning(void* arg){
             get_state(&robot);
             //printf("Ottenuto stato attuale variabili di giunto del robot\n");
             s = angles2state(robot.q4, robot.q5);
+            set_rs_for_plot(r,s);
             //printf("Quantizzato lo stato: s = %d\n", s);
             a = ql_egreedy_policy(s);
             //printf("Ottenuta l'azione\n");
@@ -202,7 +206,6 @@ void* qlearning(void* arg){
 
         if(play){  
             r = get_reward(s, snew, robot);
-            set_reward_for_plot(r);
             //printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
             ql_copy_Q();
