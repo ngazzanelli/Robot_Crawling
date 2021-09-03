@@ -20,7 +20,7 @@ typedef struct {
     int flag;
 } target;
 static target qd;
-
+static int model_dl;
 
 //Funzione dal crawler per l'aggiornamento dello stato desiderato
 extern void get_desired_joint(target* t);
@@ -32,6 +32,23 @@ static dot_state dot_robot;
 
 //Semaforo usato per accedere allo stato reale "robot"
 static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
+//semaforo usato per accedre alle dl
+static pthread_mutex_t mux_model_dl = PTHREAD_MUTEX_INITIALIZER;
+
+void inc_model_dl()
+{
+    pthread_mutex_lock(&mux_model_dl);
+    model_dl++;
+    pthread_mutex_unlock(&mux_model_dl);
+}
+
+//funzione che ottiene il valore della deadline miss
+void get_model_dl(int * dl_miss)
+{
+    pthread_mutex_lock(&mux_model_dl);
+    * dl_miss = model_dl;
+    pthread_mutex_unlock(&mux_model_dl);
+}
 
 void init_state(){
 
@@ -320,7 +337,8 @@ void* dynamics(void* arg){
         if(get_reset())
             get_state(&robot);
 
-        pt_deadline_miss(i);
+        if(pt_deadline_miss(i))
+            inc_model_dl();
         pt_wait_for_period(i);
     }
 

@@ -16,6 +16,7 @@
 #define STEP_DECAY   0.2
 #define STEP_EPS  0.3
 
+static int interface_dl;
 static int parameter_selected;  //Dice qual è il parametro attualmente selezionato
 //Possibili valori di parameter_selected:
 //  0 -> alpha
@@ -24,7 +25,7 @@ static int parameter_selected;  //Dice qual è il parametro attualmente selezion
 //  3 -> epsilon iniziale
 //  4 -> epsilon finale
 static pthread_mutex_t mux_parameter_selected = PTHREAD_MUTEX_INITIALIZER;
-
+static pthread_mutex_t mux_int_dl = PTHREAD_MUTEX_INITIALIZER;
 void inc_parameter_selected(){
   pthread_mutex_lock(&mux_parameter_selected);
   parameter_selected = (parameter_selected+1)%NPARAM;
@@ -45,6 +46,25 @@ int get_parameter_selected(){
 
 static int sys_state;
 static pthread_mutex_t mux_sys_state = PTHREAD_MUTEX_INITIALIZER;
+
+
+//funzione che incrementa la variabile delle deadline miss
+//l'ho fatta così per non modificare la funzione di pthask
+void inc_interface_dl()
+{
+    pthread_mutex_lock(&mux_int_dl);
+    interface_dl++;
+    pthread_mutex_unlock(&mux_int_dl);
+}
+
+//funzione che ottiene il valore della deadline miss
+void get_interface_dl(int * dl_miss)
+{
+    pthread_mutex_lock(&mux_int_dl);
+    * dl_miss = interface_dl;
+    pthread_mutex_unlock(&mux_int_dl);
+}
+
 // Variabile globale  che controlla il flusso delle operazioni:
    //case 0: sistema appena acceso, unico modo per settare
    //   le variabili del qlearning
@@ -287,7 +307,8 @@ void* interface(void * arg)
     while(exec)
     {
         key_manager(&exec);
-        pt_deadline_miss(i);
+        if(pt_deadline_miss(i))
+            inc_interface_dl();
         pt_wait_for_period(i);
         if(exec==0)
         {

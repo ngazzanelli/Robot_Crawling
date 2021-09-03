@@ -75,6 +75,8 @@ typedef struct {
     int flag;
 } rs_for_plot;
 
+static int graphic_dl;
+
 
 //Funzioni dall'interprete
 extern int get_stop();
@@ -89,6 +91,11 @@ extern void get_rs_for_plot(rs_for_plot* t);
 extern void get_state(state* s);
 extern void ql_get_Q(float * dest);
 
+//funzioni per gestire l'accesso al contatore delle dl di 
+//altri task
+extern void get_interface_dl(int * dl_miss);
+extern void get_crawler_dl(int * dl_miss);
+extern void get_model_dl(int * dl_miss);
 
 state joint_var;
 static float MQ_[N_state][N_action];
@@ -142,7 +149,10 @@ void update_data(BITMAP* BM_TXT,
                 float eps,
                 float decay,
                 float dis,
-                int epoch )
+                int epoch,
+                int dl_mod,
+                int dl_cra,
+                int dl_int )
 {
     char str[25];
     clear_to_color(BM_TXT,makecol(255,255,255));
@@ -159,22 +169,22 @@ void update_data(BITMAP* BM_TXT,
     sprintf(str,">Distance:%.4f",dis);
     textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+7*FB)*scale, makecol(0,0,0), makecol(255,255,255));
     sprintf(str,">Epoch:%d",epoch);
-    textout_ex(BM_TXT, font, str, X_TEXT_data*scale,  (Y_TEXT_data+8*FB), makecol(0,0,0), makecol(255,255,255));
-    /*
-    sprintf(str,">Deadline task1:%d",dl1);
-        textout_ex(P_data, font, str, X_TEXT_data*scale,  (Y_TEXT_data+9*FB), makecol(
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale,  (Y_TEXT_data+8*FB)*scale, makecol(0,0,0), makecol(255,255,255));
+
+    sprintf(str,">Deadline Crawler:%d",dl_cra);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale,  (Y_TEXT_data+9*FB)*scale, makecol(
     0,0,0), makecol(255,255,255));
-    sprintf(str,">Deadline task2:%d",dl2);
-        textout_ex(P_data, font, str, X_TEXT_data*scale,  (Y_TEXT_data+10*FB), makecol(
+    sprintf(str,">Deadline Model:%d",dl_mod);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale,  (Y_TEXT_data+10*FB)*scale, makecol(
     0,0,0), makecol(255,255,255));
-    sprintf(str,">Deadline task1:%d",dl3);
-        textout_ex(P_data, font, str, X_TEXT_data*scale,  (Y_TEXT_data+11*FB), makecol(
+    sprintf(str,">Deadline Interpreter:%d",dl_int);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale,  (Y_TEXT_data+11*FB)*scale, makecol(
     0,0,0), makecol(255,255,255));
-    sprintf(str,">Deadline task1:%d",dl4);
-        textout_ex(P_data, font, str, X_TEXT_data*scale,  (Y_TEXT_data+12*FB), makecol(
+    sprintf(str,">Deadline Graphic:%d",graphic_dl);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale,  (Y_TEXT_data+12*FB)*scale, makecol(
     0,0,0), makecol(255,255,255));
 
-    */
+    
 
     blit(BM_TXT,screen,0,0,X2*scale,0,BM_TXT->w,BM_TXT->h);
 }
@@ -475,7 +485,7 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti,s,i=0;
+    int ti,s,i=0,int_dl,mod_dl,craw_dl;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
@@ -483,6 +493,7 @@ void *update_graphic(void *arg)
     //inizializzo allegro e lo scermo 
     init_s();
     //inizializzo le BITMAP
+
     CR=create_bitmap((X2-X1)*scale,Y1*scale);
     MQ=create_bitmap(X1*scale,Y1*scale);
     P_data=create_bitmap((W_win-X2)*scale,Y1*scale);
@@ -500,7 +511,10 @@ void *update_graphic(void *arg)
             get_state(&rob);
             update_CR(CR,rob);
             
-            //s = angles2state(rob.q4,rob.q5);
+            get_interface_dl(&int_dl);
+            get_model_dl(&mod_dl);
+            get_crawler_dl(&craw_dl);
+            update_data(P_data,0.5,0,20.2,0,rob.q1,0,mod_dl,craw_dl,int_dl);
             get_rs_for_plot(&rew_st);
             update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag);
             if(rew_st.flag==1)
@@ -510,7 +524,8 @@ void *update_graphic(void *arg)
             }
         }
         
-        pt_deadline_miss(ti);
+        if(pt_deadline_miss(ti))
+            graphic_dl++;
         pt_wait_for_period(ti);
         
     } 

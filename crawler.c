@@ -28,9 +28,11 @@ static float t1min, t2min;
 static float t1max, t2max;
 static float dt1, dt2;
 static int n2;          // # of theta2 quantiations 
+static int crawler_dl;
 
 static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_reward = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_CR_dl = PTHREAD_MUTEX_INITIALIZER;
 // Struttura per lo stato reale del robot
 typedef struct {
     float q1;
@@ -66,7 +68,22 @@ extern int get_play();
 //Funzioni dal modello
 extern void get_state(state* s);
 
+//funzione che incrementa la variabile delle deadline miss
+//l'ho fatta così per non modificare la funzione di pthask
+void inc_crawler_dl()
+{
+    pthread_mutex_lock(&mux_CR_dl);
+    crawler_dl++;
+    pthread_mutex_unlock(&mux_CR_dl);
+}
 
+//funzione che ottiene il valore delle deadline miss
+void get_crawler_dl(int * dl_miss)
+{
+    pthread_mutex_lock(&mux_CR_dl);
+    * dl_miss = crawler_dl;
+    pthread_mutex_unlock(&mux_CR_dl);
+}
 void init_global_variables(){
     t1min = TH1MIN;
     t1max = TH1MAX;
@@ -201,7 +218,8 @@ void* qlearning(void* arg){
                                             //anche le variabili di giunto desiderate "qd"
             //printf("Ottenuto il nuovo stato\n");
         }
-            pt_deadline_miss(i);
+            if(pt_deadline_miss(i))
+                inc_crawler_dl();
             pt_wait_for_period(i);
 
         if(play){  
