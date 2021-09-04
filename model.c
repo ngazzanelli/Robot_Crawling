@@ -258,15 +258,17 @@ void* dynamics(void* arg){
 
             update_kyn(Tsee, robot);
             y_ee = Tsee[1][3];
-            //printf("Y = %f\n", y_ee);
+            //robot.q2 = 0;
+           // printf("Y = %f\n", y_ee);
             if(y_ee > 0){
-                //printf("Sono dentro y > 0\n");
+                //robot.q2 = 0;
+                printf("Sono dentro y > 0 con y= %f\n",y_ee);
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
                 //vector_set_zero(G, 2);
             }else{
-                //printf("Sono dentro y <= 0\n");
+                printf("Sono dentro y < 0 con y= %f\n",y_ee);
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
                 update_G2(G, robot);
@@ -298,9 +300,14 @@ void* dynamics(void* arg){
 
             if(y_ee > 0)
                 matrix_set_zero(4, 2, S);
-            else
+            else{
+                /* TODO: aggiornare lo stato prima di calcolare S2 */
+                robot.q3 = q_dip2[2];
+                robot.q4 = q_ind2[0];
+                robot.q5 = q_ind2[1];
                 update_S2(S, robot);
-
+            }
+                    
             //qdot_dip2 = S*qdot_ind2;                    //velocità attuale variabili dipendenti
             matvec_mul(qdot_ind2, qdot_dip2, 4, 2, S);
 
@@ -316,6 +323,19 @@ void* dynamics(void* arg){
             robot.q1 = q_dip2[0];
             robot.q2 = q_dip2[1];
             robot.q3 = q_dip2[2];
+
+            /* CHECK SU ALPHA e Y */
+            if(robot.q3 < 0){
+                q_dip1[2] = 0;
+                robot.q3 = 0;
+            }
+
+            if(robot.q2 < 0){
+                q_dip1[1] = 0;
+                robot.q2 = 0;   
+            }
+            /*********************/
+
             robot.q4 = q_ind2[0];
             robot.q5 = q_ind2[1];
             robot.q6 = q_dip2[3];
@@ -331,6 +351,7 @@ void* dynamics(void* arg){
 
             //Aggiorniamo lo stato globale condiviso con gli altri task
             set_state(robot);
+            printf("STATE VAR: q = [%f; %f; %f; %f; %f; %f]\n", robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
         }
 
         //Riprendiamo il valore dello stato globale se siamo in reset
