@@ -214,7 +214,7 @@ void update_STAT(BITMAP* BM_SG,int new_state)
     for(k=0;k<Sl_count;k++)
     {
         ind=(k+Sl_begin)%N_ST_SV;
-        printf("GRAPHIC: Lo stato %d vale %d\n",ind,Stat_lp[ind]); 
+        printf("GRAPHIC: Lo stato %d vale %d\n",k,Stat_lp[ind]); 
     }
     textout_ex(BM_SG, font, "State Matrix", X_Lab_S_OFF*scale, Y_Lab_S_OFF*scale, makecol(0,0,0), makecol(255,255,255));
     for(i=0;i<N_state_x_ang;i++)
@@ -231,7 +231,7 @@ void update_STAT(BITMAP* BM_SG,int new_state)
                 ind=(k+Sl_begin)%N_ST_SV;
                 if(Stat_lp[ind]==(i*N_state_x_ang+j))
                 {
-                    col=245*ind/N_ST_SV;
+                    col=245*k/N_ST_SV;
                     circlefill(BM_SG,
                     (X_Mat_S_OFF+i*L_S_rect+C_S_rect)*scale,
                     (Y_Mat_S_OFF+j*L_S_rect+C_S_rect)*scale,

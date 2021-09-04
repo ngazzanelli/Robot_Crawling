@@ -145,6 +145,16 @@ float ql_get_expl_decay()
 }
 
 // Reduce exploration
+/*
+float  ql_reduce_exploration(flaot ep_n,float ep_i,float ep_f,float dec)	
+{
+	ep_n = dec*ep_n;
+	return eps_fin + eps_norm*(eps_ini - eps_fin);
+	//printf("Ho ridotto epsilon = %f\n", epsilon);
+
+}
+
+*/
 void ql_reduce_exploration()
 {
 	eps_norm = decay*eps_norm;
@@ -184,6 +194,22 @@ float m;
 }
 
 // Epsilon-greedy policy in a given state s
+/*
+int ql_egreedy_policy (int s,float eps)
+{
+int ra, ba;
+float x;
+
+	ba = ql_best_action(s);
+	ra = rand()%nact;
+	//printf("L'azione casuale è %d\n", ra);
+	//printf("Epsilon = %f\n", epsilon);
+	x = frand(0, 1);
+	if (x < eps) return ra;
+	else return ba;
+}
+
+*/
 int ql_egreedy_policy (int s)
 {
 int ra, ba;
@@ -199,6 +225,21 @@ float x;
 }
 
 // Update Q value 
+/*
+float ql_updateQ(int s, int a, int r, int snew,float alf,float g)
+{
+float Qtarget, TDerr;
+
+	//printf("r = %d, s = %d, a = %d, snew = %d, gamma = %f\n", r, s, a, snew, gam);
+	Qtarget = r + g*ql_maxQ(snew);
+	//printf("Qtarget = %f\n", Qtarget);
+	TDerr = Qtarget - Q[s][a];
+	//printf("TDerr = %f\n", TDerr);
+	Q[s][a] = Q[s][a] + alp*TDerr;
+	//printf("Q[%d][%d] = %f\n", s, a, Q[s][a]);
+	return fabs(TDerr);
+}
+*/
 float ql_updateQ(int s, int a, int r, int snew)
 {
 float Qtarget, TDerr;

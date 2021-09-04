@@ -260,8 +260,8 @@ int main(){
     printf("MAIN: creo il task di gestione della grafica\n");
     ris = pt_task_create( update_graphic, 2, PER, DL, PRI);
     //printf("con il risultato %d\n",ris);
-    printf("MAIN: creo il task di qlearning\n");
-    ris = pt_task_create( qlearning, 3, 100, DL, PRI);
+    //printf("MAIN: creo il task di qlearning\n");
+    //ris = pt_task_create( qlearning, 3, 100, DL, PRI);
     //printf("con il risultato %d\n",ris);
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
     ris = pt_task_create( dynamics, 4, 1, DL, PRI);
