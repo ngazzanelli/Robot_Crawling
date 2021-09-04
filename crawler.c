@@ -246,23 +246,37 @@ extern void* dynamics(void*arg);
 extern void* interface(void* arg);
 extern void* update_graphic(void* arg);
 extern void* update_graphic_DC(void* arg);
+extern void* manual_interface(void* arg);
 
 
 
 int main(){
        
-    int i,ris;
+    int i, ris, mode;
+    printf("scegliere la modalità: 0 -> controllo manuale, 1 -> qlearning\n");
+    scanf("%d", &mode);
 
     init_state();
-    printf("MAIN: creo il task di interfaccia::\n");
-    ris = pt_task_create( interface, 1, PER, DL, PRI);
-    //printf("con il risultato %d\n",ris);
+    init_global_variables();
+
+    
     printf("MAIN: creo il task di gestione della grafica\n");
     ris = pt_task_create( update_graphic, 2, PER, DL, PRI);
     //printf("con il risultato %d\n",ris);
-    //printf("MAIN: creo il task di qlearning\n");
-    //ris = pt_task_create( qlearning, 3, 100, DL, PRI);
-    //printf("con il risultato %d\n",ris);
+    
+    if(mode == 1){
+        printf("MAIN: creo il task di interfaccia::\n");
+        ris = pt_task_create( interface, 1, PER, DL, PRI);
+        //printf("con il risultato %d\n",ris);
+        printf("MAIN: creo il task di qlearning\n");
+        ris = pt_task_create( qlearning, 3, 100, DL, PRI);
+        //printf("con il risultato %d\n",ris);
+    }
+    else{
+        printf("MAIN: creo il task di interfaccia::\n");
+        ris = pt_task_create( manual_interface, 1, PER, DL, PRI);
+        //printf("con il risultato %d\n",ris);
+    }
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
     ris = pt_task_create( dynamics, 4, 1, DL, PRI);
     //printf("con il risultato %d\n",ris);

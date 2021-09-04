@@ -160,6 +160,7 @@ void init_com_inter()
 }
 
 static float value; //Dice qual è il valore del parametro attualmente selezionato
+
 void key_manager(int *exec)
 {
     int p;          //Serve per gestire il cambio di parametro del qlearning
@@ -201,7 +202,7 @@ void key_manager(int *exec)
             break;
 
         case KEY_UP:
-            /*if(sys_state == 0){
+            if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto UP\n");
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected(); //si salva in locale per problemi di mutua esclusione
@@ -236,12 +237,11 @@ void key_manager(int *exec)
                         break;
                     default: break;
                 }
-            }*/
-            next_desired_state(0);
+            }
             break;
 
         case KEY_DOWN:
-            /*if(sys_state == 0){
+            if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto DOWN\n");
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected();
@@ -276,29 +276,87 @@ void key_manager(int *exec)
                         break;
                     default: break;
                 }
-            }*/
+            }
+            break;
+
+        case KEY_RIGHT:
+            if(sys_state == 0){
+                printf("INTERFACE: hai premuto il tasto RIGHT\n");
+                value += step;
+            }
+            break;
+
+        case KEY_LEFT:
+            if(sys_state == 0){
+                printf("INTERFACE: hai premuto il tasto LEFT\n");
+                value -= step;
+            }
+            break;
+
+        default: break;
+    }
+}
+
+void key_manager_manual(int *exec)
+{
+    int p;          //Serve per gestire il cambio di parametro del qlearning
+    float step;     //Dice di quanto incrementare/decrementare value
+    char cm;
+
+
+    cm = get_scancode();
+    switch(cm){
+
+        case KEY_R:
+            printf("INTERFACE: hai premuto il tasto R\n");
+            set_sys_state(0);
+            //TODO: gestire il reset dei vari task
+            break;
+
+        case KEY_S:
+            printf("INTERFACE: hai premuto il tasto S\n");
+            if(get_reset()){
+                init_state();
+                //init_graphics();
+                //init_qlearning();
+                set_sys_state(1);
+            }
+            break;
+
+        case KEY_P:
+            printf("INTERFACE: hai premuto il tasto P\n");
+            if(get_play())
+                set_sys_state(2);
+            else if(get_pause())
+                set_sys_state(1);
+            break;
+
+        case KEY_E:
+            printf("INTERFACE: hai premuto il tasto E\n");
+            set_sys_state(3);  
+            *exec=0;
+            break;
+
+        case KEY_UP:
+            next_desired_state(0);
+            break;
+
+        case KEY_DOWN:
             next_desired_state(1);
             break;
 
         case KEY_RIGHT:
-            /*if(sys_state == 0){
-                printf("INTERFACE: hai premuto il tasto RIGHT\n");
-                value += step;
-            }*/
             next_desired_state(2);
             break;
 
         case KEY_LEFT:
-            /*if(sys_state == 0){
-                printf("INTERFACE: hai premuto il tasto LEFT\n");
-                value -= step;
-            }*/
             next_desired_state(3);
             break;
 
         default: break;
     }
 }
+
 
 void* interface(void * arg)
 {
@@ -312,6 +370,30 @@ void* interface(void * arg)
     while(exec)
     {
         key_manager(&exec);
+        if(pt_deadline_miss(i))
+            inc_interface_dl();
+        pt_wait_for_period(i);
+        if(exec==0)
+        {
+            printf("ho finito \n");
+        }
+    }
+    printf("INTERPRETER: task end\n");
+    return NULL;
+}
+
+void* manual_interface(void * arg)
+{
+    printf("INTERPRETER: task started\n");
+    int i,  exec = 1;
+    i = pt_get_index(arg);
+    pt_set_activation(i);
+    set_sys_state(0);
+    value = ql_get_learning_rate();
+
+    while(exec)
+    {
+        key_manager_manual(&exec);
         if(pt_deadline_miss(i))
             inc_interface_dl();
         pt_wait_for_period(i);
