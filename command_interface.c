@@ -46,7 +46,8 @@ int get_parameter_selected(){
 
 static int sys_state;
 static pthread_mutex_t mux_sys_state = PTHREAD_MUTEX_INITIALIZER;
-
+//
+extern int next_desired_state(int a);
 
 //funzione che incrementa la variabile delle deadline miss
 //l'ho fatta così per non modificare la funzione di pthask
@@ -200,7 +201,7 @@ void key_manager(int *exec)
             break;
 
         case KEY_UP:
-            if(sys_state == 0){
+            /*if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto UP\n");
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected(); //si salva in locale per problemi di mutua esclusione
@@ -235,11 +236,12 @@ void key_manager(int *exec)
                         break;
                     default: break;
                 }
-            }
+            }*/
+            next_desired_state(0);
             break;
 
         case KEY_DOWN:
-            if(sys_state == 0){
+            /*if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto DOWN\n");
                 // Per prima cosa salviamo il valore precedentemente selezionato
                 p = get_parameter_selected();
@@ -274,21 +276,24 @@ void key_manager(int *exec)
                         break;
                     default: break;
                 }
-            }
+            }*/
+            next_desired_state(1);
             break;
 
         case KEY_RIGHT:
-            if(sys_state == 0){
+            /*if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto RIGHT\n");
                 value += step;
-            }
+            }*/
+            next_desired_state(2);
             break;
 
         case KEY_LEFT:
-            if(sys_state == 0){
+            /*if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto LEFT\n");
                 value -= step;
-            }
+            }*/
+            next_desired_state(3);
             break;
 
         default: break;
