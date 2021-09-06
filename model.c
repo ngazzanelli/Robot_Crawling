@@ -6,7 +6,22 @@
 #include "matrices.h"
 
 
-#define DT  0.01     // Intervallo di integrazione della dinamica        [s]
+int DT = 0.01          // Intervallo di integrazione della dinamica        [s]
+static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;
+void set_dyn_DT(int dt){
+    pthread_mutex_lock(&mux_dt);
+    DT = dt;
+    pthread_mutex_unlock(&mux_dt);
+}
+int get_dyn_DT(){
+    int ret;
+    pthread_mutex_lock(&mux_dt);
+    ret = DT;
+    pthread_mutex_unlock(&mux_dt);
+    return ret;
+}
+
+
 #define T   0.1       // Intervallo di generazione della traiettoria      [s]
 
 /******************** COSTANTI DEL CONTROLLO **********************/
@@ -188,7 +203,7 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
         update_coefficients(coefficients1, coefficients2, robot);
     }
 
-    t = step*DT;
+    t = step*get_dyn_dt();
     q_t[0] = robot.q4;
     q_t[1] = robot.q5;
     dot_q_t[0] = dot_robot.dq4;
@@ -232,7 +247,7 @@ void* dynamics(void* arg){
     init_state();
     int i;            // thread index
     float y_ee;
-    float dt = DT; // 1 ms
+    float dt = get_dyn_dt();
     state robot;
     get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
@@ -258,6 +273,7 @@ void* dynamics(void* arg){
         if(get_play()){
             //printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
 
+            dt = get_dyn_dt();
             update_kyn(Tsee, robot);
             y_ee = Tsee[1][3];
             //robot.q2 = 0;

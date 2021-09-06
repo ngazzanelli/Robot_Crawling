@@ -15,6 +15,7 @@ extern void pt_ptask_init(int scheduler);
 extern int pt_task_create(void* (*task) (void*), int i, int period, int drel, int prio);
 extern int pt_get_index(void* arg);
 extern int pt_get_period(int i);
+extern int pt_set_period(int i, int per);
 extern int pt_get_dmiss(int i);
 extern void pt_set_activation(int i);
 extern int pt_deadline_miss(int i);

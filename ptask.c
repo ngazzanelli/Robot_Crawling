@@ -17,6 +17,9 @@ struct task_par {
 	struct timespec dl;		
 };
 
+// Mutex per la modifica del periodo dei task online mentre girano
+static pthread_mutex_t mux_period = PTHREAD_MUTEX_INITIALIZER;
+
 static struct task_par		tp[NT];
 pthread_t					tid[NT];
 int							policy = SCHED_FIFO;
@@ -96,8 +99,21 @@ struct task_par	*tpar;
 }
 
 int pt_get_period(int i)
-{
-	return tp[i].period;
+{	
+int per;
+
+	pthread_mutex_lock(&mux_period);
+	per = tp[i].period;
+	pthread_mutex_unlock(&mux_period);
+	return per;
+}
+
+void pt_set_period(int i, int per)
+{	
+
+	pthread_mutex_lock(&mux_period);
+	tp[i].period = per;
+	pthread_mutex_unlock(&mux_period);
 }
 
 int pt_get_dmiss(int i)
@@ -108,12 +124,17 @@ int pt_get_dmiss(int i)
 void pt_set_activation(int i)
 {
 struct timespec	t;
-	
+int per, drel;
+
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	time_copy(&(tp[i].at), t);
 	time_copy(&(tp[i].dl), t);
-	time_add_us(&(tp[i].at), tp[i].period);
-	time_add_us(&(tp[i].dl), tp[i].deadline);	
+	pthread_mutex_lock(&mux_period);
+	per = tp[i].period;
+	drel = tp[i].deadline;
+	pthread_mutex_unlock(&mux_period);
+	time_add_us(&(tp[i].at), per);
+	time_add_us(&(tp[i].dl), drel);	
 }
 
 int pt_deadline_miss(int i)
@@ -130,9 +151,14 @@ struct timespec	now;
 
 void pt_wait_for_period (int i)
 {
+int per;
+
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &(tp[i].at), NULL);
-	time_add_us(&(tp[i].at), tp[i].period);
-	time_add_us(&(tp[i].dl), tp[i].period);
+	pthread_mutex_lock(&mux_period);
+	per = tp[i].period;
+	pthread_mutex_unlock(&mux_period);
+	time_add_us(&(tp[i].at), per);
+	time_add_us(&(tp[i].dl), per);
 }
 
 void pt_wait_for_end (int i)

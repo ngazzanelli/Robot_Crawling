@@ -270,7 +270,7 @@ int main(){
         ris = pt_task_create( interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
         printf("MAIN: creo il task di qlearning\n");
-        ris = pt_task_create( qlearning, 3, 10*PER_D*1000, 10*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
+        ris = pt_task_create( qlearning, 3, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
         printf("con il risultato %d\n",ris);
     }
     else{

@@ -308,6 +308,18 @@ void key_manager(int *exec)
             }
             break;
         case KEY_G:
+            pg = get_pause_graphic(); //pg = "pause graphic"
+            if(pg == 0){    // acceleratore non attivo
+                set_dyn_dt(0.01);   // settiamo il passo di integrazione della dinamica
+                scale_fact = 10;    // otteniamo il fattore di scala per il periodo del qlearning rispetto al periodo del model 
+                pt_set_period(3, ); // settiamo il periodo del model
+                pt_set_period(4, )  // settiamo il periodo del qlearning
+            }else{          // acceleratore attivo
+                set_dyn_dt(0.001);  // settiamo il passo di integrazione della dinamica
+                scale_fact = 10;    // otteniamo il fattore di scala per il periodo del qlearning rispetto al periodo del model 
+                pt_set_period(3, ); // settiamo il periodo del model
+                pt_set_period(4, )  // settiamo il periodo del qlearning
+            }
             change_pause_graphic();
         default: break;
     }
