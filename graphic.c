@@ -82,6 +82,7 @@ static int graphic_dl;
 extern int get_stop();
 extern int get_pause();
 extern int get_play();
+extern int get_pause_graphic();
 //Funzione per la conversione da variabili di giunto 
 //a stato quantizzato e per il calcolo della reward
 extern int angles2state(float t1, float t2);
@@ -196,7 +197,7 @@ void update_STAT(BITMAP* BM_SG,int new_state)
     static int Sl_begin=0;
     static int Stat_lp[N_ST_SV];
     int i,j,k,col,ind;
-    printf("GRAPHIC: il nuovo stato vale %d\n",new_state);
+    //printf("GRAPHIC: il nuovo stato vale %d\n",new_state);
     //condizione in cui il vettore ha ancora almeno un elemento 
     //disponibile
     if(Sl_count<(N_ST_SV))
@@ -214,7 +215,7 @@ void update_STAT(BITMAP* BM_SG,int new_state)
     for(k=0;k<Sl_count;k++)
     {
         ind=(k+Sl_begin)%N_ST_SV;
-        printf("GRAPHIC: Lo stato %d vale %d\n",k,Stat_lp[ind]); 
+        //printf("GRAPHIC: Lo stato %d vale %d\n",k,Stat_lp[ind]); 
     }
     textout_ex(BM_SG, font, "State Matrix", X_Lab_S_OFF*scale, Y_Lab_S_OFF*scale, makecol(0,0,0), makecol(255,255,255));
     for(i=0;i<N_state_x_ang;i++)
@@ -505,7 +506,7 @@ void *update_graphic(void *arg)
     while (!get_stop())
     {
 
-        if(get_play())
+        if(get_play()&& !get_pause_graphic())
         {
             //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);

@@ -2,14 +2,15 @@
 #include <sched.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 #define	NT	50
 
 struct task_par {
 	int		arg;
 	long	wcet;
-	int		period;
-	int 	deadline;
+	int		period;		// [micro sec]
+	int 	deadline;	// [micro sec]
 	int 	priority;
 	int		dmiss;
 	struct timespec	at;
@@ -29,10 +30,10 @@ void time_copy(struct timespec *td, struct timespec ts)
 	td->tv_nsec = ts.tv_nsec;
 }
 
-void time_add_ms (struct timespec *t, int ms)
+void time_add_us (struct timespec *t, int us)
 {
-	t->tv_sec += ms/1000;
-	t->tv_nsec += (ms%1000)*1000000;
+	t->tv_sec += us/1000000;
+	t->tv_nsec += (us%1000000)*1000;
 	if (t->tv_nsec > (1000000000)) {
 		t->tv_nsec -= 1000000000;
 		t->tv_sec += 1;
@@ -46,6 +47,11 @@ int time_cmp (struct timespec t1, struct timespec t2)
 	if (t1.tv_nsec > t2.tv_nsec) return 1;
 	if (t1.tv_nsec > t2.tv_nsec) return -1;
 	return 0;
+}
+
+int time_diff_nsec (struct timespec t1, struct timespec t2)
+{
+	return (t1.tv_sec-t2.tv_sec)*pow(10, 9)+(t1.tv_nsec-t2.tv_nsec);
 }
 
 //----------------------------
@@ -106,8 +112,8 @@ struct timespec	t;
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	time_copy(&(tp[i].at), t);
 	time_copy(&(tp[i].dl), t);
-	time_add_ms(&(tp[i].at), tp[i].period);
-	time_add_ms(&(tp[i].dl), tp[i].deadline);	
+	time_add_us(&(tp[i].at), tp[i].period);
+	time_add_us(&(tp[i].dl), tp[i].deadline);	
 }
 
 int pt_deadline_miss(int i)
@@ -125,8 +131,8 @@ struct timespec	now;
 void pt_wait_for_period (int i)
 {
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &(tp[i].at), NULL);
-	time_add_ms(&(tp[i].at), tp[i].period);
-	time_add_ms(&(tp[i].dl), tp[i].period);
+	time_add_us(&(tp[i].at), tp[i].period);
+	time_add_us(&(tp[i].dl), tp[i].period);
 }
 
 void pt_wait_for_end (int i)

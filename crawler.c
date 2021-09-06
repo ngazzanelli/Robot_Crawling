@@ -18,8 +18,9 @@
 #define DTH1    0.35    // theta1 quantization step [rad]
 #define DTH2    0.35    // theta2 quantization step [rad]
 #define PRI     10      // tasks priority 
-#define DL      20      // tasks deadline
-#define PER     20      // tasks period
+#define DL      20      // tasks deadline [ms]
+#define PER     20      // tasks period [ms]
+#define PER_D   1     // dynamic task peirod [ms] 
 #define RHIT    -10     // reward for hitting limit angles
 #define RSCALE  100     // reward scale factor 
 
@@ -138,7 +139,7 @@ int angles2state(float t1, float t2){
 
     i = (t1 - t1min)/dt1;
     j = (t2 - t2min)/dt2;
-    printf("i=%d, j=%d, n2=%d, ret = %d\n", i, j, n2, i*n2+j);
+    //printf("i=%d, j=%d, n2=%d, ret = %d\n", i, j, n2, i*n2+j);
     return i*n2 + j;
 }
 
@@ -230,7 +231,7 @@ void* qlearning(void* arg){
             //printf("Aggioranta matrice Q\n");
             //err +=  (newerr - err)/step;
             if (step % 100 == 0)
-                ql_print_Qmatrix();
+                //ql_print_Qmatrix();
             if (step % 1000 == 0)
                 ql_reduce_exploration();
               
@@ -261,24 +262,24 @@ int main(){
 
     
     printf("MAIN: creo il task di gestione della grafica\n");
-    ris = pt_task_create( update_graphic, 2, PER, DL, PRI);
+    ris = pt_task_create( update_graphic, 2, PER*1000, DL*1000, PRI);
     //printf("con il risultato %d\n",ris);
     
     if(mode == 1){
         printf("MAIN: creo il task di interfaccia::\n");
-        ris = pt_task_create( interface, 1, PER, DL, PRI);
+        ris = pt_task_create( interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
         printf("MAIN: creo il task di qlearning\n");
-        ris = pt_task_create( qlearning, 3, 100, DL, PRI);
-        //printf("con il risultato %d\n",ris);
+        ris = pt_task_create( qlearning, 3, 10*PER_D*1000, 10*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
+        printf("con il risultato %d\n",ris);
     }
     else{
         printf("MAIN: creo il task di interfaccia::\n");
-        ris = pt_task_create( manual_interface, 1, PER, DL, PRI);
+        ris = pt_task_create( manual_interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
     }
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
-    ris = pt_task_create( dynamics, 4, 1, DL, PRI);
+    ris = pt_task_create( dynamics, 4, PER_D*1000, PER_D*1000, PRI);
     //printf("con il risultato %d\n",ris);
     for(i = 1; i <= 4; i++){
           pt_wait_for_end(i);

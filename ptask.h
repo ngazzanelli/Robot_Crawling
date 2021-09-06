@@ -6,8 +6,9 @@
 
 //	Time management functions
 extern void time_copy (struct timespec *td, struct timespec ts);
-extern void time_add_ms (struct timespec *t, int ms);
+extern void time_add_us (struct timespec *t, int ms);
 extern int time_cmp (struct timespec t1, struct timespec t2);
+int time_diff_nsec (struct timespec t1, struct timespec t2);
 
 //	Task management functions
 extern void pt_ptask_init(int scheduler);

@@ -1,12 +1,13 @@
 #include <math.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
 #include "ptask.h"
 #include "matrices.h"
 
 
-#define DT  1    //Intervallo di integrazione della Dinamica        [ms]
-#define T   0.1   // Intervallo di generazione della traiettoria      [s]
+#define DT  0.01     // Intervallo di integrazione della dinamica        [s]
+#define T   0.1       // Intervallo di generazione della traiettoria      [s]
 
 /******************** COSTANTI DEL CONTROLLO **********************/
 #define KC  10 
@@ -187,7 +188,7 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
         update_coefficients(coefficients1, coefficients2, robot);
     }
 
-    t = step*DT*0.001;
+    t = step*DT;
     q_t[0] = robot.q4;
     q_t[1] = robot.q5;
     dot_q_t[0] = dot_robot.dq4;
@@ -231,7 +232,7 @@ void* dynamics(void* arg){
     init_state();
     int i;            // thread index
     float y_ee;
-    float dt = 0.001; // 1 ms
+    float dt = DT; // 1 ms
     state robot;
     get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
@@ -250,8 +251,9 @@ void* dynamics(void* arg){
 
     i = pt_get_index(arg);
     pt_set_activation(i);
-
+    
     while(!get_stop()){
+
         //controllo se l'applicazione è in pausa o in reset
         if(get_play()){
             //printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);

@@ -44,6 +44,21 @@ int get_parameter_selected(){
   return ret;
 }
 
+static int pause_graphic;
+static pthread_mutex_t mux_pause_graphic = PTHREAD_MUTEX_INITIALIZER;
+void change_pause_graphic(){
+    pthread_mutex_lock(&mux_pause_graphic);
+    pause_graphic = (pause_graphic)?0:1;
+    pthread_mutex_unlock(&mux_pause_graphic);
+}
+int get_pause_graphic(){
+    int temp;
+    pthread_mutex_lock(&mux_pause_graphic);
+    temp = pause_graphic;
+    pthread_mutex_unlock(&mux_pause_graphic);
+    return temp;
+}
+
 static int sys_state;
 static pthread_mutex_t mux_sys_state = PTHREAD_MUTEX_INITIALIZER;
 //
@@ -292,7 +307,8 @@ void key_manager(int *exec)
                 value -= step;
             }
             break;
-
+        case KEY_G:
+            change_pause_graphic();
         default: break;
     }
 }
