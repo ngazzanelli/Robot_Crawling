@@ -18,7 +18,7 @@ struct task_par {
 };
 
 // Mutex per la modifica del periodo dei task online mentre girano
-static pthread_mutex_t mux_period = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_period[NT] = PTHREAD_MUTEX_INITIALIZER;
 
 static struct task_par		tp[NT];
 pthread_t					tid[NT];
@@ -75,8 +75,10 @@ int					tret;
 	if (i>=NT) return -1;
 	
 	tp[i].arg = i;
+	pthread_mutex_lock(&mux_period[i]);
 	tp[i].period = period;
 	tp[i].deadline = drel;
+	pthread_mutex_unlock(&mux_period[i]);
 	tp[i].priority = prio;
 	tp[i].dmiss = 0;
 	
@@ -102,18 +104,34 @@ int pt_get_period(int i)
 {	
 int per;
 
-	pthread_mutex_lock(&mux_period);
+	pthread_mutex_lock(&mux_period[i]);
 	per = tp[i].period;
-	pthread_mutex_unlock(&mux_period);
+	pthread_mutex_unlock(&mux_period[i]);
 	return per;
 }
 
 void pt_set_period(int i, int per)
 {	
-
-	pthread_mutex_lock(&mux_period);
+	pthread_mutex_lock(&mux_period[i]);
 	tp[i].period = per;
-	pthread_mutex_unlock(&mux_period);
+	pthread_mutex_unlock(&mux_period[i]);
+}
+
+void pt_set_deadline(int i, int drel)
+{	
+	pthread_mutex_lock(&mux_period[i]);
+	tp[i].deadline = drel;
+	pthread_mutex_unlock(&mux_period[i]);
+}
+
+int pt_get_deadline(int i)
+{	
+int drel;
+
+	pthread_mutex_lock(&mux_period[i]);
+	drel = tp[i].deadline;
+	pthread_mutex_unlock(&mux_period[i]);
+	return drel;
 }
 
 int pt_get_dmiss(int i)
@@ -129,10 +147,10 @@ int per, drel;
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	time_copy(&(tp[i].at), t);
 	time_copy(&(tp[i].dl), t);
-	pthread_mutex_lock(&mux_period);
+	pthread_mutex_lock(&mux_period[i]);
 	per = tp[i].period;
 	drel = tp[i].deadline;
-	pthread_mutex_unlock(&mux_period);
+	pthread_mutex_unlock(&mux_period[i]);
 	time_add_us(&(tp[i].at), per);
 	time_add_us(&(tp[i].dl), drel);	
 }
@@ -154,9 +172,9 @@ void pt_wait_for_period (int i)
 int per;
 
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &(tp[i].at), NULL);
-	pthread_mutex_lock(&mux_period);
+	pthread_mutex_lock(&mux_period[i]);
 	per = tp[i].period;
-	pthread_mutex_unlock(&mux_period);
+	pthread_mutex_unlock(&mux_period[i]);
 	time_add_us(&(tp[i].at), per);
 	time_add_us(&(tp[i].dl), per);
 }

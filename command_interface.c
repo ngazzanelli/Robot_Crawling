@@ -63,6 +63,8 @@ static int sys_state;
 static pthread_mutex_t mux_sys_state = PTHREAD_MUTEX_INITIALIZER;
 //
 extern int next_desired_state(int a);
+extern void set_dyn_dt(float dt);
+extern float get_dyn_dt();
 
 //funzione che incrementa la variabile delle deadline miss
 //l'ho fatta così per non modificare la funzione di pthask
@@ -181,7 +183,7 @@ void key_manager(int *exec)
     int p;          //Serve per gestire il cambio di parametro del qlearning
     float step;     //Dice di quanto incrementare/decrementare value
     char cm;
-
+    int pg;         //Serve per sapere il valore di pause_graphic
 
     cm = get_scancode();
     switch(cm){
@@ -308,19 +310,24 @@ void key_manager(int *exec)
             }
             break;
         case KEY_G:
+            printf("hai premuto il tasto G\n");
+            change_pause_graphic();
             pg = get_pause_graphic(); //pg = "pause graphic"
             if(pg == 0){    // acceleratore non attivo
-                set_dyn_dt(0.01);   // settiamo il passo di integrazione della dinamica
-                scale_fact = 10;    // otteniamo il fattore di scala per il periodo del qlearning rispetto al periodo del model 
-                pt_set_period(3, ); // settiamo il periodo del model
-                pt_set_period(4, )  // settiamo il periodo del qlearning
+                set_dyn_dt(0.001);   // settiamo il passo di integrazione della dinamica
+                //scale_fact = 100 è il fattore di scala per il periodo del qlearning rispetto al periodo del model 
+                pt_set_period(4, 1000); // settiamo il periodo del model
+                pt_set_period(3, 100000);  // settiamo il periodo del qlearning
+                pt_set_deadline(4, 1000); // settiamo la deadline relativa del model
+                pt_set_deadline(3, 100000);  // settiamo la deadline relativa del qlearning
             }else{          // acceleratore attivo
-                set_dyn_dt(0.001);  // settiamo il passo di integrazione della dinamica
-                scale_fact = 10;    // otteniamo il fattore di scala per il periodo del qlearning rispetto al periodo del model 
-                pt_set_period(3, ); // settiamo il periodo del model
-                pt_set_period(4, )  // settiamo il periodo del qlearning
+                set_dyn_dt(0.01);  // settiamo il passo di integrazione della dinamica
+                //scale_fact = 10 è il fattore di scala per il periodo del qlearning rispetto al periodo del model 
+                pt_set_period(4, 700); // settiamo il periodo del model
+                pt_set_period(3, 7000);  // settiamo il periodo del qlearning
+                pt_set_deadline(4, 700); // settiamo la deadline relativa del model
+                pt_set_deadline(3, 7000);  // settiamo la deadline relativa del qlearning
             }
-            change_pause_graphic();
         default: break;
     }
 }
@@ -366,18 +373,22 @@ void key_manager_manual(int *exec)
             break;
 
         case KEY_UP:
+            printf("INTERFACE: hai premuto il tasto UP\n");
             next_desired_state(0);
             break;
 
         case KEY_DOWN:
+            printf("INTERFACE: hai premuto il tasto UP\n");
             next_desired_state(1);
             break;
 
         case KEY_RIGHT:
+            printf("INTERFACE: hai premuto il tasto UP\n");
             next_desired_state(2);
             break;
 
         case KEY_LEFT:
+            printf("INTERFACE: hai premuto il tasto UP\n");
             next_desired_state(3);
             break;
 

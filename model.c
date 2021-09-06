@@ -6,20 +6,7 @@
 #include "matrices.h"
 
 
-int DT = 0.01          // Intervallo di integrazione della dinamica        [s]
-static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;
-void set_dyn_DT(int dt){
-    pthread_mutex_lock(&mux_dt);
-    DT = dt;
-    pthread_mutex_unlock(&mux_dt);
-}
-int get_dyn_DT(){
-    int ret;
-    pthread_mutex_lock(&mux_dt);
-    ret = DT;
-    pthread_mutex_unlock(&mux_dt);
-    return ret;
-}
+
 
 
 #define T   0.1       // Intervallo di generazione della traiettoria      [s]
@@ -28,6 +15,20 @@ int get_dyn_DT(){
 #define KC  10 
 #define KD  10
 
+static float DT = 0.001;          // Intervallo di integrazione della dinamica        [s]
+static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;
+void set_dyn_dt(float dt){
+    pthread_mutex_lock(&mux_dt);
+    DT = dt;
+    pthread_mutex_unlock(&mux_dt);
+}
+float get_dyn_dt(){
+    float ret;
+    pthread_mutex_lock(&mux_dt);
+    ret = DT;
+    pthread_mutex_unlock(&mux_dt);
+    return ret;
+}
 
 //Struttura per lo stato desiderato del robot
 typedef struct {
@@ -48,7 +49,7 @@ static dot_state dot_robot;
 
 //Semaforo usato per accedere allo stato reale "robot"
 static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
-//semaforo usato per accedre alle dl
+//semaforo usato per accedre alle deadline miss
 static pthread_mutex_t mux_model_dl = PTHREAD_MUTEX_INITIALIZER;
 
 void inc_model_dl()
@@ -247,7 +248,7 @@ void* dynamics(void* arg){
     init_state();
     int i;            // thread index
     float y_ee;
-    float dt = get_dyn_dt();
+    float dt;
     state robot;
     get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
@@ -266,6 +267,7 @@ void* dynamics(void* arg){
 
     i = pt_get_index(arg);
     pt_set_activation(i);
+    //printf("DYN: il mio periodo è %d microsecondi\n", pt_get_period(i));
     
     while(!get_stop()){
 
@@ -274,19 +276,20 @@ void* dynamics(void* arg){
             //printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
 
             dt = get_dyn_dt();
+            //printf("DYN: dt vale %f\n", dt);
             update_kyn(Tsee, robot);
             y_ee = Tsee[1][3];
             //robot.q2 = 0;
            // printf("Y = %f\n", y_ee);
             if(y_ee > 0){
                 //robot.q2 = 0;
-                printf("Sono dentro y > 0 con y= %f\n",y_ee);
+                //printf("DYN: Sono dentro y > 0 con y= %f\n",y_ee);
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
                 //vector_set_zero(G, 2);
             }else{
-                printf("Sono dentro y < 0 con y= %f\n",y_ee);
+                //printf("DYN: Sono dentro y < 0 con y= %f\n",y_ee);
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
                 update_G2(G, robot);
@@ -369,15 +372,20 @@ void* dynamics(void* arg){
 
             //Aggiorniamo lo stato globale condiviso con gli altri task
             set_state(robot);
-            printf("STATE VAR: q = [%f; %f; %f; %f; %f; %f]\n", robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
+            //printf("DYN: state variables q = [%f; %f; %f; %f; %f; %f]\n", robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
         }
 
         //Riprendiamo il valore dello stato globale se siamo in reset
         if(get_reset())
             get_state(&robot);
 
-        if(pt_deadline_miss(i))
+        if(pt_deadline_miss(i)){
             inc_model_dl();
+            printf("DYN: ho missato una deadline\n");
+            printf("DYN: il mio periodo vale %d microsecondi\n", pt_get_period(i));
+            printf("DYN: la mia deadline relativa vale %d microsecondi\n", pt_get_deadline(i));
+        }
+        
         pt_wait_for_period(i);
     }
 

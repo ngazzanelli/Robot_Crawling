@@ -506,7 +506,7 @@ void *update_graphic(void *arg)
     while (!get_stop())
     {
 
-        if(get_play()&& !get_pause_graphic())
+        if(get_play()/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
         {
             //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);

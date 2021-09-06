@@ -205,6 +205,8 @@ void* qlearning(void* arg){
         //Controllo se l'applicazione è in pausa
         play = get_play();
         if(play){
+            float period = pt_get_period(3);
+            printf("QLEARN: il mio periodo vale %f\n", period);
             //printf("QLEARN: sono dentro all'if\n");
             step++;
 
@@ -217,10 +219,12 @@ void* qlearning(void* arg){
             //printf("Ottenuta l'azione\n");
             snew = next_desired_state(a);   //Questa funzione aggiorna 
                                             //anche le variabili di giunto desiderate "qd"
-            //printf("Ottenuto il nuovo stato\n");
+            //printf("QLEARN: Ottenuto il nuovo stato\n");
         }
-            if(pt_deadline_miss(i))
+            if(pt_deadline_miss(i)){
+                printf("QLEARN: ho missato una deadline\n");
                 inc_crawler_dl();
+            }
             pt_wait_for_period(i);
 
         if(play){  
@@ -266,15 +270,15 @@ int main(){
     //printf("con il risultato %d\n",ris);
     
     if(mode == 1){
-        printf("MAIN: creo il task di interfaccia::\n");
+        printf("MAIN: creo il task di interfaccia\n");
         ris = pt_task_create( interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
         printf("MAIN: creo il task di qlearning\n");
         ris = pt_task_create( qlearning, 3, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
-        printf("con il risultato %d\n",ris);
+        //printf("con il risultato %d\n",ris);
     }
     else{
-        printf("MAIN: creo il task di interfaccia::\n");
+        printf("MAIN: creo il task di interfaccia\n");
         ris = pt_task_create( manual_interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
     }
