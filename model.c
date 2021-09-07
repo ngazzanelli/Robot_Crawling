@@ -351,7 +351,7 @@ void* dynamics(void* arg){
                 robot.q3 = 0;
             }
 
-            if(robot.q2 < 0){
+            if(robot.q2 != 0){
                 q_dip1[1] = 0;
                 robot.q2 = 0;   
             }
@@ -381,9 +381,9 @@ void* dynamics(void* arg){
 
         if(pt_deadline_miss(i)){
             inc_model_dl();
-            printf("DYN: ho missato una deadline\n");
+            /*printf("DYN: ho missato una deadline\n");
             printf("DYN: il mio periodo vale %d microsecondi\n", pt_get_period(i));
-            printf("DYN: la mia deadline relativa vale %d microsecondi\n", pt_get_deadline(i));
+            printf("DYN: la mia deadline relativa vale %d microsecondi\n", pt_get_deadline(i));*/
         }
         
         pt_wait_for_period(i);

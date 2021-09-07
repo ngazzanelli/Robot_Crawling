@@ -83,6 +83,7 @@ extern int get_stop();
 extern int get_pause();
 extern int get_play();
 extern int get_pause_graphic();
+extern float ql_get_epsilon();
 //Funzione per la conversione da variabili di giunto 
 //a stato quantizzato e per il calcolo della reward
 extern int angles2state(float t1, float t2);
@@ -150,10 +151,10 @@ void update_data(BITMAP* BM_TXT,
                 float eps,
                 float decay,
                 float dis,
-                int epoch,
                 int dl_mod,
                 int dl_cra,
-                int dl_int )
+                int dl_int,
+                int epoch )
 {
     char str[25];
     clear_to_color(BM_TXT,makecol(255,255,255));
@@ -232,7 +233,7 @@ void update_STAT(BITMAP* BM_SG,int new_state)
                 ind=(k+Sl_begin)%N_ST_SV;
                 if(Stat_lp[ind]==(i*N_state_x_ang+j))
                 {
-                    col=245*k/N_ST_SV;
+                    col=245*(4-k)/N_ST_SV;
                     circlefill(BM_SG,
                     (X_Mat_S_OFF+i*L_S_rect+C_S_rect)*scale,
                     (Y_Mat_S_OFF+j*L_S_rect+C_S_rect)*scale,
@@ -486,10 +487,11 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti,s,i=0,int_dl,mod_dl,craw_dl;
+    int ti,s,i=0,int_dl,mod_dl,craw_dl,epoch;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
+    float epsilon;
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
     //inizializzo allegro e lo scermo 
     init_s();
@@ -515,13 +517,15 @@ void *update_graphic(void *arg)
             get_interface_dl(&int_dl);
             get_model_dl(&mod_dl);
             get_crawler_dl(&craw_dl);
-            update_data(P_data,0.5,0,20.2,0,rob.q1,0,mod_dl,craw_dl,int_dl);
+            epsilon=ql_get_epsilon();
+            update_data(P_data,0.5,0,epsilon,0,rob.q1,mod_dl,craw_dl,int_dl,epoch);
             get_rs_for_plot(&rew_st);
             update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag);
             if(rew_st.flag==1)
             {
                 ql_get_Q(Matrix_Q);
-                update_MQ(MQ,Matrix_Q,50);
+                update_MQ(MQ,Matrix_Q,0.1);
+                epoch++;
             }
         }
         

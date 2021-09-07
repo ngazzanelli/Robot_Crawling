@@ -8,9 +8,9 @@
 // Global constants
 #define MAXSTA	100		// max # of states
 #define MAXACT	100		// max # of actions
-#define ALPHA0	1.0		// default learning rate
+#define ALPHA0	0.1		// default learning rate
 #define EPSINI	0.9 	// initial exploration factor
-#define EPSFIN	0.1 	// final exploration factor
+#define EPSFIN	0.01 	// final exploration factor
 #define GAMMA0	0.9 	// default discount factor
 #define DECAY0	0.95	// default epsilon decay rate
 
@@ -37,6 +37,8 @@ static float eps_norm;	// normalized exploration probability
 static float eps_ini;	// initial exploration probability
 static float eps_fin;	// final exploration probability
 
+// Semaphores 
+static pthread_mutex_t mux_eps = PTHREAD_MUTEX_INITIALIZER;
 
 // Auxiliary functions
 float frand(float xmin, float xmax)
@@ -93,6 +95,16 @@ int s, a;
 	for (s=0; s<nsta; s++)
 		for(a=0; a<nact; a++)
 			Q[s][a] = 0;
+	// test per vedere se riconosce il ciclo 
+	/*Q[9][0] = 10;
+	Q[16][0] = 10;
+	Q[23][2] = 10;
+	Q[24][2] = 10;
+	Q[25][1] = 10;
+	Q[18][1] = 10;
+	Q[11][3] = 10;
+	Q[10][3] = 10;
+	*/
 }
 
 // Set parameters functions
@@ -139,6 +151,13 @@ float ql_get_epsfin()
 {
 	return eps_fin; 
 }
+float ql_get_epsilon(){
+	float ret;
+	pthread_mutex_lock(&mux_eps);
+	ret = epsilon;
+	pthread_mutex_unlock(&mux_eps);
+	return ret;
+}
 float ql_get_expl_decay()
 {
 	return decay;
@@ -158,8 +177,10 @@ float  ql_reduce_exploration(flaot ep_n,float ep_i,float ep_f,float dec)
 void ql_reduce_exploration()
 {
 	eps_norm = decay*eps_norm;
+	pthread_mutex_lock(&mux_eps);
 	epsilon = eps_fin + eps_norm*(eps_ini - eps_fin);
-	//printf("Ho ridotto epsilon = %f\n", epsilon);
+	pthread_mutex_unlock(&mux_eps);
+	printf("Ho ridotto epsilon = %f\n", epsilon);
 
 }
 
@@ -213,14 +234,17 @@ float x;
 int ql_egreedy_policy (int s)
 {
 int ra, ba;
-float x;
+float x, eps;
 
 	ba = ql_best_action(s);
 	ra = rand()%nact;
 	//printf("L'azione casuale è %d\n", ra);
 	//printf("Epsilon = %f\n", epsilon);
 	x = frand(0, 1);
-	if (x < epsilon) return ra;
+	pthread_mutex_lock(&mux_eps);
+	eps = epsilon;
+	pthread_mutex_unlock(&mux_eps);
+	if (x < eps) return ra;
 	else return ba;
 }
 

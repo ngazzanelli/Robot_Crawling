@@ -11,8 +11,8 @@
 #define TH1DW   1       // action move down link 1
 #define TH2UP   2       // action move up link 2
 #define TH2DW   3       // action move down link 2
-#define TH1MAX  1.55    // max theta1 angle [rad]
-#define TH1MIN  -0.55   // min theta1 angle [rad]
+#define TH1MAX  1.40    // max theta1 angle [rad]
+#define TH1MIN  -0.7   // min theta1 angle [rad]
 #define TH2MAX  1.05    // max theta2 angle [rad]
 #define TH2MIN  -1.05   // min theta2 angle [rad]
 #define DTH1    0.35    // theta1 quantization step [rad]
@@ -20,9 +20,9 @@
 #define PRI     10      // tasks priority 
 #define DL      20      // tasks deadline [ms]
 #define PER     20      // tasks period [ms]
-#define PER_D   1     // dynamic task peirod [ms] 
+#define PER_D   1       // dynamic task peirod [ms] 
 #define RHIT    -10     // reward for hitting limit angles
-#define RSCALE  100     // reward scale factor 
+#define RSCALE  10    // reward scale factor 
 
 // Global variables (inutili se tanto ho le costanti, no?)
 static float t1min, t2min;
@@ -43,7 +43,7 @@ typedef struct {
     float q5;
     float q6;
     float energy;   //energia spesa utile per il reward
-    float dt3;    //variazione dell'angolo della ruota per il reward  
+    float dt3;      //variazione dell'angolo della ruota per il reward  
 } state;
 
 // Struttura per lo stato desiderato del robot
@@ -136,18 +136,23 @@ void set_rs_for_plot(int r,int s){
 int angles2state(float t1, float t2){
 
     int i, j;
-
-    i = (t1 - t1min)/dt1;
-    j = (t2 - t2min)/dt2;
+    //printf("le variabilidi giunto valgono %f e %f\n", t1, t2);
+    i = round((t1 - t1min)/dt1);
+    j = round((t2 - t2min)/dt2);
+    //printf("le variabilidi giunto sono approssimate a %f e %f\n", i*dt1+TH1MIN, j*dt2+TH2MIN);
     //printf("i=%d, j=%d, n2=%d, ret = %d\n", i, j, n2, i*n2+j);
     return i*n2 + j;
 }
 
 int get_reward(int s, int snew, state robot){
 
-    int r;
+    int r = 0;
 
-    r = (int)( ( (robot.dt3 > 0) ? 50 : -10) * RSCALE - 1);
+    if(robot.dt3 > 0)
+        r = 10*robot.dt3;
+    else if(robot.dt3 < 0)
+        r = -15*robot.dt3;
+    r-=1;
     if (snew == s) 
         r += RHIT;        // hit the limit angle
 
@@ -200,17 +205,22 @@ void* qlearning(void* arg){
     ql_init(NSTATES, NACTIONS);
     init_global_variables();
     printf("QLEARN: inizio ciclo while\n");
+    float old_q1 = 0;
+
     while (!get_stop()){
 
         //Controllo se l'applicazione è in pausa
         play = get_play();
         if(play){
             float period = pt_get_period(3);
-            printf("QLEARN: il mio periodo vale %f\n", period);
+            //printf("QLEARN: il mio periodo vale %f\n", period);
             //printf("QLEARN: sono dentro all'if\n");
             step++;
 
             get_state(&robot);
+            robot.dt3 = robot.q1 - old_q1;
+            old_q1 = robot.q1;
+
             //printf("Ottenuto stato attuale variabili di giunto del robot\n");
             s = angles2state(robot.q4, robot.q5);
             set_rs_for_plot(r,s);
@@ -234,9 +244,9 @@ void* qlearning(void* arg){
             ql_copy_Q();
             //printf("Aggioranta matrice Q\n");
             //err +=  (newerr - err)/step;
-            if (step % 100 == 0)
+            //if (step % 100 == 0)
                 //ql_print_Qmatrix();
-            if (step % 1000 == 0)
+            if (step % 100 == 0)
                 ql_reduce_exploration();
               
         }

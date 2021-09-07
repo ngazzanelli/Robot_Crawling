@@ -29,7 +29,7 @@ extern float ql_get_discount_factor();
 extern float ql_get_epsini();
 extern float ql_get_epsfin();
 extern float ql_get_expl_decay();
-extern float get_epsilon();
+extern float ql_get_epsilon();
 extern void ql_get_Q(float *dest);
 
 extern void ql_set_learning_rate(float alpha);

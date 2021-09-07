@@ -321,12 +321,12 @@ void key_manager(int *exec)
                 pt_set_deadline(4, 1000); // settiamo la deadline relativa del model
                 pt_set_deadline(3, 100000);  // settiamo la deadline relativa del qlearning
             }else{          // acceleratore attivo
-                set_dyn_dt(0.01);  // settiamo il passo di integrazione della dinamica
+                set_dyn_dt(0.001);  // settiamo il passo di integrazione della dinamica
                 //scale_fact = 10 è il fattore di scala per il periodo del qlearning rispetto al periodo del model 
                 pt_set_period(4, 700); // settiamo il periodo del model
-                pt_set_period(3, 7000);  // settiamo il periodo del qlearning
+                pt_set_period(3, 70000);  // settiamo il periodo del qlearning
                 pt_set_deadline(4, 700); // settiamo la deadline relativa del model
-                pt_set_deadline(3, 7000);  // settiamo la deadline relativa del qlearning
+                pt_set_deadline(3, 70000);  // settiamo la deadline relativa del qlearning
             }
         default: break;
     }
@@ -337,6 +337,7 @@ void key_manager_manual(int *exec)
     int p;          //Serve per gestire il cambio di parametro del qlearning
     float step;     //Dice di quanto incrementare/decrementare value
     char cm;
+    int s;
 
 
     cm = get_scancode();
@@ -374,22 +375,26 @@ void key_manager_manual(int *exec)
 
         case KEY_UP:
             printf("INTERFACE: hai premuto il tasto UP\n");
-            next_desired_state(0);
+            s = next_desired_state(0);
+            printf("sei andato nello stato %d\n", s);
             break;
 
         case KEY_DOWN:
-            printf("INTERFACE: hai premuto il tasto UP\n");
-            next_desired_state(1);
+            printf("INTERFACE: hai premuto il tasto DOWN\n");
+            s = next_desired_state(1);
+            printf("sei andato nello stato %d\n", s);
             break;
 
         case KEY_RIGHT:
-            printf("INTERFACE: hai premuto il tasto UP\n");
-            next_desired_state(2);
+            printf("INTERFACE: hai premuto il tasto RIGHT\n");
+            s = next_desired_state(2);
+            printf("sei andato nello stato %d\n", s);
             break;
 
         case KEY_LEFT:
-            printf("INTERFACE: hai premuto il tasto UP\n");
-            next_desired_state(3);
+            printf("INTERFACE: hai premuto il tasto LEFT\n");
+            s = next_desired_state(3);
+            printf("sei andato nello stato %d\n", s);
             break;
 
         default: break;
