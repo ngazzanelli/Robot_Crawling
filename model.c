@@ -340,7 +340,7 @@ void* dynamics(void* arg){
 
 
             //Aggiorniamo lo stato locale utilizzato soltanto per l'integrazione
-            robot.dt3 = q_dip2[0] - robot.q1;
+            //robot.dt3 = q_dip2[0] - robot.q1;
             robot.q1 = q_dip2[0];
             robot.q2 = q_dip2[1];
             robot.q3 = q_dip2[2];

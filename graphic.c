@@ -487,7 +487,7 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti,s,i=0,int_dl,mod_dl,craw_dl,epoch;
+    int ti,s,i=0,int_dl,mod_dl,craw_dl,epoch = 0;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
