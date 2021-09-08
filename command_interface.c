@@ -5,16 +5,14 @@
 #include <pthread.h>
 #include "ptask.h"
 #include "qlearn.h"
+#include "matrices.h"
 
 #define PI 3.14
 #define PASSO 0.01
 
 // Costanti utili per la modifica dei parametri del qlearning
 #define NPARAM  5  //total number of possible learning parameters
-#define STEP_ALPHA  1
-#define STEP_GAMMA  0.1
-#define STEP_DECAY   0.2
-#define STEP_EPS  0.3
+#define STEP 0.1   //step di incremento e decremento dei parametri del qlearning
 
 static int interface_dl;
 static int parameter_selected;  //Dice qual è il parametro attualmente selezionato
@@ -24,6 +22,8 @@ static int parameter_selected;  //Dice qual è il parametro attualmente selezion
 //  2 -> decay
 //  3 -> epsilon iniziale
 //  4 -> epsilon finale
+static float values[5];             //Dice qual è il valore del parametro attualmente selezionato
+static pthread_mutex_t mux_parameter_values = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_parameter_selected = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_int_dl = PTHREAD_MUTEX_INITIALIZER;
 void inc_parameter_selected(){
@@ -42,6 +42,49 @@ int get_parameter_selected(){
   ret = parameter_selected;
   pthread_mutex_unlock(&mux_parameter_selected);
   return ret;
+}
+void inc_parameter_value(int p){
+    float temp;
+    pthread_mutex_lock(&mux_parameter_values);
+    temp = values[p];
+    pthread_mutex_unlock(&mux_parameter_values);
+    if(temp == 1)
+        return;
+    pthread_mutex_lock(&mux_parameter_values);
+    values[p] += STEP;
+    pthread_mutex_unlock(&mux_parameter_values);
+}
+void dec_parameter_value(int p){
+    float temp;
+    pthread_mutex_lock(&mux_parameter_values);
+    temp = values[p];
+    pthread_mutex_unlock(&mux_parameter_values);
+    if(temp == 0)
+        return;
+    pthread_mutex_lock(&mux_parameter_values);
+    values[p] -= STEP;
+    pthread_mutex_unlock(&mux_parameter_values);
+}
+void get_parameter_value(float *buff){
+    pthread_mutex_lock(&mux_parameter_values);
+    vector_copy(values, buff, 5);
+    pthread_mutex_unlock(&mux_parameter_values);
+}
+void init_parameter_values(){
+    values[0] = ql_get_learning_rate();
+    values[1] = ql_get_discount_factor();
+    values[2] = ql_get_expl_decay();
+    values[3] = ql_get_epsini();
+    values[4] = ql_get_epsfin();
+}
+void set_qlearning_values(){
+    pthread_mutex_lock(&mux_parameter_values);
+    ql_set_learning_rate(values[0]);
+    ql_set_discount_factor(values[1]);
+    ql_set_expl_decay(values[2]);
+    ql_set_epsini(values[3]);
+    ql_set_epsfin(values[4]);
+    pthread_mutex_unlock(&mux_parameter_values);
 }
 
 static int pause_graphic;
@@ -158,8 +201,6 @@ void get_sys_state(int *ic) //LA MODIFICHEREI METTENDO IL RITORNO DI TIPO INTERO
 
 //Funzioni esterne da altri moduli
 extern void init_state();
-//extern voif init_graphics();
-//extern void init_qlearning();
 
 // Funzione per ottenere il codice del tasto premuto da tastiera 
 char get_scancode()
@@ -170,18 +211,10 @@ char get_scancode()
         return 0;
 }
 
-void init_com_inter()
-{
-    //inizializzazione dell'interprete
-    set_sys_state(0);
-}
-
-static float value; //Dice qual è il valore del parametro attualmente selezionato
 
 void key_manager(int *exec)
 {
     int p;          //Serve per gestire il cambio di parametro del qlearning
-    float step;     //Dice di quanto incrementare/decrementare value
     char cm;
     int pg;         //Serve per sapere il valore di pause_graphic
 
@@ -191,17 +224,13 @@ void key_manager(int *exec)
         case KEY_R:
             printf("INTERFACE: hai premuto il tasto R\n");
             set_sys_state(0);
-            //TODO: gestire il reset dei vari task
+            init_state();
             break;
 
         case KEY_S:
             printf("INTERFACE: hai premuto il tasto S\n");
-            if(get_reset()){
-                init_state();
-                //init_graphics();
-                //init_qlearning();
+            if(get_reset())
                 set_sys_state(1);
-            }
             break;
 
         case KEY_P:
@@ -221,92 +250,30 @@ void key_manager(int *exec)
         case KEY_UP:
             if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto UP\n");
-                // Per prima cosa salviamo il valore precedentemente selezionato
-                p = get_parameter_selected(); //si salva in locale per problemi di mutua esclusione
-                // Passiamo quindi al successivo parametro
                 inc_parameter_selected();
-                //Possibili valori di parameter_selected:
-                //  0 -> alpha  1 -> gamma  2 -> decay  3 -> eps ini  4 -> eps fin
-                switch(p){
-                    case 0:  
-                        ql_set_learning_rate(value);
-                        step = STEP_GAMMA;
-                        value = ql_get_discount_factor();
-                        break;
-                    case 1:
-                        ql_set_discount_factor(value);
-                        step = STEP_DECAY;
-                        value = ql_get_expl_decay();
-                        break;
-                    case 2:
-                        ql_set_expl_decay(value);
-                        step = STEP_EPS;
-                        value = ql_get_epsini();
-                        break;
-                    case 3:
-                        ql_set_epsini(value);
-                        value = ql_get_epsfin();
-                        break; 
-                    case 4:
-                        ql_set_epsfin(value);
-                        step = STEP_ALPHA;
-                        value = ql_get_learning_rate();
-                        break;
-                    default: break;
-                }
             }
             break;
 
         case KEY_DOWN:
             if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto DOWN\n");
-                // Per prima cosa salviamo il valore precedentemente selezionato
-                p = get_parameter_selected();
-                // Passiamo quindi al successivo parametro
                 dec_parameter_selected();
-                //Possibili valori di parameter_selected:
-                //  0 -> alpha  1 -> gamma  2 -> decay  3 -> eps ini  4 -> eps fin
-                switch(p){
-                    case 0:  
-                        ql_set_learning_rate(value);
-                        step = STEP_EPS;
-                        value = ql_get_epsfin();
-                        break;
-                    case 1:
-                        ql_set_discount_factor(value);
-                        step = STEP_ALPHA;
-                        value = ql_get_learning_rate();
-                        break;
-                    case 2:
-                        ql_set_expl_decay(value);
-                        step = STEP_GAMMA;
-                        value = ql_get_discount_factor();
-                        break;
-                    case 3:
-                        ql_set_epsini(value);
-                        step = STEP_DECAY;
-                        value = ql_get_expl_decay();
-                        break; 
-                    case 4:
-                        ql_set_epsfin(value);
-                        value = ql_get_epsini();
-                        break;
-                    default: break;
-                }
             }
             break;
 
         case KEY_RIGHT:
             if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto RIGHT\n");
-                value += step;
+                p = get_parameter_selected();
+                inc_parameter_value(p);
             }
             break;
 
         case KEY_LEFT:
             if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto LEFT\n");
-                value -= step;
+                p = get_parameter_selected();
+                dec_parameter_value(p);
             }
             break;
         case KEY_G:
@@ -326,7 +293,7 @@ void key_manager(int *exec)
                 pt_set_period(4, 700); // settiamo il periodo del model
                 pt_set_period(3, 70000);  // settiamo il periodo del qlearning
                 pt_set_deadline(4, 700); // settiamo la deadline relativa del model
-                pt_set_deadline(3, 70000);  // settiamo la deadline relativa del qlearning
+                pt_set_deadline(3, 7000);  // settiamo la deadline relativa del qlearning
             }
         default: break;
     }
@@ -409,7 +376,8 @@ void* interface(void * arg)
     i = pt_get_index(arg);
     pt_set_activation(i);
     set_sys_state(0);
-    value = ql_get_learning_rate();
+
+    init_parameter_values();
 
     while(exec)
     {
@@ -433,7 +401,6 @@ void* manual_interface(void * arg)
     i = pt_get_index(arg);
     pt_set_activation(i);
     set_sys_state(0);
-    value = ql_get_learning_rate();
 
     while(exec)
     {

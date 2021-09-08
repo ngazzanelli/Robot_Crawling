@@ -287,13 +287,11 @@ void* dynamics(void* arg){
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
-                //vector_set_zero(G, 2);
             }else{
                 //printf("DYN: Sono dentro y < 0 con y= %f\n",y_ee);
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
                 update_G2(G, robot);
-                //vector_set_zero(G, 2);
             }
 
             generate_tau(tau, robot, M, C, G);
@@ -376,8 +374,13 @@ void* dynamics(void* arg){
         }
 
         //Riprendiamo il valore dello stato globale se siamo in reset
-        if(get_reset())
+        if(get_reset()){
             get_state(&robot);
+            vector_set_zero(q_ind1, 2);
+            vector_set_zero(q_dip1, 4);
+            vector_set_zero(qdot_ind1, 2);
+            vector_set_zero(qdot_dip1, 4);
+        }
 
         if(pt_deadline_miss(i)){
             inc_model_dl();

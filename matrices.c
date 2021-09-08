@@ -9,9 +9,9 @@ dot_state dot_robot;*/
 void update_kyn(float Tsee[4][4], state robot){
 	float value;
 	float q1, q2, q3, q4, q5; 
-	q1 = 0;
-	q2 = 0;
-	q3 = 0;
+	q1 = 0; //robot.q1;
+	q2 = 0; //robot.q2; 
+	q3 = 0; //robot.q3; 
 	q4 = robot.q4;
 	q5 = robot.q5;
 

@@ -82,8 +82,12 @@ static int graphic_dl;
 extern int get_stop();
 extern int get_pause();
 extern int get_play();
+extern int get_reset();
 extern int get_pause_graphic();
 extern float ql_get_epsilon();
+
+extern int get_parameter_selected();
+extern void get_parameter_value(float *buff);
 //Funzione per la conversione da variabili di giunto 
 //a stato quantizzato e per il calcolo della reward
 extern int angles2state(float t1, float t2);
@@ -191,13 +195,50 @@ void update_data(BITMAP* BM_TXT,
     blit(BM_TXT,screen,0,0,X2*scale,0,BM_TXT->w,BM_TXT->h);
 }
 
+void update_data_reset(BITMAP* BM_TXT,
+                float alpha,
+                float gam,
+                float eps_in,
+                float eps_fi,
+                float decay )
+{
+    char str[25];
+    int select;
+    clear_to_color(BM_TXT,makecol(255,255,255));
+    select=get_parameter_selected();
+    sprintf(str,">Learning Rate:%.4f",alpha);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale, Y_TEXT_data*scale, makecol(255,255,255), select==0? makecol(255,0,0): makecol(0,0,0));
+    sprintf(str,">Discount Factor:%.4f",gam);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+1*FB)*scale, makecol(255,255,255), select==1? makecol(255,0,0): makecol(0,0,0));
 
-void update_STAT(BITMAP* BM_SG,int new_state)
+    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_data*scale, (Y_TEXT_data+2*FB)*scale, makecol(255,255,255), select==2? makecol(255,0,0): makecol(0,0,0));
+    sprintf(str,"Epsilon:%.4f",decay);
+    textout_ex(BM_TXT, font, str,X_TEXT_data*scale, (Y_TEXT_data+3*FB)*scale, makecol(255,255,255), select==2? makecol(255,0,0): makecol(0,0,0));
+    sprintf(str,"Minimum Epsilon:%.4f",eps_in);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+4*FB)*scale, makecol(255,255,255), select==3? makecol(255,0,0): makecol(0,0,0));
+
+    sprintf(str,"Maximum Epsilon:%.4f",eps_fi);
+    textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+5*FB)*scale, makecol(255,255,255), select==4? makecol(255,0,0): makecol(0,0,0));
+
+   
+    
+    
+
+    blit(BM_TXT,screen,0,0,X2*scale,0,BM_TXT->w,BM_TXT->h);
+}
+
+void update_STAT(BITMAP* BM_SG,int new_state,int reset)
 {
     static int Sl_count=0;
     static int Sl_begin=0;
     static int Stat_lp[N_ST_SV];
     int i,j,k,col,ind;
+    if(reset)
+    {
+        printf("resetto le variabili di stato\n");
+        Sl_count=0;
+        Sl_begin=0;
+    }
     //printf("GRAPHIC: il nuovo stato vale %d\n",new_state);
     //condizione in cui il vettore ha ancora almeno un elemento 
     //disponibile
@@ -249,14 +290,20 @@ void update_STAT(BITMAP* BM_SG,int new_state)
     
 }
 
-void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range)
+void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int reset)
 {
     static float  Reward_p[Len_Ax_X*scale];
-    static int Rew_count=0;
-    static int Rew_begin=0;
+    static int rew_count=0;
+    static int rew_begin=0;
     int i,cont_plot;
     float val;
     char s[10];
+    if(reset)
+    {
+        printf("resetto le variabili di stato\n");
+        rew_begin=0;
+        rew_count=0;
+    }
 
     line(BM_GS,G_X_OFF*scale,G_Y_OFF*scale,G_X_OFF*scale,(G_Y_OFF-Len_Ax_Y)*scale,makecol(0,0,0));
     line(BM_GS,G_X_OFF*scale,G_Y_OFF*scale,(G_X_OFF+Len_Ax_X)*scale,G_Y_OFF*scale,makecol(0,0,0));
@@ -267,19 +314,19 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range)
 
     textout_ex(BM_GS, font, "Epoch", X_EPOCH_L*scale, Y_EPOCH_L*scale, makecol(0,0,0), makecol(255,255,255));
     textout_ex(BM_GS, font, "Reward Plot", X_G_NAME*scale, Y_G_NAME*scale, makecol(0,0,0), makecol(255,255,255));
-    if(Rew_count<Len_Ax_X*scale-1)
+    if(rew_count<Len_Ax_X*scale-1)
     {
-        Reward_p[Rew_count]=reward;
-        Rew_count++;
+        Reward_p[rew_count]=reward;
+        rew_count++;
     }
     else
     {
-        Rew_begin=(Rew_begin+1)%(Len_Ax_X*scale);
-        Reward_p[(Rew_begin+Len_Ax_X*scale)%(Len_Ax_X*scale)]=reward;
+        rew_begin=(rew_begin+1)%(Len_Ax_X*scale);
+        Reward_p[(rew_begin+Len_Ax_X*scale)%(Len_Ax_X*scale)]=reward;
     }
-    for(i=0;i<Rew_count;i++)
+    for(i=0;i<rew_count;i++)
     {
-        cont_plot=(i+Rew_begin)%(Len_Ax_X*scale);
+        cont_plot=(i+rew_begin)%(Len_Ax_X*scale);
         if(Reward_p[cont_plot]>=max_range)
             val=(float)max_range;
         else if(Reward_p[cont_plot]<=min_range)
@@ -294,15 +341,23 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range)
 
 }
 
-void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int flag)
+void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int flag,int reset)
 {
     if(flag==1)
     {
         clear_to_color(BM_GS,makecol(255,255,255));
-        update_STAT(BM_GS,state);
-        update_graph(BM_GS,reward,min_r,max_r);
+        update_STAT(BM_GS,state,reset);
+        update_graph(BM_GS,reward,min_r,max_r,reset);
         blit(BM_GS,screen,0,0,X1*scale,Y1*scale,BM_GS->w,BM_GS->h);
     }
+    if(reset)
+    {
+        clear_to_color(BM_GS,makecol(255,255,255));
+        update_STAT(BM_GS,angles2state(0,0),reset);
+        update_graph(BM_GS,0,min_r,max_r,reset);
+        blit(BM_GS,screen,0,0,X1*scale,Y1*scale,BM_GS->w,BM_GS->h);
+    }
+
 }
 /*
 * set di funzioni per la gestione della bitmap in cui viene 
@@ -492,6 +547,7 @@ void *update_graphic(void *arg)
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
     float epsilon;
+    float values[5];
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
     //inizializzo allegro e lo scermo 
     init_s();
@@ -508,7 +564,7 @@ void *update_graphic(void *arg)
     while (!get_stop())
     {
 
-        if(get_play()/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
+        if(get_play() || get_reset()/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
         {
             //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);
@@ -518,14 +574,27 @@ void *update_graphic(void *arg)
             get_model_dl(&mod_dl);
             get_crawler_dl(&craw_dl);
             epsilon=ql_get_epsilon();
-            update_data(P_data,0.5,0,epsilon,0,rob.q1,mod_dl,craw_dl,int_dl,epoch);
+            if(get_play())
+                update_data(P_data,values[0],values[1],epsilon,values[2],rob.q1,mod_dl,craw_dl,int_dl,epoch);
+            if (get_reset())
+            {
+                get_parameter_value(values);
+                update_data_reset(P_data,values[0],values[1],values[3],values[4],values[2]);
+            }
             get_rs_for_plot(&rew_st);
-            update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag);
+            update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,0);
+
             if(rew_st.flag==1)
             {
                 ql_get_Q(Matrix_Q);
                 update_MQ(MQ,Matrix_Q,0.1);
                 epoch++;
+            }
+
+            if(get_reset()){
+                ql_get_Q(Matrix_Q);
+                update_MQ(MQ, Matrix_Q, 0.1);
+                update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,1);
             }
         }
         

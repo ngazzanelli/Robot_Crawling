@@ -31,7 +31,7 @@ static float dt1, dt2;
 static int n2;          // # of theta2 quantiations 
 static int crawler_dl;
 
-static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_desired_joint = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_reward = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_CR_dl = PTHREAD_MUTEX_INITIALIZER;
 // Struttura per lo stato reale del robot
@@ -66,6 +66,8 @@ static rs_for_plot rw;
 extern int get_stop();
 extern int get_pause();
 extern int get_play();
+extern int get_reset();
+extern void set_qlearning_values();
 //Funzioni dal modello
 extern void get_state(state* s);
 
@@ -108,13 +110,21 @@ void set_desired_joint(int s){
 
 }
 */
+void reset_desired_joint()
+{
+    pthread_mutex_lock(&mux_desired_joint);
+    qd.t1d = 0;
+    qd.t2d = 0;
+    qd.flag = 0;
+    pthread_mutex_unlock(&mux_desired_joint);
+}
 void get_desired_joint(target* t){
-  pthread_mutex_lock(&mux);
+  pthread_mutex_lock(&mux_desired_joint);
   t->t1d = qd.t1d;
   t->t2d = qd.t2d;
   t->flag = qd.flag;
   qd.flag = 0;
-  pthread_mutex_unlock(&mux);
+  pthread_mutex_unlock(&mux_desired_joint);
 }
 void get_rs_for_plot(rs_for_plot* t){
   pthread_mutex_lock(&mux_reward);
@@ -151,8 +161,10 @@ int get_reward(int s, int snew, state robot){
     if(robot.dt3 > 0)
         r = 10*robot.dt3;
     else if(robot.dt3 < 0)
-        r = 7*robot.dt3;
+        r = 10*robot.dt3;
+
     r-=1;
+
     if (snew == s) 
         r += RHIT;        // hit the limit angle
 
@@ -160,7 +172,7 @@ int get_reward(int s, int snew, state robot){
 }
 
 int next_desired_state(int a){
-    pthread_mutex_lock(&mux);
+    pthread_mutex_lock(&mux_desired_joint);
     switch(a){
         case TH1UP: 
             qd.t1d += DTH1;
@@ -182,7 +194,7 @@ int next_desired_state(int a){
     if (qd.t2d > TH2MAX) qd.t2d = TH2MAX;
     if (qd.t2d < TH2MIN) qd.t2d = TH2MIN;
     qd.flag = 1;
-    pthread_mutex_unlock(&mux);
+    pthread_mutex_unlock(&mux_desired_joint);
     return angles2state(qd.t1d, qd.t2d);
 }
 
@@ -206,7 +218,7 @@ void* qlearning(void* arg){
     init_global_variables();
     printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
-
+   
     while (!get_stop()){
 
         //Controllo se l'applicazione è in pausa
@@ -250,6 +262,14 @@ void* qlearning(void* arg){
                 ql_reduce_exploration();
               
         }
+
+        if(get_reset()){
+            ql_init(NSTATES, NACTIONS);
+            set_qlearning_values();
+            ql_copy_Q();
+            reset_desired_joint();
+        }
+        
     }
     printf("QLEARN: task finshed\n");
     return NULL;
