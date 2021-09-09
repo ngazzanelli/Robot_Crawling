@@ -26,7 +26,7 @@
 #define Y_OFF 50
 
 #define X_TEXT 35//valori di offset della stringa "matrice Q"
-#define Y_TEXT 5
+#define Y_TEXT 10
 
 #define X_TEXT_data 15//valori di offset per il plot dei 
 #define Y_TEXT_data 50//dati di interesse(parametri di learning,...)
@@ -44,7 +44,8 @@
 //elementi per l'aggiornamento del grafico 
 #define G_X_OFF 50
 #define G_Y_OFF 165
-#define Len_Ax_X 301
+#define Len_Ax_X 300
+#define Len_Line 10
 #define Len_Ax_Y 141
 #define X_MAX_R_L 20
 #define Y_MAX_R_L 30
@@ -79,7 +80,7 @@ static int graphic_dl;
 
 
 //Funzioni dall'interprete
-extern int get_stop();
+extern int get_stop(int* temp);
 extern int get_pause();
 extern int get_play();
 extern int get_reset();
@@ -116,6 +117,38 @@ int conv_col(int col,int cscale)
         return(col*cscale);
     }
 }
+void reset_command()
+{
+    textout_ex(screen,font,"Pulsanti di controllo:",X_TEXT_data*scale,(Y1+Y_TEXT +FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"E <--> Chiusura",X_TEXT_data*scale,(Y1+Y_TEXT+2*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"del Programma",X_TEXT_data*scale,(Y1+Y_TEXT+3*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"S <--> Avvio",X_TEXT_data*scale,(Y1+Y_TEXT+4*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"del Learning",X_TEXT_data*scale,(Y1+Y_TEXT+5*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"UP/DOWN <--> Cambio",X_TEXT_data*scale,(Y1+Y_TEXT+6*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"Par. di Apprendimento",X_TEXT_data*scale,(Y1+Y_TEXT+7*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    
+    textout_ex(screen,font,"RIGHT <--> Incremento",X_TEXT_data*scale,(Y1+Y_TEXT+8*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"Par. di Apprendimento ",X_TEXT_data*scale,(Y1+Y_TEXT+9*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    
+    textout_ex(screen,font,"LEFT <--> Decremento",X_TEXT_data*scale,(Y1+Y_TEXT+10*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"Par. di Apprendimento",X_TEXT_data*scale,(Y1+Y_TEXT+11*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    
+}
+
+void not_reset_command()
+{
+    textout_ex(screen,font,"Pulsanti di controllo:",X_TEXT_data*scale,(Y1+Y_TEXT +FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"E <--> Chiusura",X_TEXT_data*scale,(Y1+Y_TEXT+2*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"del Programma",X_TEXT_data*scale,(Y1+Y_TEXT+3*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"R <--> Reset",X_TEXT_data*scale,(Y1+Y_TEXT+4*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"del Programma",X_TEXT_data*scale,(Y1+Y_TEXT+5*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    
+    textout_ex(screen,font,"G <--> Set/Reset",X_TEXT_data*scale,(Y1+Y_TEXT+6*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"Accelleratore Learning",X_TEXT_data*scale,(Y1+Y_TEXT+7*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    
+    textout_ex(screen,font,"P <--> Pause/Play",X_TEXT_data*scale,(Y1+Y_TEXT+8*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+
+}
 void   init_s()
 {
     int i,j;
@@ -124,7 +157,7 @@ void   init_s()
     install_keyboard();
     set_color_depth(32);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_win*scale,H_win*scale,0,0);
-    clear_to_color(screen,BKG);
+    clear_to_color(screen,makecol(200,200,200));
     // parte di inizializzazione pre-extern variable
     /*joint_var.q1=0;
     joint_var.q2=0;
@@ -235,7 +268,7 @@ void update_STAT(BITMAP* BM_SG,int new_state,int reset)
     int i,j,k,col,ind;
     if(reset)
     {
-        printf("resetto le variabili di stato\n");
+        //printf("resetto le variabili di stato\n");
         Sl_count=0;
         Sl_begin=0;
     }
@@ -292,7 +325,7 @@ void update_STAT(BITMAP* BM_SG,int new_state,int reset)
 
 void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int reset)
 {
-    static float  Reward_p[Len_Ax_X*scale];
+    static float  Reward_p[(Len_Ax_X/Len_Line)];
     static int rew_count=0;
     static int rew_begin=0;
     int i,cont_plot;
@@ -300,7 +333,7 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int res
     char s[10];
     if(reset)
     {
-        printf("resetto le variabili di stato\n");
+        //printf("resetto le variabili di stato\n");
         rew_begin=0;
         rew_count=0;
     }
@@ -314,16 +347,17 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int res
 
     textout_ex(BM_GS, font, "Epoch", X_EPOCH_L*scale, Y_EPOCH_L*scale, makecol(0,0,0), makecol(255,255,255));
     textout_ex(BM_GS, font, "Reward Plot", X_G_NAME*scale, Y_G_NAME*scale, makecol(0,0,0), makecol(255,255,255));
-    if(rew_count<Len_Ax_X*scale-1)
+    if(rew_count<(Len_Ax_X/Len_Line))
     {
         Reward_p[rew_count]=reward;
         rew_count++;
     }
     else
     {
-        rew_begin=(rew_begin+1)%(Len_Ax_X*scale);
-        Reward_p[(rew_begin+Len_Ax_X*scale)%(Len_Ax_X*scale)]=reward;
+        rew_begin=(rew_begin+1)%((Len_Ax_X/Len_Line));
+        Reward_p[(rew_begin+(Len_Ax_X/Len_Line))%((Len_Ax_X/Len_Line))]=reward;
     }
+    printf("il numero di elementi nel vettore è %d ed al massimo può essere %d\n",rew_count,(Len_Ax_X/Len_Line)*scale);
     for(i=0;i<rew_count;i++)
     {
         cont_plot=(i+rew_begin)%(Len_Ax_X*scale);
@@ -335,8 +369,8 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int res
             val=Reward_p[cont_plot];
         
         val=((val-min_range)/(max_range-min_range))*(Len_Ax_Y*scale-1);
-        putpixel(BM_GS,(G_X_OFF*scale+1+i),(G_Y_OFF*scale-floor(val)),makecol(255,0,0));
-        
+       //putpixel(BM_GS,(G_X_OFF*scale+1+i),(G_Y_OFF*scale-floor(val)),makecol(255,0,0));
+        line(BM_GS,(G_X_OFF*scale+i*Len_Line*scale),(G_Y_OFF*scale-floor(val)),(G_X_OFF*scale+(i+1)*Len_Line*scale),(G_Y_OFF*scale-floor(val)),makecol(255,0,0));
     }
 
 }
@@ -452,6 +486,9 @@ void L2_kin(int position[],state s)
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
     //printf("SONO DENTRO UPDATE_CR\n");
+    /*BITMAP * floor_cell=load_bitmap("floor.png",NULL);
+    if(floor_cell==NULL)
+        printf("DIOPORCO\n");*/
     int figure[12];
     clear_to_color(BM_CR,makecol(255,255,255));
     line(BM_CR,0,(BM_CR->h-h_floor*scale),(BM_CR->w),(BM_CR->h-h_floor*scale),1);
@@ -464,7 +501,7 @@ void update_CR(BITMAP* BM_CR,state joint_v)
     circlefill(BM_CR,figure[2],figure[3],MToPx(r_joint,2),makecol(CR_All_R,CR_All_G,CR_All_B));
     L2_kin(figure,joint_v);
     line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    
+    //blit(floor_cell,BM_CR,0,0,0,0,floor_cell->h,floor_cell->h);
     blit(BM_CR,screen,0,0,X1*scale,0,BM_CR->w,BM_CR->h);
 
 }
@@ -542,7 +579,7 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti,s,i=0,int_dl,mod_dl,craw_dl,epoch = 0;
+    int ti,s,i=0,int_dl,mod_dl,craw_dl,epoch = 0,exec;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
@@ -557,14 +594,14 @@ void *update_graphic(void *arg)
     MQ=create_bitmap(X1*scale,Y1*scale);
     P_data=create_bitmap((W_win-X2)*scale,Y1*scale);
     GRP_STAT=create_bitmap((W_win-X1)*scale,(Y1)*scale);
-
+    
     ti = pt_get_index(arg);
     pt_set_activation(ti);
 
-    while (!get_stop())
+    while (!get_stop(&exec))
     {
 
-        if(get_play() || get_reset()/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
+        if(exec==1 || exec==0/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
         {
             //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);
@@ -574,27 +611,29 @@ void *update_graphic(void *arg)
             get_model_dl(&mod_dl);
             get_crawler_dl(&craw_dl);
             epsilon=ql_get_epsilon();
-            if(get_play())
+            if(exec==1)
+            {
                 update_data(P_data,values[0],values[1],epsilon,values[2],rob.q1,mod_dl,craw_dl,int_dl,epoch);
-            if (get_reset())
+                not_reset_command();
+            }
+            if (exec==0)
             {
                 get_parameter_value(values);
                 update_data_reset(P_data,values[0],values[1],values[3],values[4],values[2]);
+                ql_get_Q(Matrix_Q);
+                update_MQ(MQ, Matrix_Q, 0.1);
+                update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,1);
+                reset_command();
             }
             get_rs_for_plot(&rew_st);
             update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,0);
+            
 
             if(rew_st.flag==1)
             {
                 ql_get_Q(Matrix_Q);
                 update_MQ(MQ,Matrix_Q,0.1);
                 epoch++;
-            }
-
-            if(get_reset()){
-                ql_get_Q(Matrix_Q);
-                update_MQ(MQ, Matrix_Q, 0.1);
-                update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,1);
             }
         }
         

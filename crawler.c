@@ -66,7 +66,7 @@ static rs_for_plot rw;
 extern int get_stop();
 extern int get_pause();
 extern int get_play();
-extern int get_reset();
+extern int get_reset(int * temp);
 extern void set_qlearning_values();
 //Funzioni dal modello
 extern void get_state(state* s);
@@ -207,7 +207,7 @@ void* qlearning(void* arg){
     int play;  // Serve per saltare entrambe le sezioni in 
                 // cui è diviso il corpo del while per 
                 // evitare di chiamare due volte get_pause()
-    int s, a, r=0, snew;
+    int s, a, r=0, snew,exec;
     long step = 0;
     float newerr, err = 0;
     state robot;
@@ -219,11 +219,11 @@ void* qlearning(void* arg){
     printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
    
-    while (!get_stop()){
+    while (!get_stop(&exec)){
 
         //Controllo se l'applicazione è in pausa
         play = get_play();
-        if(play){
+        if(exec==1){
             float period = pt_get_period(3);
             //printf("QLEARN: il mio periodo vale %f\n", period);
             //printf("QLEARN: sono dentro all'if\n");
@@ -249,7 +249,7 @@ void* qlearning(void* arg){
             }
             pt_wait_for_period(i);
 
-        if(play){  
+        if(exec==1){  
             r = get_reward(s, snew, robot);
             //printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
@@ -263,7 +263,7 @@ void* qlearning(void* arg){
               
         }
 
-        if(get_reset()){
+        if(exec==0){
             ql_init(NSTATES, NACTIONS);
             set_qlearning_values();
             ql_copy_Q();

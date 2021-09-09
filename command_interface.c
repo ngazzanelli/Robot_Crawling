@@ -44,25 +44,18 @@ int get_parameter_selected(){
   return ret;
 }
 void inc_parameter_value(int p){
-    float temp;
     pthread_mutex_lock(&mux_parameter_values);
-    temp = values[p];
-    pthread_mutex_unlock(&mux_parameter_values);
-    if(temp == 1)
-        return;
-    pthread_mutex_lock(&mux_parameter_values);
-    values[p] += STEP;
+    if(values[p] < 1)
+        values[p] += STEP;
     pthread_mutex_unlock(&mux_parameter_values);
 }
 void dec_parameter_value(int p){
-    float temp;
+    //float temp;
     pthread_mutex_lock(&mux_parameter_values);
-    temp = values[p];
-    pthread_mutex_unlock(&mux_parameter_values);
-    if(temp == 0)
-        return;
-    pthread_mutex_lock(&mux_parameter_values);
-    values[p] -= STEP;
+    //temp = values[p];
+   // pthread_mutex_unlock(&mux_parameter_values);
+    if(values[p]>0.01)
+       values[p] -= STEP;
     pthread_mutex_unlock(&mux_parameter_values);
 }
 void get_parameter_value(float *buff){
@@ -159,12 +152,11 @@ int get_play(){
 }
 
 
-int get_stop(){
-    int temp ;
+int get_stop(int *temp ){
     pthread_mutex_lock(&mux_sys_state);
-    temp = sys_state;
+    * temp = sys_state;
     pthread_mutex_unlock(&mux_sys_state);
-    if(temp == 3)
+    if(*temp == 3)
         return 1;
     else
         return 0;
@@ -250,14 +242,14 @@ void key_manager(int *exec)
         case KEY_UP:
             if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto UP\n");
-                inc_parameter_selected();
+                dec_parameter_selected();
             }
             break;
 
         case KEY_DOWN:
             if(sys_state == 0){
                 printf("INTERFACE: hai premuto il tasto DOWN\n");
-                dec_parameter_selected();
+                inc_parameter_selected();
             }
             break;
 

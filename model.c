@@ -118,7 +118,7 @@ void set_state(state s){
 extern int get_stop();
 extern int get_pause();
 extern int get_play();
-extern int get_reset();
+extern int get_reset(int *temp);
 
 void update_coefficients(float coef1[4], float coef2[4], state robot){
 
@@ -246,7 +246,7 @@ void* dynamics(void* arg){
 
     printf("DYNAMIC: task started\n");
     init_state();
-    int i;            // thread index
+    int i,exec;            // thread index
     float y_ee;
     float dt;
     state robot;
@@ -269,10 +269,10 @@ void* dynamics(void* arg){
     pt_set_activation(i);
     //printf("DYN: il mio periodo è %d microsecondi\n", pt_get_period(i));
     
-    while(!get_stop()){
+    while(!get_stop(&exec)){
 
         //controllo se l'applicazione è in pausa o in reset
-        if(get_play()){
+        if(exec==1){
             //printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
 
             dt = get_dyn_dt();
@@ -374,7 +374,7 @@ void* dynamics(void* arg){
         }
 
         //Riprendiamo il valore dello stato globale se siamo in reset
-        if(get_reset()){
+        if(exec==0){
             get_state(&robot);
             vector_set_zero(q_ind1, 2);
             vector_set_zero(q_dip1, 4);
