@@ -10,6 +10,12 @@
 #define PI 3.14
 #define PASSO 0.01
 
+// COSTANTI PER LO STATO DEL SISTEMA
+#define RESET   0
+#define PLAY    1
+#define PAUSE   2
+#define STOP    3
+
 // Costanti utili per la modifica dei parametri del qlearning
 #define NPARAM  5  //total number of possible learning parameters
 #define STEP 0.1   //step di incremento e decremento dei parametri del qlearning
@@ -50,15 +56,12 @@ void inc_parameter_value(int p){
     pthread_mutex_unlock(&mux_parameter_values);
 }
 void dec_parameter_value(int p){
-    //float temp;
     pthread_mutex_lock(&mux_parameter_values);
-    //temp = values[p];
-   // pthread_mutex_unlock(&mux_parameter_values);
     if(values[p]>0.01)
        values[p] -= STEP;
     pthread_mutex_unlock(&mux_parameter_values);
 }
-void get_parameter_value(float *buff){
+void get_parameter_values(float *buff){
     pthread_mutex_lock(&mux_parameter_values);
     vector_copy(values, buff, 5);
     pthread_mutex_unlock(&mux_parameter_values);
@@ -77,6 +80,7 @@ void set_qlearning_values(){
     ql_set_expl_decay(values[2]);
     ql_set_epsini(values[3]);
     ql_set_epsfin(values[4]);
+    ql_set_epsilon(values[3]);
     pthread_mutex_unlock(&mux_parameter_values);
 }
 
@@ -97,13 +101,15 @@ int get_pause_graphic(){
 
 static int sys_state;
 static pthread_mutex_t mux_sys_state = PTHREAD_MUTEX_INITIALIZER;
-//
+
+//Funzioni esterne da altri moduli
+extern void init_state();
 extern int next_desired_state(int a);
 extern void set_dyn_dt(float dt);
 extern float get_dyn_dt();
 
-//funzione che incrementa la variabile delle deadline miss
-//l'ho fatta così per non modificare la funzione di pthask
+// Funzione che incrementa la variabile delle deadline miss
+// (l'ho fatta così per non modificare la funzione di ptask)
 void inc_interface_dl()
 {
     pthread_mutex_lock(&mux_int_dl);
@@ -111,7 +117,7 @@ void inc_interface_dl()
     pthread_mutex_unlock(&mux_int_dl);
 }
 
-//funzione che ottiene il valore della deadline miss
+// Funzione che ottiene il valore della deadline miss
 void get_interface_dl(int * dl_miss)
 {
     pthread_mutex_lock(&mux_int_dl);
@@ -119,62 +125,7 @@ void get_interface_dl(int * dl_miss)
     pthread_mutex_unlock(&mux_int_dl);
 }
 
-// Variabile globale  che controlla il flusso delle operazioni:
-   //case 0: sistema appena acceso, unico modo per settare
-   //   le variabili del qlearning
-   //case 1: sistema in play, i task sono attivi ed eseguono 
-   //   tutte le istruzioni 
-   //case 2: sistema in pausa, i task rimangono attivi 
-   //   ma non eseguono il flusso principale
-   //case 3: arresto del sistema 
-
-int get_pause(){
-    int temp ;
-    pthread_mutex_lock(&mux_sys_state);
-    temp = sys_state;
-    pthread_mutex_unlock(&mux_sys_state);
-    if(temp == 2)
-        return 1;
-    else
-        return 0;
-}
-
-
-int get_play(){
-    int temp ;
-    pthread_mutex_lock(&mux_sys_state);
-    temp = sys_state;
-    pthread_mutex_unlock(&mux_sys_state);
-    if(temp == 1)
-        return 1;
-    else
-        return 0;
-}
-
-
-int get_stop(int *temp ){
-    pthread_mutex_lock(&mux_sys_state);
-    * temp = sys_state;
-    pthread_mutex_unlock(&mux_sys_state);
-    if(*temp == 3)
-        return 1;
-    else
-        return 0;
-}
-
-int get_reset(){
-    int temp ;
-    pthread_mutex_lock(&mux_sys_state);
-    temp = sys_state;
-    pthread_mutex_unlock(&mux_sys_state);
-    if(temp == 0)
-        return 1;
-    else
-        return 0;
-}
-
-
-//funzioni di interfaccia per accedere allo stato dell'applicazione
+// Funzioni di interfaccia per accedere allo stato dell'applicazione
 void set_sys_state(int i)
 {
     if(i>=0 && i<4)
@@ -184,15 +135,14 @@ void set_sys_state(int i)
         pthread_mutex_unlock(&mux_sys_state);
     }
 }
-void get_sys_state(int *ic) //LA MODIFICHEREI METTENDO IL RITORNO DI TIPO INTERO E TOGLIENDO IL PARAMETRO PASSATO
+int get_sys_state(int *s)
 {
     pthread_mutex_lock(&mux_sys_state);
-    *ic = sys_state;
+    *s = sys_state;
     pthread_mutex_unlock(&mux_sys_state);
+    return *s;
 }
 
-//Funzioni esterne da altri moduli
-extern void init_state();
 
 // Funzione per ottenere il codice del tasto premuto da tastiera 
 char get_scancode()
@@ -204,7 +154,7 @@ char get_scancode()
 }
 
 
-void key_manager(int *exec)
+void key_manager(int exec)
 {
     int p;          //Serve per gestire il cambio di parametro del qlearning
     char cm;
@@ -215,46 +165,45 @@ void key_manager(int *exec)
 
         case KEY_R:
             printf("INTERFACE: hai premuto il tasto R\n");
-            set_sys_state(0);
+            set_sys_state(RESET);
             init_state();
             break;
 
         case KEY_S:
             printf("INTERFACE: hai premuto il tasto S\n");
-            if(get_reset())
-                set_sys_state(1);
+            if(exec == RESET)
+                set_sys_state(PLAY);
             break;
 
         case KEY_P:
             printf("INTERFACE: hai premuto il tasto P\n");
-            if(get_play())
-                set_sys_state(2);
-            else if(get_pause())
-                set_sys_state(1);
+            if(exec == PLAY)
+                set_sys_state(PAUSE);
+            else if(exec == PAUSE)
+                set_sys_state(PLAY);
             break;
 
         case KEY_E:
             printf("INTERFACE: hai premuto il tasto E\n");
-            set_sys_state(3);  
-            *exec=0;
+            set_sys_state(STOP); 
             break;
 
         case KEY_UP:
-            if(sys_state == 0){
+            if(sys_state == RESET){
                 printf("INTERFACE: hai premuto il tasto UP\n");
                 dec_parameter_selected();
             }
             break;
 
         case KEY_DOWN:
-            if(sys_state == 0){
+            if(sys_state == RESET){
                 printf("INTERFACE: hai premuto il tasto DOWN\n");
                 inc_parameter_selected();
             }
             break;
 
         case KEY_RIGHT:
-            if(sys_state == 0){
+            if(sys_state == RESET){
                 printf("INTERFACE: hai premuto il tasto RIGHT\n");
                 p = get_parameter_selected();
                 inc_parameter_value(p);
@@ -262,13 +211,13 @@ void key_manager(int *exec)
             break;
 
         case KEY_LEFT:
-            if(sys_state == 0){
+            if(sys_state == RESET){
                 printf("INTERFACE: hai premuto il tasto LEFT\n");
                 p = get_parameter_selected();
                 dec_parameter_value(p);
             }
             break;
-        case KEY_G:
+        case KEY_B:
             printf("hai premuto il tasto G\n");
             change_pause_graphic();
             pg = get_pause_graphic(); //pg = "pause graphic"
@@ -298,7 +247,7 @@ void key_manager_manual(int *exec)
     char cm;
     int s;
 
-
+/*DA RIFARE TOGLIENDO GET_STOP ETC
     cm = get_scancode();
     switch(cm){
 
@@ -357,30 +306,26 @@ void key_manager_manual(int *exec)
             break;
 
         default: break;
-    }
+    }*/
 }
 
 
 void* interface(void * arg)
 {
     printf("INTERPRETER: task started\n");
-    int i,  exec = 1;
+    int i,  exec;
     i = pt_get_index(arg);
     pt_set_activation(i);
-    set_sys_state(0);
+    set_sys_state(RESET);
 
     init_parameter_values();
 
-    while(exec)
+    while(get_sys_state(&exec) != STOP)
     {
-        key_manager(&exec);
+        key_manager(exec);
         if(pt_deadline_miss(i))
             inc_interface_dl();
         pt_wait_for_period(i);
-        if(exec==0)
-        {
-            printf("ho finito \n");
-        }
     }
     printf("INTERPRETER: task end\n");
     return NULL;
@@ -389,10 +334,10 @@ void* interface(void * arg)
 void* manual_interface(void * arg)
 {
     printf("INTERPRETER: task started\n");
-    int i,  exec = 1;
+    int i,  exec;
     i = pt_get_index(arg);
     pt_set_activation(i);
-    set_sys_state(0);
+    set_sys_state(RESET);
 
     while(exec)
     {

@@ -1,10 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "qlearn.h"
 #include "ptask.h"
 
 #define NSTATES     49
 #define NACTIONS    4
+
+// COSTANTI PER LO STATO DEL SISTEMA
+#define RESET   0
+#define PLAY    1
+#define PAUSE   2
+#define STOP    3
 
 // Global definitions
 #define TH1UP   0       // action move up link 1
@@ -63,11 +70,9 @@ static target qd;
 static rs_for_plot rw;
 
 //Funzioni dall'interprete
-extern int get_stop();
-extern int get_pause();
-extern int get_play();
-extern int get_reset(int * temp);
+extern int get_sys_state(int *s);
 extern void set_qlearning_values();
+extern void init_parameter_values();
 //Funzioni dal modello
 extern void get_state(state* s);
 
@@ -158,9 +163,7 @@ int get_reward(int s, int snew, state robot){
 
     int r = 0;
 
-    if(robot.dt3 > 0)
-        r = 10*robot.dt3;
-    else if(robot.dt3 < 0)
+    if(robot.dt3 != 0)
         r = 10*robot.dt3;
 
     r-=1;
@@ -207,7 +210,7 @@ void* qlearning(void* arg){
     int play;  // Serve per saltare entrambe le sezioni in 
                 // cui è diviso il corpo del while per 
                 // evitare di chiamare due volte get_pause()
-    int s, a, r=0, snew,exec;
+    int s, a, r=0, snew,exec, old_exec = 0;
     long step = 0;
     float newerr, err = 0;
     state robot;
@@ -216,14 +219,19 @@ void* qlearning(void* arg){
     pt_set_activation(i);
     ql_init(NSTATES, NACTIONS);
     init_global_variables();
+    init_parameter_values();
     printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
-   
-    while (!get_stop(&exec)){
+    
+    while (get_sys_state(&exec) != STOP){
 
-        //Controllo se l'applicazione è in pausa
-        play = get_play();
-        if(exec==1){
+        if(exec == PLAY){
+
+            if(old_exec == RESET){
+                set_qlearning_values();
+                old_exec = PLAY;
+            }
+
             float period = pt_get_period(3);
             //printf("QLEARN: il mio periodo vale %f\n", period);
             //printf("QLEARN: sono dentro all'if\n");
@@ -243,13 +251,15 @@ void* qlearning(void* arg){
                                             //anche le variabili di giunto desiderate "qd"
             //printf("QLEARN: Ottenuto il nuovo stato\n");
         }
-            if(pt_deadline_miss(i)){
-                printf("QLEARN: ho missato una deadline\n");
-                inc_crawler_dl();
-            }
-            pt_wait_for_period(i);
+            
+        if(pt_deadline_miss(i)){
+            printf("QLEARN: ho missato una deadline\n");
+            inc_crawler_dl();
+        }
+        
+        pt_wait_for_period(i);
 
-        if(exec==1){  
+        if(exec == PLAY){  
             r = get_reward(s, snew, robot);
             //printf("Ottenuto il reward r = %d\n", r);
             newerr = ql_updateQ(s, a, r, snew);
@@ -258,14 +268,14 @@ void* qlearning(void* arg){
             //err +=  (newerr - err)/step;
             //if (step % 100 == 0)
                 //ql_print_Qmatrix();
-            if (step % 500 == 0)
+            if (step % 10 == 0)
                 ql_reduce_exploration();
               
         }
 
-        if(exec==0){
+        if(exec == RESET){
+            old_exec = exec;
             ql_init(NSTATES, NACTIONS);
-            set_qlearning_values();
             ql_copy_Q();
             reset_desired_joint();
         }

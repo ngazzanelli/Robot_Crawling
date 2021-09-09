@@ -38,5 +38,6 @@ extern void ql_set_expl_range(float eps_ini, float eps_fin);
 extern void ql_set_expl_decay(float decay);
 extern void ql_set_epsini(float eps_ini);
 extern void ql_set_epsfin(float eps_fin);
+extern void ql_set_epsilon(float e);
 
 #endif

@@ -5,15 +5,17 @@
 #include "ptask.h"
 #include "matrices.h"
 
-
-
-
-
 #define T   0.1       // Intervallo di generazione della traiettoria      [s]
 
-/******************** COSTANTI DEL CONTROLLO **********************/
+// COSTANTI DEL CONTROLLO
 #define KC  10 
 #define KD  10
+
+// COSTANTI PER LO STATO DEL SISTEMA
+#define RESET   0
+#define PLAY    1
+#define PAUSE   2
+#define STOP    3
 
 static float DT = 0.001;          // Intervallo di integrazione della dinamica        [s]
 static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;
@@ -115,10 +117,7 @@ void set_state(state s){
 }
 
 //Funzione dall'interprete
-extern int get_stop();
-extern int get_pause();
-extern int get_play();
-extern int get_reset(int *temp);
+extern int get_sys_state(int *s);
 
 void update_coefficients(float coef1[4], float coef2[4], state robot){
 
@@ -246,7 +245,7 @@ void* dynamics(void* arg){
 
     printf("DYNAMIC: task started\n");
     init_state();
-    int i,exec;            // thread index
+    int i,exec;            // thread index and system state
     float y_ee;
     float dt;
     state robot;
@@ -269,10 +268,10 @@ void* dynamics(void* arg){
     pt_set_activation(i);
     //printf("DYN: il mio periodo è %d microsecondi\n", pt_get_period(i));
     
-    while(!get_stop(&exec)){
+    while(get_sys_state(&exec) != STOP){
 
         //controllo se l'applicazione è in pausa o in reset
-        if(exec==1){
+        if(exec==PLAY){
             //printf("DYNAMIC: il valore di q è: [%f %f %f %f %f %f]\n",robot.q1, robot.q2, robot.q3, robot.q4, robot.q5, robot.q6);
 
             dt = get_dyn_dt();
@@ -374,7 +373,7 @@ void* dynamics(void* arg){
         }
 
         //Riprendiamo il valore dello stato globale se siamo in reset
-        if(exec==0){
+        if(exec==RESET){
             get_state(&robot);
             vector_set_zero(q_ind1, 2);
             vector_set_zero(q_dip1, 4);

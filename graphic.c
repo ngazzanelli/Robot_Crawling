@@ -5,6 +5,12 @@
 #include <string.h>
 #include "matrices.h"
 
+// COSTANTI PER LO STATO DEL SISTEMA
+#define RESET   0
+#define PLAY    1
+#define PAUSE   2
+#define STOP    3
+
 #define W_win 640 //larghezza della finestra
 #define H_win 480 //altezza della finestra 
 #define X1 120 //posizioni di riferimento delle BITMAP che compongono la parte
@@ -80,15 +86,12 @@ static int graphic_dl;
 
 
 //Funzioni dall'interprete
-extern int get_stop(int* temp);
-extern int get_pause();
-extern int get_play();
-extern int get_reset();
+extern int get_sys_state(int* s);
 extern int get_pause_graphic();
 extern float ql_get_epsilon();
 
 extern int get_parameter_selected();
-extern void get_parameter_value(float *buff);
+extern void get_parameter_values(float *buff);
 //Funzione per la conversione da variabili di giunto 
 //a stato quantizzato e per il calcolo della reward
 extern int angles2state(float t1, float t2);
@@ -119,6 +122,8 @@ int conv_col(int col,int cscale)
 }
 void reset_command()
 {
+    //clear_to_color(screen,makecol(200,200,200));
+    rectfill(screen,0,Y1*scale,X1*scale,H_win*scale,makecol(200,200,200));
     textout_ex(screen,font,"Pulsanti di controllo:",X_TEXT_data*scale,(Y1+Y_TEXT +FB)*scale, makecol(0,0,255),makecol(200,200,200));
     textout_ex(screen,font,"E <--> Chiusura",X_TEXT_data*scale,(Y1+Y_TEXT+2*FB)*scale, makecol(0,0,255),makecol(200,200,200));
     textout_ex(screen,font,"del Programma",X_TEXT_data*scale,(Y1+Y_TEXT+3*FB)*scale, makecol(0,0,255),makecol(200,200,200));
@@ -137,14 +142,15 @@ void reset_command()
 
 void not_reset_command()
 {
+    rectfill(screen,0,Y1*scale,X1*scale,H_win*scale,makecol(200,200,200));
     textout_ex(screen,font,"Pulsanti di controllo:",X_TEXT_data*scale,(Y1+Y_TEXT +FB)*scale, makecol(0,0,255),makecol(200,200,200));
     textout_ex(screen,font,"E <--> Chiusura",X_TEXT_data*scale,(Y1+Y_TEXT+2*FB)*scale, makecol(0,0,255),makecol(200,200,200));
     textout_ex(screen,font,"del Programma",X_TEXT_data*scale,(Y1+Y_TEXT+3*FB)*scale, makecol(0,0,255),makecol(200,200,200));
     textout_ex(screen,font,"R <--> Reset",X_TEXT_data*scale,(Y1+Y_TEXT+4*FB)*scale, makecol(0,0,255),makecol(200,200,200));
     textout_ex(screen,font,"del Programma",X_TEXT_data*scale,(Y1+Y_TEXT+5*FB)*scale, makecol(0,0,255),makecol(200,200,200));
     
-    textout_ex(screen,font,"G <--> Set/Reset",X_TEXT_data*scale,(Y1+Y_TEXT+6*FB)*scale, makecol(0,0,255),makecol(200,200,200));
-    textout_ex(screen,font,"Accelleratore Learning",X_TEXT_data*scale,(Y1+Y_TEXT+7*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    textout_ex(screen,font,"B <--> Boost",X_TEXT_data*scale,(Y1+Y_TEXT+6*FB)*scale, makecol(0,0,255),makecol(200,200,200));
+    //textout_ex(screen,font,"Accelleratore Learning",X_TEXT_data*scale,(Y1+Y_TEXT+7*FB)*scale, makecol(0,0,255),makecol(200,200,200));
     
     textout_ex(screen,font,"P <--> Pause/Play",X_TEXT_data*scale,(Y1+Y_TEXT+8*FB)*scale, makecol(0,0,255),makecol(200,200,200));
 
@@ -243,14 +249,13 @@ void update_data_reset(BITMAP* BM_TXT,
     textout_ex(BM_TXT, font, str, X_TEXT_data*scale, Y_TEXT_data*scale, makecol(255,255,255), select==0? makecol(255,0,0): makecol(0,0,0));
     sprintf(str,">Discount Factor:%.4f",gam);
     textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+1*FB)*scale, makecol(255,255,255), select==1? makecol(255,0,0): makecol(0,0,0));
-
     textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_data*scale, (Y_TEXT_data+2*FB)*scale, makecol(255,255,255), select==2? makecol(255,0,0): makecol(0,0,0));
     sprintf(str,"Epsilon:%.4f",decay);
     textout_ex(BM_TXT, font, str,X_TEXT_data*scale, (Y_TEXT_data+3*FB)*scale, makecol(255,255,255), select==2? makecol(255,0,0): makecol(0,0,0));
-    sprintf(str,"Minimum Epsilon:%.4f",eps_in);
+    sprintf(str,">Maximum Epsilon:%.4f",eps_in);
     textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+4*FB)*scale, makecol(255,255,255), select==3? makecol(255,0,0): makecol(0,0,0));
 
-    sprintf(str,"Maximum Epsilon:%.4f",eps_fi);
+    sprintf(str,">Minimum Epsilon:%.4f",eps_fi);
     textout_ex(BM_TXT, font, str, X_TEXT_data*scale, (Y_TEXT_data+5*FB)*scale, makecol(255,255,255), select==4? makecol(255,0,0): makecol(0,0,0));
 
    
@@ -357,10 +362,9 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int res
         rew_begin=(rew_begin+1)%((Len_Ax_X/Len_Line));
         Reward_p[(rew_begin+(Len_Ax_X/Len_Line))%((Len_Ax_X/Len_Line))]=reward;
     }
-    printf("il numero di elementi nel vettore è %d ed al massimo può essere %d\n",rew_count,(Len_Ax_X/Len_Line)*scale);
     for(i=0;i<rew_count;i++)
     {
-        cont_plot=(i+rew_begin)%(Len_Ax_X*scale);
+        cont_plot=(i+rew_begin)%(Len_Ax_X/Len_Line);
         if(Reward_p[cont_plot]>=max_range)
             val=(float)max_range;
         else if(Reward_p[cont_plot]<=min_range)
@@ -369,7 +373,6 @@ void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int res
             val=Reward_p[cont_plot];
         
         val=((val-min_range)/(max_range-min_range))*(Len_Ax_Y*scale-1);
-       //putpixel(BM_GS,(G_X_OFF*scale+1+i),(G_Y_OFF*scale-floor(val)),makecol(255,0,0));
         line(BM_GS,(G_X_OFF*scale+i*Len_Line*scale),(G_Y_OFF*scale-floor(val)),(G_X_OFF*scale+(i+1)*Len_Line*scale),(G_Y_OFF*scale-floor(val)),makecol(255,0,0));
     }
 
@@ -486,7 +489,7 @@ void L2_kin(int position[],state s)
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
     //printf("SONO DENTRO UPDATE_CR\n");
-    /*BITMAP * floor_cell=load_bitmap("floor.png",NULL);
+    /*BITMAP * floor_cell=load_png("floor.png",NULL);
     if(floor_cell==NULL)
         printf("DIOPORCO\n");*/
     int figure[12];
@@ -586,7 +589,7 @@ void *update_graphic(void *arg)
     float epsilon;
     float values[5];
     BITMAP *CR,*MQ,*P_data,*GRP_STAT;
-    //inizializzo allegro e lo scermo 
+    //inizializzo allegro e lo schermo 
     init_s();
     //inizializzo le BITMAP
 
@@ -598,10 +601,10 @@ void *update_graphic(void *arg)
     ti = pt_get_index(arg);
     pt_set_activation(ti);
 
-    while (!get_stop(&exec))
+    while (get_sys_state(&exec) != STOP)
     {
 
-        if(exec==1 || exec==0/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
+        if(exec==PLAY || exec==RESET/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
         {
             //printf("DENTRO IF DI update_graphic\n");
             get_state(&rob);
@@ -611,14 +614,14 @@ void *update_graphic(void *arg)
             get_model_dl(&mod_dl);
             get_crawler_dl(&craw_dl);
             epsilon=ql_get_epsilon();
-            if(exec==1)
+            if(exec==PLAY)
             {
                 update_data(P_data,values[0],values[1],epsilon,values[2],rob.q1,mod_dl,craw_dl,int_dl,epoch);
                 not_reset_command();
             }
-            if (exec==0)
+            if (exec==RESET)
             {
-                get_parameter_value(values);
+                get_parameter_values(values);
                 update_data_reset(P_data,values[0],values[1],values[3],values[4],values[2]);
                 ql_get_Q(Matrix_Q);
                 update_MQ(MQ, Matrix_Q, 0.1);

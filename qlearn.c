@@ -96,7 +96,7 @@ int s, a;
 		for(a=0; a<nact; a++)
 			Q[s][a] = 0;
 	// test per vedere se riconosce il ciclo 
-	/*Q[9][0] = 10;
+	Q[9][0] = 10;
 	Q[16][0] = 10;
 	Q[23][2] = 10;
 	Q[24][2] = 10;
@@ -104,7 +104,7 @@ int s, a;
 	Q[18][1] = 10;
 	Q[11][3] = 10;
 	Q[10][3] = 10;
-	*/
+	
 }
 
 // Set parameters functions
@@ -128,6 +128,10 @@ void ql_set_epsini(float e_ini)
 void ql_set_epsfin(float e_fin)
 {
 	eps_fin = e_fin; 
+}
+void ql_set_epsilon(float e)
+{
+	epsilon = e;
 }
 void ql_set_expl_decay(float d)
 {
@@ -155,6 +159,7 @@ float ql_get_epsilon(){
 	float ret;
 	pthread_mutex_lock(&mux_eps);
 	ret = epsilon;
+	printf("QLEARN:: epsilon vale %f\n",ret);
 	pthread_mutex_unlock(&mux_eps);
 	return ret;
 }
@@ -181,6 +186,7 @@ void ql_reduce_exploration()
 	epsilon = eps_fin + eps_norm*(eps_ini - eps_fin);
 	pthread_mutex_unlock(&mux_eps);
 	printf("Ho ridotto epsilon = %f\n", epsilon);
+	ql_get_epsilon();
 
 }
 
