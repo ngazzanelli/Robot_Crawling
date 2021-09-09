@@ -329,4 +329,5 @@ int main(){
           pt_wait_for_end(i);
           printf("MAIN: fine ciclo %d\n", i);
     }
+    return 0;
 }

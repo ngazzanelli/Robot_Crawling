@@ -159,7 +159,7 @@ float ql_get_epsilon(){
 	float ret;
 	pthread_mutex_lock(&mux_eps);
 	ret = epsilon;
-	printf("QLEARN:: epsilon vale %f\n",ret);
+	//printf("QLEARN:: epsilon vale %f\n",ret);
 	pthread_mutex_unlock(&mux_eps);
 	return ret;
 }

@@ -306,6 +306,7 @@ void* dynamics(void* arg){
                 update_kyn(Tsee, robot, TRUE_ALPHA);
                 y_ee = Tsee[1][3];
                 if(y_ee > 0){
+                    printf("DYN: Sono dentro y < 0 ma il secondo check dice y=%f\n", y_ee);
                     theta = adjuste_alpha(Tsee[0][3], Tsee[1][3]); 
                     robot.q3 -= theta;  
                     q_dip1[2] = robot.q3;
