@@ -3,9 +3,130 @@
 #include <stdio.h>
 
 
-/*state robot;
-dot_state dot_robot;*/
+//-----------------------------------------------------
+// The following Functions manage Vector operations:
+// sum, subtraction, scalar-vector product
+//----------------------------------------------------- 
+void vector_sum(float *a, float *b, float *res, int dim){
+  int i;
 
+  for(i = 0; i < dim; i++)
+    res[i] = a[i] + b[i];
+}
+
+void vector_sub(float *a, float *b, float *res, int dim){
+  int i;
+
+  for(i = 0; i < dim; i++)
+    res[i] = a[i] - b[i];
+}
+
+void vector_scal(float *a, float b, float *res, int dim){
+  int i;
+
+  for(i = 0; i < dim; i++)
+    res[i] = a[i]*b;
+}
+
+//----------------------------------------------------- 
+// The following Functions copies src vector in dest 
+// vector, both having dimension dim
+//----------------------------------------------------- 
+void vector_copy(float* src, float* dest, int dim){
+	int i;
+
+	for(i = 0; i < dim; ++i)
+		dest[i] = src[i];
+
+	return;
+}
+
+//----------------------------------------------------- 
+// The following Function computes matrix-vector product
+// y = A*x 
+//----------------------------------------------------- 
+void matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
+  int i, j;
+
+  for(i = 0; i < d1; i++){
+    y[i] = 0;
+    for(j = 0; j < d2; j++)
+      y[i] += A[i][j]*x[j];
+  }
+}
+
+//----------------------------------------------------- 
+// The following Functions print matrices and vectors
+//----------------------------------------------------- 
+void matrix_print(int row, int column, float m[row][column]){
+
+    int i, j;
+
+    for (i = 0; i < row; i++){
+        for (j = 0; j < column; j++)
+           printf("%g ", m[i][j]);
+        printf("\n");
+    }
+}
+
+void vector_print(int column, float v[column]){
+	int i;
+
+	for (i = 0; i < column; i++){
+		printf("%g ", v[i]);
+		printf("\n");
+	}
+}
+
+//----------------------------------------------------- 
+// The following Function computes the inverse of a 
+// 2x2 Matrix
+//----------------------------------------------------- 
+void matrix_inverse(float A[2][2], float res[2][2]){
+	float det, a, b, c, d;
+	a = A[0][0];
+	b = A[0][1];
+	c = A[1][0];
+	d = A[1][1];
+
+	det = a*d - b*c;
+
+	if(det == 0){
+		printf("Matrice non  invertibile: il determinante è nullo.\n");
+		return;
+	}
+
+	res[0][0] = d/det;
+	res[0][1] = -b/det;
+	res[1][0] = -c/det;
+	res[1][1] = a/det;
+}
+
+//-----------------------------------------------------
+// The following Functions initialize to zero every 
+// element of a vector or matrix
+//-----------------------------------------------------
+void vector_set_zero(float *v, int dim){
+	int i;
+
+	for(i = 0; i < dim; ++i)
+		v[i] = 0;
+	
+	return;
+}
+
+void matrix_set_zero(int row, int column, float m[row][column]){
+	int i, j;
+	
+	for(i=0; i<row; i++)
+		for(j=0; j<column; j++)
+			m[i][j] = 0;
+		
+}
+
+//-----------------------------------------------------
+// The following Function updates Robot Kynematics
+//-----------------------------------------------------
 void update_kyn(float Tsee[4][4], state robot, int true_alpha){
 	float value;
 	float q1, q2, q3, q4, q5; 
@@ -18,7 +139,7 @@ void update_kyn(float Tsee[4][4], state robot, int true_alpha){
 	q4 = robot.q4;
 	q5 = robot.q5;
 
-	// Prima riga
+	// First Row
 	value = cos(q4 + q5)*sin(q3) + cos(q3)*sin(q4 + q5);
 	Tsee[0][0] = value;
 
@@ -33,7 +154,7 @@ void update_kyn(float Tsee[4][4], state robot, int true_alpha){
 			cos(q3)*(15.0/2.0 + 6.0*cos(q4) + 6.0*sin(q4 + q5));
 	Tsee[0][3] = value;
 
-	// Seconda riga
+	// Second Row
 	value = -cos(q3)*cos(q4 + q5) + sin(q3)*sin(q4 + q5);
 	Tsee[1][0] = value;
 
@@ -48,19 +169,27 @@ void update_kyn(float Tsee[4][4], state robot, int true_alpha){
 			sin(q3)*(15.0/2.0 + 6*cos(q4) + 6*sin(q4 + q5));
 	Tsee[1][3] =  value;
 
-	// Terza riga
+	// Third Row
 	Tsee[2][0] =  0.0;
 	Tsee[2][1] =  0.0;
 	Tsee[2][2] =  1.0;
 	Tsee[2][3] =  0.0;
 
-	// Quarta riga
+	// Fourth ROw
 	Tsee[3][0] = 0.0;
 	Tsee[3][1] = 0.0;
 	Tsee[3][2] = 0.0;
 	Tsee[3][3] = 1.0;
 }
 
+
+//-----------------------------------------------------
+// The following Functions update dynamic Matrices for 
+// dynamic integration. There are two set of contraints
+// which depend on the position of the end-effector:
+// 1) Tne end-effector is not touching the ground 
+// 2) The end-effector is touching the ground
+//-----------------------------------------------------
 void update_S2(float S2[4][2], state robot){
 	float value;
 	float q3, q4, q5;
@@ -68,7 +197,7 @@ void update_S2(float S2[4][2], state robot){
 	q4 = robot.q4;
 	q5 = robot.q5;
 
-	//PRIMA RIGA
+	// First Row
 	value = -6*cos(q3)*(cos(q4 + q5) - sin(q4)) +
 			6*sin(q3)*(cos(q4) + sin(q4 + q5)) - (
 			3.0*(0.5 + 1.0*cos(q3) - 2.0*cos(q4 + q5) + 2.5*sin(q3) +
@@ -83,7 +212,7 @@ void update_S2(float S2[4][2], state robot){
 			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5));
 	S2[0][1] = value;
 
-	//SECONDA RIGA
+	// Second Row
 	value = (7.5*(-1.0 + 1.0*cos(q3) -
 			0.4*sin(q3))*(sin(q3)*(cos(q4 + q5) - 1.0*sin(q4)) +
 			cos(q3)*(cos(q4) + sin(q4 + q5))))/(
@@ -94,7 +223,7 @@ void update_S2(float S2[4][2], state robot){
 			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5));
 	S2[1][1] = value;
 
-	//TERZA RIGA
+	// Third Row
 	value = (-1.0*cos(q3 + q4) -1.0*sin(q3 + q4 + q5))/(
 			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5));
 	S2[2][0] = value;
@@ -103,7 +232,7 @@ void update_S2(float S2[4][2], state robot){
 			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5)));
 	S2[2][1] = value;
 
-	//QUARTA RIGA
+	// FOurth Row
 	value =(3.0*cos(q3 + q4) - 4.0*cos(q3 - q5) + 4.0*cos(q3 + q5) +
 			10.0*cos(q3 + q4 + q5) - 8.0*sin(q3) - 10.0*sin(q3 + q4) +
 			3.0*sin(q3 + q4 + q5))/(2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5));
@@ -119,35 +248,19 @@ void update_M1(float M1[2][2], state robot){
 	float q5;
 	q5 = robot.q5;
 
-	//PRIMA RIGA
+	// First Row
 	value =180.0*(4.57118 + sin(q5));
 	M1[0][0] = value;
 
 	value =231.406 + 90*sin(q5);
 	M1[0][1] = value;
 
-	//SECONDA RIGA
+	// Second Row
 	value = 231.406 + 90*sin(q5);
 	M1[1][0] = value;
 
 	value =  231.406;
 	M1[1][1] = value;
-}
-
-void update_G1(float G1[2], state robot){
-	float value;
-	float q3, q4, q5;
-	q3 = robot.q3;
-	q4 = robot.q4;
-	q5 = robot.q5;
-	
-	//PRIMA RIGA
-	value = 0.0 + 735.0*cos(q3 + q4) + 147.0*sin(q3 + q4 + q5);
-	G1[0] = value;
-
-	//SECONDA RIGA
-	value = 0.0 + 147.0*sin(q3 + q4 + q5);
-	G1[1] = value;
 }
 
 void update_C1(float C1[2][2], state robot, dot_state dot_robot){
@@ -162,7 +275,7 @@ void update_C1(float C1[2][2], state robot, dot_state dot_robot){
 	dotq4 = dot_robot.dq4;
 	dotq5 = dot_robot.dq5;
 
-	//PRIMA RIGA
+	// First Row
 	value = -112.5*dotq3*cos(q4) + (37.5*dotq1 - 56.25*dotq3)*cos(q3 + q4) +
 			180.0*dotq5*cos(q5) - 56.25*dotq3*cos(q4 + q5) -
 			7.5*dotq2*cos(q3 + q4 + q5) - 56.25*dotq3*cos(q3 + q4 + q5) +
@@ -177,7 +290,7 @@ void update_C1(float C1[2][2], state robot, dot_state dot_robot){
 			11.25*dotq3*sin(q3 + q4 + q5);
 	C1[0][1] = value;
 
-	//SECONDA RIGA
+	// Second Row
 	value = -90.0*dotq4*cos(q5) +
 			45*dotq5*cos(q5) - 7.5*dotq2*cos(q3 + q4 + q5) -
 			45.0*dotq3*(1.0*cos(q3 - q5) + 1.0*cos(q3 + q5) + 1.25*cos(q4 + q5) +
@@ -194,33 +307,20 @@ void update_C1(float C1[2][2], state robot, dot_state dot_robot){
 	C1[1][1] = value;
 }
 
-void update_G2(float G2[2], state robot){
+void update_G1(float G1[2], state robot){
 	float value;
 	float q3, q4, q5;
 	q3 = robot.q3;
 	q4 = robot.q4;
 	q5 = robot.q5;
+	
+	// First Row
+	value = 0.0 + 735.0*cos(q3 + q4) + 147.0*sin(q3 + q4 + q5);
+	G1[0] = value;
 
-	//PRIMA RIGA
-	value = 0.0 + 735.0*cos(q3 + q4) + (
-			29767.5*(-1.0 + 1.0*cos(q3) -
-			0.4*sin(q3))*(sin(q3)*(cos(q4 + q5) - 1.0*sin(q4)) +
-			cos(q3)*(cos(q4) + sin(q4 + q5))))/(
-			2.5 + 1.0*cos(q4) +
-			1.0*sin(q4 + q5)) + ((-8305.5 + 29767.5*cos(q3) + 735.0*cos(q4) -
-			11907.0*sin(q3) + 147.0*sin(q4 + q5))*(-1.0*cos(q3 + q4) -
-			1.0*sin(q3 + q4 + q5)))/(2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5)) +
-			147.0*sin(q3 + q4 + q5);
-	G2[0] =  value;
-
-	//SECONDA RIGA
-	value = 0.0 + 147.0*sin(q3 + q4 + q5) + (
-			29767.5*(-1.0 + 1.0*cos(q3) - 0.4*sin(q3))*sin(q3 + q4 + q5))/(
-			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5)) - (
-			1.0*(-8305.5 + 29767.5*cos(q3) + 735.0*cos(q4) - 11907.0*sin(q3) +
-			147.0*sin(q4 + q5))*sin(q3 + q4 + q5))/(
-			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5));
-	G2[1] = value;
+	// Second Row
+	value = 0.0 + 147.0*sin(q3 + q4 + q5);
+	G1[1] = value;
 }
 
 void update_M2(float M2[2][2], state robot){
@@ -1701,100 +1801,31 @@ void update_C2(float C2[2][2], state robot, dot_state dot_robot){
 	C2[1][1] = value;
 }
 
-void vector_sum(float *a, float *b, float *c, int dim){
-  int i;
+void update_G2(float G2[2], state robot){
+	float value;
+	float q3, q4, q5;
+	q3 = robot.q3;
+	q4 = robot.q4;
+	q5 = robot.q5;
 
-  for(i=0; i<dim; i++)
-    c[i] = a[i] + b[i];
-}
+	// First Row
+	value = 0.0 + 735.0*cos(q3 + q4) + (
+			29767.5*(-1.0 + 1.0*cos(q3) -
+			0.4*sin(q3))*(sin(q3)*(cos(q4 + q5) - 1.0*sin(q4)) +
+			cos(q3)*(cos(q4) + sin(q4 + q5))))/(
+			2.5 + 1.0*cos(q4) +
+			1.0*sin(q4 + q5)) + ((-8305.5 + 29767.5*cos(q3) + 735.0*cos(q4) -
+			11907.0*sin(q3) + 147.0*sin(q4 + q5))*(-1.0*cos(q3 + q4) -
+			1.0*sin(q3 + q4 + q5)))/(2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5)) +
+			147.0*sin(q3 + q4 + q5);
+	G2[0] =  value;
 
-void vector_sub(float *a, float *b, float *c, int dim){
-  int i;
-
-  for(i=0; i<dim; i++)
-    c[i] = a[i] - b[i];
-}
-
-void vector_scal(float *a, float b, float *c, int dim){
-  int i;
-
-  for(i=0; i<dim; i++)
-    c[i] = a[i]*b;
-}
-
-void vector_copy(float* src, float* dest, int dim){
-	int i;
-
-	for(i = 0; i < dim; ++i)
-		dest[i] = src[i];
-
-	return;
-}
-
-void vector_set_zero(float *v, int dim){
-	int i;
-
-	for(i=0; i<dim; ++i)
-		v[i] = 0;
-	
-	return;
-}
-
-void matvec_mul(float *x, float *y, int d1, int d2, float A[d1][d2]){
-  int i, j;
-
-  for(i=0; i<d1; i++){
-    y[i] = 0;
-    for(j=0; j<d2; j++)
-      y[i] += A[i][j]*x[j];
-  }
-}
-
-void matrix_print(int row, int column, float m[row][column]){
-
-    int i, j;
-
-    for (i = 0; i < row; i++){
-        for (j = 0; j < column; j++)
-           printf("%g ", m[i][j]);
-        printf("\n");
-    }
-}
-
-void vector_print(int column, float v[column]){
-	int i;
-
-	for (i = 0; i < column; i++){
-		printf("%g ", v[i]);
-		printf("\n");
-	}
-}
-
-void matrix_set_zero(int row, int column, float m[row][column]){
-	int i, j;
-	
-	for(i=0; i<row; i++)
-		for(j=0; j<column; j++)
-			m[i][j] = 0;
-		
-}
-
-void matrix_inverse(float A[2][2], float res[2][2]){
-	float det, a, b, c, d;
-	a = A[0][0];
-	b = A[0][1];
-	c = A[1][0];
-	d = A[1][1];
-
-	det = a*d - b*c;
-
-	if(det == 0){
-		printf("Matrice non  invertibile: il determinante è nullo.\n");
-		return;
-	}
-
-	res[0][0] = d/det;
-	res[0][1] = -b/det;
-	res[1][0] = -c/det;
-	res[1][1] = a/det;
+	// Second Row
+	value = 0.0 + 147.0*sin(q3 + q4 + q5) + (
+			29767.5*(-1.0 + 1.0*cos(q3) - 0.4*sin(q3))*sin(q3 + q4 + q5))/(
+			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5)) - (
+			1.0*(-8305.5 + 29767.5*cos(q3) + 735.0*cos(q4) - 11907.0*sin(q3) +
+			147.0*sin(q4 + q5))*sin(q3 + q4 + q5))/(
+			2.5 + 1.0*cos(q4) + 1.0*sin(q4 + q5));
+	G2[1] = value;
 }

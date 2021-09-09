@@ -1,4 +1,3 @@
-
 #include "qlearn.h"
 #include <stdlib.h>
 #include <pthread.h>
@@ -14,63 +13,32 @@
 #define GAMMA0	0.9 	// default discount factor
 #define DECAY0	0.95	// default epsilon decay rate
 
-// QL matrices
-//static int T[MAXSTA][MAXACT];	// transition matrix	INUTILE
-//static int R[MAXSTA][MAXACT];	// reward matrix		INUTILE
-static float Q[MAXSTA][MAXACT];	// Q matrix
-static float Q_copy[MAXSTA][MAXACT];	// Q matrix for graphic
-										// (si usa per non accedere
-										// a troppe sezioni critiche 
-										// ogni volta che il crawler
-										// sta imparando)
+
+//Mutex
 static pthread_mutex_t mux_Qmatrix = PTHREAD_MUTEX_INITIALIZER;
-
-// Global variables
-static int nsta;		// actual # of states
-static int nact;		// actual number of actions
-//static int goalstate;	// store the goal state			INUTILE
-static float alpha;		// learning rate
-static float gam;		// discount factor
-static float epsilon; 	// actual exploration probability
-static float decay;		// decay rate for epsilon
-static float eps_norm;	// normalized exploration probability
-static float eps_ini;	// initial exploration probability
-static float eps_fin;	// final exploration probability
-
-// Semaphores 
 static pthread_mutex_t mux_eps = PTHREAD_MUTEX_INITIALIZER;
 
-// Auxiliary functions
-float frand(float xmin, float xmax)
-{
-float range;
-	range = (xmax - xmin);
-	return (xmin + range*(float)rand()/RAND_MAX);
-}
-
-void ql_copy_Q(){
-	int s,a;
-	pthread_mutex_lock(&mux_Qmatrix);
-	for (s=0; s<nsta; s++)
-		for(a=0; a<nact; a++)
-			Q_copy[s][a] = Q[s][a];
-	pthread_mutex_unlock(&mux_Qmatrix);
-}
-
-void ql_get_Q(float *dest){//da verificare che in dest ci sia abbastanza spazio
-	int s,a;
-	pthread_mutex_lock(&mux_Qmatrix);
-	for (s=0; s<nsta; s++)
-		for(a=0; a<nact; a++)
-			dest[s*4+a] = Q_copy[s][a];
-	pthread_mutex_unlock(&mux_Qmatrix);
-}
+// Global variables
+static int nsta;						// actual # of states
+static int nact;						// actual number of actions
+static float alpha;						// learning rate
+static float gam;						// discount factor
+static float epsilon; 					// actual exploration probability
+static float decay;						// decay rate for epsilon
+static float eps_norm;					// normalized exploration probability
+static float eps_ini;					// initial exploration probability
+static float eps_fin;					// final exploration probability
+static float Q[MAXSTA][MAXACT];			// Q matrix
+static float Q_copy[MAXSTA][MAXACT];	// Q matrix for graphic task, used for 
+										// avoiding useless critical sections 
 
 
-// Initialization
-void ql_init(int ns, int na)
-{
-int s, a;
+//-----------------------------------------------------
+// The following Function initializes all the variables
+// needed to implemetn QLearning Algorithm
+//-----------------------------------------------------
+void ql_init(int ns, int na){
+	int s, a;
 	
 	nsta = ns;
 	nact = na;
@@ -92,95 +60,119 @@ int s, a;
 	decay = DECAY0;
 	epsilon = EPSINI;
 
-	for (s=0; s<nsta; s++)
-		for(a=0; a<nact; a++)
+	for (s = 0; s < nsta; s++)
+		for(a = 0; a < nact; a++)
 			Q[s][a] = 0;
-	// test per vedere se riconosce il ciclo 
-	Q[9][0] = 10;
-	Q[16][0] = 10;
-	Q[23][2] = 10;
-	Q[24][2] = 10;
-	Q[25][1] = 10;
-	Q[18][1] = 10;
-	Q[11][3] = 10;
-	Q[10][3] = 10;
-	
+
+	/********** IDEAL CYCLE TEST **********/ 
+	 Q[9][0] = 10;
+	 Q[16][0] = 10;
+	 Q[23][2] = 10;
+	 Q[24][2] = 10;
+	 Q[25][1] = 10;
+	 Q[18][1] = 10;
+	 Q[11][3] = 10;
+	 Q[10][3] = 10;
+	/*************************************/
 }
 
-// Set parameters functions
-void ql_set_learning_rate(float a)
-{
+
+//-----------------------------------------------------
+// The following Functions manage Q matrix and its copy
+//-----------------------------------------------------
+void ql_copy_Q(){
+	int s,a;
+	pthread_mutex_lock(&mux_Qmatrix);
+	for (s = 0; s < nsta; s++)
+		for(a = 0; a < nact; a++)
+			Q_copy[s][a] = Q[s][a];
+	pthread_mutex_unlock(&mux_Qmatrix);
+}
+
+void ql_get_Q(float *dest){
+	int s, a;
+	pthread_mutex_lock(&mux_Qmatrix);
+	for (s = 0; s < nsta; s++)
+		for(a = 0; a < nact; a++)
+			dest[s*4 + a] = Q_copy[s][a];
+	pthread_mutex_unlock(&mux_Qmatrix);
+}
+
+
+//-----------------------------------------------------
+// The following Functions set the parameters 
+// used in the QLearning Algorithm
+//-----------------------------------------------------
+void ql_set_learning_rate(float a){
 	alpha = a;
 }
-void ql_set_discount_factor(float g)
-{
+
+void ql_set_discount_factor(float g){
 	gam = g;
 }
-void ql_set_expl_range(float e_ini, float e_fin)
-{
+
+void ql_set_expl_range(float e_ini, float e_fin){
 	eps_ini = e_ini;
 	eps_fin = e_fin;
 }
-void ql_set_epsini(float e_ini)
-{
+
+void ql_set_epsini(float e_ini){
 	eps_ini = e_ini;
 }
-void ql_set_epsfin(float e_fin)
-{
+
+void ql_set_epsfin(float e_fin){
 	eps_fin = e_fin; 
 }
-void ql_set_epsilon(float e)
-{
+
+void ql_set_epsilon(float e){
 	epsilon = e;
 }
-void ql_set_expl_decay(float d)
-{
+
+void ql_set_expl_decay(float d){
 	decay = d;
 }
 
-// Get parameters functions
-float ql_get_learning_rate()
-{
+
+//-----------------------------------------------------
+// The following Functions get the parameters 
+// used in the QLearning Algorithm
+//-----------------------------------------------------
+float ql_get_learning_rate(){
 	return alpha;
 }
-float ql_get_discount_factor()
-{
+
+float ql_get_discount_factor(){
 	return gam;
 }
-float ql_get_epsini()
-{
+
+float ql_get_epsini(){
 	return eps_ini; 
 }
-float ql_get_epsfin()
-{
+
+float ql_get_epsfin(){
 	return eps_fin; 
 }
+
 float ql_get_epsilon(){
 	float ret;
 	pthread_mutex_lock(&mux_eps);
 	ret = epsilon;
-	//printf("QLEARN:: epsilon vale %f\n",ret);
 	pthread_mutex_unlock(&mux_eps);
 	return ret;
 }
-float ql_get_expl_decay()
-{
+
+float ql_get_expl_decay(){
 	return decay;
 }
 
-// Reduce exploration
-/*
-float  ql_reduce_exploration(flaot ep_n,float ep_i,float ep_f,float dec)	
-{
-	ep_n = dec*ep_n;
-	return eps_fin + eps_norm*(eps_ini - eps_fin);
-	//printf("Ho ridotto epsilon = %f\n", epsilon);
 
-}
+//-----------------------------------------------------
+// The following Function reduces exploration factor 
+// epsilon, depending on decay, inital and final
+// epsilon values
+//-----------------------------------------------------
+void ql_reduce_exploration(){
 
-*/
-void ql_reduce_exploration()
-{
 	eps_norm = decay*eps_norm;
 	pthread_mutex_lock(&mux_eps);
 	epsilon = eps_fin + eps_norm*(eps_ini - eps_fin);
@@ -190,29 +182,35 @@ void ql_reduce_exploration()
 
 }
 
-// Maximum Q value in a given state s
-float ql_maxQ(int s)
-{
+
+//-----------------------------------------------------
+// The following Function computes the Maximum Q
+// value in a given state s
+//-----------------------------------------------------
+float ql_maxQ(int s){
 int a;
 float m;
 
 	m = Q[s][0];	// initialized with Q value for action 0
-	for (a=1; a<nact; a++)
+	for (a = 1; a < nact; a++)
 		if (Q[s][a] > m)
 			m = Q[s][a];
 	return m;
 }
 
-// Best action in a given state s
-float ql_best_action(int s)
-{
-int a, ba;
-float m;
+
+//-----------------------------------------------------
+// The following Function computes the best action
+// in a given state s
+//-----------------------------------------------------
+float ql_best_action(int s){
+	int a, ba;
+	float m;
 
 	ba = 0;			// initialized best action with action 0
 	m = Q[s][0];	// initialized with Q value for action 0
 
-	for (a=1; a<nact; a++)
+	for (a = 1; a < nact; a++)
 		if (Q[s][a] > m){
 			m = Q[s][a];
 			ba = a;
@@ -220,25 +218,12 @@ float m;
 	return ba;
 }
 
-// Epsilon-greedy policy in a given state s
-/*
-int ql_egreedy_policy (int s,float eps)
-{
-int ra, ba;
-float x;
 
-	ba = ql_best_action(s);
-	ra = rand()%nact;
-	//printf("L'azione casuale è %d\n", ra);
-	//printf("Epsilon = %f\n", epsilon);
-	x = frand(0, 1);
-	if (x < eps) return ra;
-	else return ba;
-}
-
-*/
-int ql_egreedy_policy (int s)
-{
+//-----------------------------------------------------
+// The following Function computes Epsilon-greedy
+// policy in a given state s
+//-----------------------------------------------------
+int ql_egreedy_policy (int s){
 int ra, ba;
 float x, eps;
 
@@ -254,37 +239,23 @@ float x, eps;
 	else return ba;
 }
 
-// Update Q value 
-/*
-float ql_updateQ(int s, int a, int r, int snew,float alf,float g)
-{
-float Qtarget, TDerr;
 
-	//printf("r = %d, s = %d, a = %d, snew = %d, gamma = %f\n", r, s, a, snew, gam);
-	Qtarget = r + g*ql_maxQ(snew);
-	//printf("Qtarget = %f\n", Qtarget);
-	TDerr = Qtarget - Q[s][a];
-	//printf("TDerr = %f\n", TDerr);
-	Q[s][a] = Q[s][a] + alp*TDerr;
-	//printf("Q[%d][%d] = %f\n", s, a, Q[s][a]);
-	return fabs(TDerr);
-}
-*/
-float ql_updateQ(int s, int a, int r, int snew)
-{
-float Qtarget, TDerr;
+//-----------------------------------------------------
+// The following Function updates Q value 
+//-----------------------------------------------------
+float ql_updateQ(int s, int a, int r, int snew){
+	float Qtarget, TDerr;
 
-	//printf("r = %d, s = %d, a = %d, snew = %d, gamma = %f\n", r, s, a, snew, gam);
 	Qtarget = r + gam*ql_maxQ(snew);
-	//printf("Qtarget = %f\n", Qtarget);
 	TDerr = Qtarget - Q[s][a];
-	//printf("TDerr = %f\n", TDerr);
 	Q[s][a] = Q[s][a] + alpha*TDerr;
-	//printf("Q[%d][%d] = %f\n", s, a, Q[s][a]);
 	return fabs(TDerr);
 }
 
-// Show the Q matrix
+
+//-----------------------------------------------------
+// The following Function shows the Q matrix
+//-----------------------------------------------------
 void ql_print_Qmatrix()
 {
 int i, j;
@@ -294,4 +265,14 @@ int i, j;
 			printf("%f ", Q[i][j]);
 		printf("\n");
 	}
+}
+
+
+//-----------------------------------------------------
+// THe following Function computes a random number 
+//-----------------------------------------------------
+float frand(float xmin, float xmax){
+	float range;
+	range = (xmax - xmin);
+	return (xmin + range*(float)rand()/RAND_MAX);
 }

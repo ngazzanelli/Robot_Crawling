@@ -13,10 +13,9 @@
 #define PLAY    1
 #define PAUSE   2
 #define STOP    3
-
 // Qlearning Parameters Change Constants
-#define NPARAM  5               // Total Number of Possible Learning Parameters
-#define STEP 0.1                // Increase/Decrease Step of Learning Parameters
+#define NPARAM  5                  // Total Number of Possible Learning Parameters
+#define STEP    0.1                // Increase/Decrease Step of Learning Parameters
 
 
 // Functions from other modules
@@ -37,14 +36,14 @@ static pthread_mutex_t mux_pause_graphic = PTHREAD_MUTEX_INITIALIZER;
 // Static Variables
 static int sys_state;
 static int pause_graphic;
-static int interface_dl;        // Interface Deadline Miss
-static int parameter_selected;  // Selected Parameter
-static float values[5];         // Values of QLearning Parameters
+static int interface_dl;           // Interface Deadline Miss
+static int parameter_selected;     // Selected Parameter
+static float values[5];            // Values of QLearning Parameters
 //  value[0] -> alpha
 //  value[1] -> gamma
 //  value[2] -> decay
-//  value[3] -> epsilon iniziale
-//  value[4] -> epsilon finale
+//  value[3] -> initial epsilon
+//  value[4] -> final epsilon
 
 
 
@@ -125,6 +124,7 @@ void change_pause_graphic(){
     pause_graphic = (pause_graphic)?0:1;
     pthread_mutex_unlock(&mux_pause_graphic);
 }
+
 int get_pause_graphic(){
     int temp;
     pthread_mutex_lock(&mux_pause_graphic);
@@ -155,7 +155,8 @@ void inc_interface_dl()
 
 
 //-----------------------------------------------------
-// The following Functions manage the System State
+// The following Functions manage and track 
+// the System State
 //-----------------------------------------------------
 void set_sys_state(int i)
 {
@@ -175,7 +176,10 @@ int get_sys_state(int *s)
 }
 
 
-// Funzione per ottenere il codice del tasto premuto da tastiera 
+//------------------------------------------------------
+//  The following function waits for a key pressed and 
+//  extracts the corresponding ascii code and scan code
+//------------------------------------------------------
 char get_scancode()
 {
     if(keypressed())
@@ -191,11 +195,12 @@ char get_scancode()
 //------------------------------------------------------------- 
 void key_manager(int exec)
 {
-    int p;          //Serve per gestire il cambio di parametro del qlearning
+    int p;          // Tracks Qlearning parameters change
+    int pg;         // Tracks pause_graphics
     char cm;
-    int pg;         //Serve per sapere il valore di pause_graphic
 
     cm = get_scancode();
+
     switch(cm){
 
         case KEY_R:

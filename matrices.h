@@ -1,6 +1,8 @@
 #ifndef	MATRICES_H
 #define	MATRICES_H
 
+
+// Robot State
 typedef struct {
     float q1;
     float q2;
@@ -12,6 +14,7 @@ typedef struct {
     float dt3;
 } state;
 
+// Derivative of Robot State
 typedef struct {
     float dq1;
     float dq2;
@@ -21,7 +24,8 @@ typedef struct {
     float dq6;
 } dot_state;
 
-// Funzioni per la dinamica
+
+// Dynamic Functions
 extern void update_kyn(float Tsee[4][4], state robot, int flag);
 extern void update_S2(float S2[4][2], state robot);
 extern void update_M1(float M1[2][2], state robot);
@@ -31,7 +35,7 @@ extern void update_G2(float G2[2], state robot);
 extern void update_M2(float M2[2][2], state robot);
 extern void update_C2(float C2[2][2], state robot, dot_state dot_robot);
 
-// Funzioni di calcolo matriciale
+// Linear Algebra Functions
 extern void vector_sum(float *a, float *b, float *c, int dim);
 extern void vector_sub(float *a, float *b, float *c, int dim);
 extern void vector_scal(float *a, float b, float *c, int dim);

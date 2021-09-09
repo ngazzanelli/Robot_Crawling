@@ -4,44 +4,37 @@
 #include "qlearn.h"
 #include "ptask.h"
 
+
+// Qlearning Constants
 #define NSTATES     49
 #define NACTIONS    4
 
-// COSTANTI PER LO STATO DEL SISTEMA
+// System State Constants
 #define RESET   0
 #define PLAY    1
 #define PAUSE   2
 #define STOP    3
 
 // Global definitions
-#define TH1UP   0       // action move up link 1
-#define TH1DW   1       // action move down link 1
-#define TH2UP   2       // action move up link 2
-#define TH2DW   3       // action move down link 2
+#define TH1UP   0       // Action move up link 1
+#define TH1DW   1       // Action move down link 1
+#define TH2UP   2       // Action move up link 2
+#define TH2DW   3       // Action move down link 2
 #define TH1MAX  1.40    // max theta1 angle [rad]
-#define TH1MIN  -0.7   // min theta1 angle [rad]
+#define TH1MIN  -0.7    // min theta1 angle [rad]
 #define TH2MAX  1.05    // max theta2 angle [rad]
 #define TH2MIN  -1.05   // min theta2 angle [rad]
 #define DTH1    0.35    // theta1 quantization step [rad]
 #define DTH2    0.35    // theta2 quantization step [rad]
-#define PRI     10      // tasks priority 
-#define DL      20      // tasks deadline [ms]
-#define PER     20      // tasks period [ms]
-#define PER_D   1       // dynamic task peirod [ms] 
-#define RHIT    -10     // reward for hitting limit angles
-#define RSCALE  10    // reward scale factor 
+#define PRI     10      // Tasks priority 
+#define DL      20      // Tasks deadline [ms]
+#define PER     20      // Tasks period [ms]
+#define PER_D   1       // Dynamic task peirod [ms] 
+#define RHIT    -10     // Reward for hitting limit angles
+#define RSCALE  10      // Reward scale factor 
 
-// Global variables (inutili se tanto ho le costanti, no?)
-static float t1min, t2min;
-static float t1max, t2max;
-static float dt1, dt2;
-static int n2;          // # of theta2 quantiations 
-static int crawler_dl;
 
-static pthread_mutex_t mux_desired_joint = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mux_reward = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mux_CR_dl = PTHREAD_MUTEX_INITIALIZER;
-// Struttura per lo stato reale del robot
+// Actual Robot State  (SI PUÒ INCLUDERE ANCHE MATRICES.H)
 typedef struct {
     float q1;
     float q2;
@@ -49,35 +42,61 @@ typedef struct {
     float q4;
     float q5;
     float q6;
-    float energy;   //energia spesa utile per il reward
-    float dt3;      //variazione dell'angolo della ruota per il reward  
+    float energy;   
+    float dt3;      
 } state;
 
-// Struttura per lo stato desiderato del robot
+// Desired Robot State
 typedef struct {
     float t1d;
     float t2d;
     int flag;
 } target;
 
+
+// ??????????????????????????????? //
 typedef struct {
     int state;
     int reward;
     int flag;
 } rs_for_plot;
 
-static target qd;
-static rs_for_plot rw;
 
-//Funzioni dall'interprete
+// Functions from other modules
 extern int get_sys_state(int *s);
 extern void set_qlearning_values();
 extern void init_parameter_values();
-//Funzioni dal modello
+extern void init_state();
 extern void get_state(state* s);
 
-//funzione che incrementa la variabile delle deadline miss
-//l'ho fatta così per non modificare la funzione di pthask
+// Application Tasks: main will activate them
+extern void* dynamics(void*arg);
+extern void* interface(void* arg);
+extern void* manual_interface(void* arg);
+extern void* update_graphic(void* arg);
+extern void* update_graphic_DC(void* arg);
+
+
+//Mutex
+static pthread_mutex_t mux_desired_joint = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_reward = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_CR_dl = PTHREAD_MUTEX_INITIALIZER;
+
+
+// Static Variables (inutili se tanto ho le costanti, no?)
+static float t1min, t2min;
+static float t1max, t2max;
+static float dt1, dt2;
+static int n2;              // # of theta2 quantiations 
+static int crawler_dl;      // Crawler Deadline Miss
+static target qd;
+static rs_for_plot rw;
+
+
+//-----------------------------------------------------
+// The following Functions manage Interface Task 
+// Deadline Misses
+//-----------------------------------------------------
 void inc_crawler_dl()
 {
     pthread_mutex_lock(&mux_CR_dl);
@@ -85,13 +104,18 @@ void inc_crawler_dl()
     pthread_mutex_unlock(&mux_CR_dl);
 }
 
-//funzione che ottiene il valore delle deadline miss
+
 void get_crawler_dl(int * dl_miss)
 {
     pthread_mutex_lock(&mux_CR_dl);
     * dl_miss = crawler_dl;
     pthread_mutex_unlock(&mux_CR_dl);
 }
+
+
+//-----------------------------------------------------
+// The following Function initializes global Variables
+//-----------------------------------------------------
 void init_global_variables(){
     t1min = TH1MIN;
     t1max = TH1MAX;
@@ -101,20 +125,12 @@ void init_global_variables(){
     dt2 = DTH2;
     n2 = (t2max - t2min)/dt2 + 1;
 }
-/*
-void set_desired_joint(int s){
-    int i, j;    
-    
-    i = s/n2;
-    j = s%n2;
-    pthread_mutex_lock(&mux);
-    qd.t1d = t1min + i*dt1;
-    qd.t2d = t2min + j*dt2;
-    qd.flag = 1;
-    pthread_mutex_unlock(&mux);
 
-}
-*/
+
+//-----------------------------------------------------
+// The following Functions manage desired joint angles
+// decided from Qlearning algorithm
+//-----------------------------------------------------
 void reset_desired_joint()
 {
     pthread_mutex_lock(&mux_desired_joint);
@@ -123,6 +139,7 @@ void reset_desired_joint()
     qd.flag = 0;
     pthread_mutex_unlock(&mux_desired_joint);
 }
+
 void get_desired_joint(target* t){
   pthread_mutex_lock(&mux_desired_joint);
   t->t1d = qd.t1d;
@@ -131,6 +148,11 @@ void get_desired_joint(target* t){
   qd.flag = 0;
   pthread_mutex_unlock(&mux_desired_joint);
 }
+
+
+//-----------------------------------------------------
+//?????????????????????????????????????????????????????
+//-----------------------------------------------------
 void get_rs_for_plot(rs_for_plot* t){
   pthread_mutex_lock(&mux_reward);
   t->state = rw.state;
@@ -139,6 +161,7 @@ void get_rs_for_plot(rs_for_plot* t){
   rw.flag = 0;
   pthread_mutex_unlock(&mux_reward);
 }
+
 void set_rs_for_plot(int r,int s){
   pthread_mutex_lock(&mux_reward);
   rw.state = s;
@@ -147,7 +170,11 @@ void set_rs_for_plot(int r,int s){
   pthread_mutex_unlock(&mux_reward);
 }
 
-// Angles to state (non serve la matrice T di transizione dello stato)
+
+//-----------------------------------------------------
+// The following Function converts joint angles to 
+// a state so that Transition Matrix is not needed
+//-----------------------------------------------------
 int angles2state(float t1, float t2){
 
     int i, j;
@@ -159,6 +186,11 @@ int angles2state(float t1, float t2){
     return i*n2 + j;
 }
 
+
+//-----------------------------------------------------
+// The following Function computes reward for the
+// actual state
+//-----------------------------------------------------
 int get_reward(int s, int snew, state robot){
 
     int r = 0;
@@ -174,6 +206,11 @@ int get_reward(int s, int snew, state robot){
     return r;
 }
 
+
+//-----------------------------------------------------
+// The following Function computes the next state given
+// the action a
+//-----------------------------------------------------
 int next_desired_state(int a){
     pthread_mutex_lock(&mux_desired_joint);
     switch(a){
@@ -202,17 +239,16 @@ int next_desired_state(int a){
 }
 
 
-// Learning loop 
+//-----------------------------------------------------
+// The following Function implements the Learning Loop
+//----------------------------------------------------- 
 void* qlearning(void* arg){
 
     printf("QLEARN: task started\n");
-    int i;      // thread index
-    int play;  // Serve per saltare entrambe le sezioni in 
-                // cui è diviso il corpo del while per 
-                // evitare di chiamare due volte get_pause()
-    int s, a, r=0, snew,exec, old_exec = 0;
+    int i;                              // thread index
+    int s, snew, a, exec, r = 0, old_exec = 0;
     long step = 0;
-    float newerr, err = 0;
+    float newerr = 0;
     state robot;
 
     i = pt_get_index(arg);
@@ -232,7 +268,7 @@ void* qlearning(void* arg){
                 old_exec = PLAY;
             }
 
-            float period = pt_get_period(3);
+            //float period = pt_get_period(3);
             //printf("QLEARN: il mio periodo vale %f\n", period);
             //printf("QLEARN: sono dentro all'if\n");
             step++;
@@ -285,19 +321,13 @@ void* qlearning(void* arg){
     return NULL;
 }
 
-//Funzioni dal model.c
-extern void init_state();
-extern void* dynamics(void*arg);
-extern void* interface(void* arg);
-extern void* update_graphic(void* arg);
-extern void* update_graphic_DC(void* arg);
-extern void* manual_interface(void* arg);
-
-
 
 int main(){
        
-    int i, ris, mode;
+    int i, ris;
+    int mode;       // Manual or Qlearning mode decided from user
+
+
     printf("scegliere la modalità: 0 -> controllo manuale, 1 -> qlearning\n");
     scanf("%d", &mode);
 
