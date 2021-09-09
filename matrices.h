@@ -22,7 +22,7 @@ typedef struct {
 } dot_state;
 
 // Funzioni per la dinamica
-extern void update_kyn(float Tsee[4][4], state robot);
+extern void update_kyn(float Tsee[4][4], state robot, int flag);
 extern void update_S2(float S2[4][2], state robot);
 extern void update_M1(float M1[2][2], state robot);
 extern void update_G1(float G1[2], state robot);

@@ -17,6 +17,14 @@
 #define PAUSE   2
 #define STOP    3
 
+//COSTANTI PER IL CALCOLO DELLA CINEMATICA
+#define TRUE_ALPHA  1
+#define FALSE_ALPHA 0
+
+//COSTANTI DEL ROBOT
+#define ROBOT_LENGHT    10.0
+#define WHEEL_RADIUS    1.5
+
 static float DT = 0.001;          // Intervallo di integrazione della dinamica        [s]
 static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;
 void set_dyn_dt(float dt){
@@ -240,6 +248,14 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
     return;
 }
 
+float adjuste_alpha(float x_p, float y_p){
+    float theta1, theta2;
+    y_p -= WHEEL_RADIUS;
+    x_p += ROBOT_LENGHT/2; 
+    theta1 = atan2(y_p, x_p);
+    theta2 = atan2(WHEEL_RADIUS, x_p);
+    return (theta1 + theta2);
+}
 
 void* dynamics(void* arg){
 
@@ -248,6 +264,7 @@ void* dynamics(void* arg){
     int i,exec;            // thread index and system state
     float y_ee;
     float dt;
+    float theta;        
     state robot;
     get_state(&robot);
     //Vettori per lo stato a un passo e al successivo
@@ -276,18 +293,23 @@ void* dynamics(void* arg){
 
             dt = get_dyn_dt();
             //printf("DYN: dt vale %f\n", dt);
-            update_kyn(Tsee, robot);
+            update_kyn(Tsee, robot, FALSE_ALPHA);
             y_ee = Tsee[1][3];
-            //robot.q2 = 0;
-           // printf("Y = %f\n", y_ee);
+            //printf("Y = %f\n", y_ee);
             if(y_ee > 0){
-                //robot.q2 = 0;
                 //printf("DYN: Sono dentro y > 0 con y= %f\n",y_ee);
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
             }else{
                 //printf("DYN: Sono dentro y < 0 con y= %f\n",y_ee);
+                update_kyn(Tsee, robot, TRUE_ALPHA);
+                y_ee = Tsee[1][3];
+                if(y_ee > 0){
+                    theta = adjuste_alpha(Tsee[0][3], Tsee[1][3]); 
+                    robot.q3 -= theta;  
+                    q_dip1[2] = robot.q3;
+                }
                 update_M2(M, robot);
                 update_C2(C, robot, dot_robot);
                 update_G2(G, robot);
