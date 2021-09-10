@@ -13,6 +13,7 @@
 #define PLAY    1
 #define PAUSE   2
 #define STOP    3
+
 // Qlearning Parameters Change Constants
 #define NPARAM  5                  // Total Number of Possible Learning Parameters
 #define STEP    0.1                // Increase/Decrease Step of Learning Parameters
@@ -44,7 +45,6 @@ static float values[5];            // Values of QLearning Parameters
 //  value[2] -> decay
 //  value[3] -> initial epsilon
 //  value[4] -> final epsilon
-
 
 
 //-----------------------------------------------------
@@ -314,10 +314,10 @@ void* interface(void * arg)
 // Manual Mode
 
 void key_manager_manual(int *exec){
-    int p;          //Serve per gestire il cambio di parametro del qlearning
+    /*int p;          //Serve per gestire il cambio di parametro del qlearning
     float step;     //Dice di quanto incrementare/decrementare value
     char cm;
-    int s;
+    int s;*/
 
 /*DA RIFARE TOGLIENDO GET_STOP ETC
     cm = get_scancode();

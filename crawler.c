@@ -248,7 +248,7 @@ void* qlearning(void* arg){
     int i;                              // thread index
     int s, snew, a, exec, r = 0, old_exec = 0;
     long step = 0;
-    float newerr = 0;
+    //float newerr = 0;
     state robot;
 
     i = pt_get_index(arg);
@@ -298,7 +298,7 @@ void* qlearning(void* arg){
         if(exec == PLAY){  
             r = get_reward(s, snew, robot);
             //printf("Ottenuto il reward r = %d\n", r);
-            newerr = ql_updateQ(s, a, r, snew);
+            /*newerr =*/ ql_updateQ(s, a, r, snew);
             ql_copy_Q();
             //printf("Aggioranta matrice Q\n");
             //err +=  (newerr - err)/step;
@@ -324,7 +324,7 @@ void* qlearning(void* arg){
 
 int main(){
        
-    int i, ris;
+    int i; //ris;
     int mode;       // Manual or Qlearning mode decided from user
 
 
@@ -336,28 +336,30 @@ int main(){
 
     
     printf("MAIN: creo il task di gestione della grafica\n");
-    ris = pt_task_create( update_graphic, 2, PER*1000, DL*1000, PRI);
+    pt_task_create( update_graphic, 2, PER*1000, DL*1000, PRI);
     //printf("con il risultato %d\n",ris);
     
     if(mode == 1){
         printf("MAIN: creo il task di interfaccia\n");
-        ris = pt_task_create( interface, 1, PER*1000, DL*1000, PRI);
+        pt_task_create( interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
         printf("MAIN: creo il task di qlearning\n");
-        ris = pt_task_create( qlearning, 3, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
+        pt_task_create( qlearning, 3, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
         //printf("con il risultato %d\n",ris);
     }
     else{
         printf("MAIN: creo il task di interfaccia\n");
-        ris = pt_task_create( manual_interface, 1, PER*1000, DL*1000, PRI);
+        pt_task_create( manual_interface, 1, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
     }
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
-    ris = pt_task_create( dynamics, 4, PER_D*1000, PER_D*1000, PRI);
+    pt_task_create( dynamics, 4, PER_D*1000, PER_D*1000, PRI);
     //printf("con il risultato %d\n",ris);
+
     for(i = 1; i <= 4; i++){
           pt_wait_for_end(i);
           printf("MAIN: fine ciclo %d\n", i);
     }
+    
     return 0;
 }

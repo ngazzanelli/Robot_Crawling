@@ -205,7 +205,7 @@ int main()
     }
 
 
-    /*int a=0,G_n=0;
+    int a=0,G_n=0;
     float i;
     BITMAP * Graph[num_graph];
     int Graph_points[num_graph][X_point*scale];
