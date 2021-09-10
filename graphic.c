@@ -70,10 +70,10 @@
 //parametri per il disegno del crawler più le dimensioni fisiche
 #define h_floor 50
 #define w_centre 150
-#define d_body 0.2
-#define h_body 0.03
-#define r_wheel 0.015
-#define r_joint 0.0075
+#define d_body 15.0
+#define h_body 3.0
+#define r_wheel 1.5
+#define r_joint 0.75
 
 //struttura per il passaggio della reward
 typedef struct {
@@ -386,11 +386,11 @@ void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,in
 int MToPx(double val,int xy)
 {
     if (xy==0)
-        return(((int)round(val*1000)+w_centre)*SCALE);
+        return(((int)round(val*10)+w_centre)*SCALE);
     if(xy==1)
-        return((Y1*SCALE)-((int)round(val*1000)+h_floor)*SCALE);
+        return((Y1*SCALE)-((int)round(val*10)+h_floor)*SCALE);
     else        
-        return((int)round(val*1000*SCALE));
+        return((int)round(val*10*SCALE));
 }
 void  body_kin(int position[],state s)
 {   
@@ -400,10 +400,10 @@ void  body_kin(int position[],state s)
     
     rot_body[0]=cos(s.q3);
     rot_body[1]=-sin(s.q3);
-    pos_body[0]=-0.1+0.1*cos(s.q3)-0.03*sin(s.q3);
+    pos_body[0]=-(15/2) + (15/2)* cos(s.q3) - 3* sin(s.q3);
     rot_body[2]=sin(s.q3);
     rot_body[3]=cos(s.q3);
-    pos_body[1]=0.015+0.03*cos(s.q3)+0.1*sin(s.q3);
+    pos_body[1]=1.5 + 3* cos(s.q3) + (15/2) *sin(s.q3);
     position[0]=MToPx(rot_body[0]*(-d_body/2)+rot_body[1]*(-h_body/2)+pos_body[0],0);
     position[1]=MToPx(rot_body[2]*(-d_body/2)+rot_body[3]*(-h_body/2)+pos_body[1],1);
     position[2]=MToPx(rot_body[0]*(-d_body/2)+rot_body[1]*(h_body/2)+pos_body[0],0);
@@ -416,19 +416,26 @@ void  body_kin(int position[],state s)
     position[9]=MToPx(rot_body[2]*(d_body/2-r_wheel)+rot_body[3]*(-h_body/2)+pos_body[1],1);
     position[10]=MToPx(rot_body[0]*(-d_body/2)+rot_body[1]*(-h_body/2-r_wheel)+pos_body[0],0);
     position[11]=MToPx(rot_body[2]*(-d_body/2)+rot_body[3]*(-h_body/2-r_wheel)+pos_body[1],1);
-    }
+}
 void L1_kin(int position[],state s)
 {
     //recupero la posizione del primo giunto direttamente dal vettore prec. calcolato
     
     position[0]=position[4];
     position[1]=position[5];
+    
+    position[2]=  MToPx(
+        
+        -(15/2) + (15 *cos(s.q3))/2 + cos(s.q3) *(15/2 + 6 *cos(s.q4)) - 
+ 3.0* sin(s.q3) - sin(s.q3)*(3/2 + 6* sin(s.q4))
+                ,0);
+    position[3]= MToPx(1.5  + 3.0* cos(s.q3) + (15 *sin(s.q3))/2 + (15/2 + 6 *cos(s.q4)) *sin(s.q3) + 
+ cos(s.q3)* (1.5 + 6 *sin(s.q4))
+        ,1);
+    printf("la posizione del secondo giunto vale (%f,%f)\n",-(15/2) + (15 *cos(s.q3))/2 + cos(s.q3) *(15/2 + 6 *cos(s.q4)) - 
+ 3.0* sin(s.q3) - sin(s.q3)*(3/2 + 6* sin(s.q4)),1.5  + 3.0* cos(s.q3) + (15 *sin(s.q3))/2 + (15/2 + 6 *cos(s.q4)) *sin(s.q3) + 
+ cos(s.q3)* (1.5 + 6 *sin(s.q4)));
 
-    position[2]=  MToPx(cos(s.q3)*(0.1 + 0.06 *cos(s.q4)) + 
-                (-0.1 + 0.1* cos(s.q3) - 0.03*sin(s.q3)) - 
-                sin(s.q3)* (0.015 + 0.06 *sin(s.q4)),0);
-    position[3]= MToPx( (0.015 + 0.03 *cos(s.q3) + 0.1* sin(s.q3)) + (0.1 + 
-                0.06* cos(s.q4))* sin(s.q3) + cos(s.q3) *(0.015 + 0.06* sin(s.q4)),1);
       
   
 }
@@ -440,23 +447,21 @@ void L2_kin(int position[],state s)
     position[1]=position[3];
 
     position[2]=  MToPx(
-            (-0.1  + 0.1* cos(s.q3) - 0.03* sin(s.q3)) + 
-            cos(s.q3) *(0.1 + 0.06* cos(s.q5) *sin(s.q4) + 
-            cos(s.q4) *(0.06 + 0.06 *sin(s.q5))) - 
-            sin(s.q3)* (0.015 - 0.06 *cos(s.q4)* cos(s.q5) + 
-            sin(s.q4) *(0.06 + 0.06 *sin(s.q5)))
+            -(15.0/2.0)  + (15*cos(s.q3))/2.0 - 3.0*sin(s.q3) -
+			sin(s.q3)*(3.0/2.0 - 6.0*cos(s.q4 + s.q5) + 6.0*sin(s.q4)) +
+			cos(s.q3)*(15.0/2.0 + 6.0*cos(s.q4) + 6.0*sin(s.q4 + s.q5))
         ,0);
     position[3]= MToPx( 
-            (1.5 + 3.0*cos(s.q3) + (15*sin(s.q3))/2 +
+            1.5 + 3.0*cos(s.q3) + (15*sin(s.q3))/2 +
 			cos(s.q3)*(3.0/2.0 - 6*cos(s.q4 + s.q5) + 6*sin(s.q4)) +
-			sin(s.q3)*(15.0/2.0 + 6*cos(s.q4) + 6*sin(s.q4 + s.q5)))/100
+			sin(s.q3)*(15.0/2.0 + 6*cos(s.q4) + 6*sin(s.q4 + s.q5))
         ,1);
 }
 
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
     //printf("SONO DENTRO UPDATE_CR\n");
-    /*BITMAP * floor_cell=load_png("floor.png",NULL);
+    BITMAP * floor_cell=load_bitmap("floor.",NULL);
     if(floor_cell==NULL)
         printf("DIOPORCO\n");*/
     int figure[12];
