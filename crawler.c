@@ -15,6 +15,12 @@
 #define PAUSE   2
 #define STOP    3
 
+// Task identifier Constants
+#define INTERPRETER   1
+#define GRAPHIC     2
+#define CRAWLER     3
+#define MODEL       4
+
 // Global definitions
 #define TH1UP   0       // Action move up link 1
 #define TH1DW   1       // Action move down link 1
@@ -71,46 +77,24 @@ extern void get_state(state* s);
 
 // Application Tasks: main will activate them
 extern void* dynamics(void*arg);
-extern void* interface(void* arg);
-extern void* manual_interface(void* arg);
+extern void* interpreter(void* arg);
+extern void* manual_interpreter(void* arg);
 extern void* update_graphic(void* arg);
 extern void* update_graphic_DC(void* arg);
 
 
-//Mutex
+//Mutexes
 static pthread_mutex_t mux_desired_joint = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_reward = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mux_CR_dl = PTHREAD_MUTEX_INITIALIZER;
 
 
-// Static Variables (inutili se tanto ho le costanti, no?)
+// Static Variables
 static float t1min, t2min;
 static float t1max, t2max;
 static float dt1, dt2;
 static int n2;              // # of theta2 quantiations 
-static int crawler_dl;      // Crawler Deadline Miss
 static target qd;
 static rs_for_plot rw;
-
-
-//-----------------------------------------------------
-// The following Functions manage Interface Task 
-// Deadline Misses
-//-----------------------------------------------------
-void inc_crawler_dl()
-{
-    pthread_mutex_lock(&mux_CR_dl);
-    crawler_dl++;
-    pthread_mutex_unlock(&mux_CR_dl);
-}
-
-
-void get_crawler_dl(int * dl_miss)
-{
-    pthread_mutex_lock(&mux_CR_dl);
-    * dl_miss = crawler_dl;
-    pthread_mutex_unlock(&mux_CR_dl);
-}
 
 
 //-----------------------------------------------------
@@ -256,7 +240,7 @@ void* qlearning(void* arg){
     ql_init(NSTATES, NACTIONS);
     init_global_variables();
     init_parameter_values();
-    printf("QLEARN: inizio ciclo while\n");
+    //printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
     
     while (get_sys_state(&exec) != STOP){
@@ -288,11 +272,7 @@ void* qlearning(void* arg){
             //printf("QLEARN: Ottenuto il nuovo stato\n");
         }
             
-        if(pt_deadline_miss(i)){
-            printf("QLEARN: ho missato una deadline\n");
-            inc_crawler_dl();
-        }
-        
+        pt_deadline_miss(i);
         pt_wait_for_period(i);
 
         if(exec == PLAY){  
@@ -324,11 +304,11 @@ void* qlearning(void* arg){
 
 int main(){
        
-    int i; //ris;
-    int mode;       // Manual or Qlearning mode decided from user
+    int i;      //ris;
+    int mode;	// Manual or Qlearning mode decided from user
 
 
-    printf("scegliere la modalità: 0 -> controllo manuale, 1 -> qlearning\n");
+    printf("MAIN: scegliere la modalità: 0 -> controllo manuale, 1 -> qlearning\n");
     scanf("%d", &mode);
 
     init_state();
@@ -336,24 +316,24 @@ int main(){
 
     
     printf("MAIN: creo il task di gestione della grafica\n");
-    pt_task_create( update_graphic, 2, PER*1000, DL*1000, PRI);
+    pt_task_create( update_graphic, GRAPHIC, PER*1000, DL*1000, PRI);
     //printf("con il risultato %d\n",ris);
     
     if(mode == 1){
-        printf("MAIN: creo il task di interfaccia\n");
-        pt_task_create( interface, 1, PER*1000, DL*1000, PRI);
+        printf("MAIN: creo il task di interpretazione dei comandi\n");
+        pt_task_create( interpreter, INTERPRETER, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
         printf("MAIN: creo il task di qlearning\n");
-        pt_task_create( qlearning, 3, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
+        pt_task_create( qlearning, CRAWLER, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
         //printf("con il risultato %d\n",ris);
     }
     else{
-        printf("MAIN: creo il task di interfaccia\n");
-        pt_task_create( manual_interface, 1, PER*1000, DL*1000, PRI);
+        printf("MAIN: creo il task di interpretazione dei comandi\n");
+        pt_task_create( manual_interpreter, INTERPRETER, PER*1000, DL*1000, PRI);
         //printf("con il risultato %d\n",ris);
     }
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
-    pt_task_create( dynamics, 4, PER_D*1000, PER_D*1000, PRI);
+    pt_task_create( dynamics, MODEL, PER_D*1000, PER_D*1000, PRI);
     //printf("con il risultato %d\n",ris);
 
     for(i = 1; i <= 4; i++){

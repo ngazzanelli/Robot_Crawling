@@ -64,7 +64,7 @@ void ql_init(int ns, int na){
 		for(a = 0; a < nact; a++)
 			Q[s][a] = 0;
 
-	/********** IDEAL CYCLE TEST **********/ 
+	// IDEAL CYCLE TEST 
 	 Q[9][0] = 10;
 	 Q[16][0] = 10;
 	 Q[23][2] = 10;
@@ -73,7 +73,6 @@ void ql_init(int ns, int na){
 	 Q[18][1] = 10;
 	 Q[11][3] = 10;
 	 Q[10][3] = 10;
-	/*************************************/
 }
 
 
@@ -177,7 +176,7 @@ void ql_reduce_exploration(){
 	pthread_mutex_lock(&mux_eps);
 	epsilon = eps_fin + eps_norm*(eps_ini - eps_fin);
 	pthread_mutex_unlock(&mux_eps);
-	printf("Ho ridotto epsilon = %f\n", epsilon);
+	//printf("Ho ridotto epsilon = %f\n", epsilon);
 	ql_get_epsilon();
 
 }

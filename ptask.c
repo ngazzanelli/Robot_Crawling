@@ -17,8 +17,15 @@ struct task_par {
 	struct timespec dl;		
 };
 
-// Mutex 
-static pthread_mutex_t mux_period[NT] = PTHREAD_MUTEX_INITIALIZER;
+// Mutex for managing task informations
+static pthread_mutex_t mux_task[NT];
+void init_mutex()
+{
+	int i;
+
+	for(i=0; i<NT; i++)
+		pthread_mutex_init(&mux_task[i], NULL);
+}
 
 static struct task_par		tp[NT];
 pthread_t					tid[NT];
@@ -28,14 +35,14 @@ int							policy = SCHED_FIFO;
 //----------------------------
 //	Time management functions
 //----------------------------
-void time_copy(struct timespec *td, struct timespec ts){
-
+void time_copy(struct timespec *td, struct timespec ts)
+{
 	td->tv_sec = ts.tv_sec;
 	td->tv_nsec = ts.tv_nsec;
 }
 
-void time_add_us (struct timespec *t, int us){
-
+void time_add_us (struct timespec *t, int us)
+{
 	t->tv_sec += us/1000000;
 	t->tv_nsec += (us%1000000)*1000;
 
@@ -45,8 +52,8 @@ void time_add_us (struct timespec *t, int us){
 	}
 }
 
-int time_cmp (struct timespec t1, struct timespec t2){
-
+int time_cmp (struct timespec t1, struct timespec t2)
+{
 	if (t1.tv_sec > t2.tv_sec) return 1;
 	if (t1.tv_sec < t2.tv_sec) return -1;
 	if (t1.tv_nsec > t2.tv_nsec) return 1;
@@ -54,8 +61,8 @@ int time_cmp (struct timespec t1, struct timespec t2){
 	return 0;
 }
 
-int time_diff_nsec (struct timespec t1, struct timespec t2){
-
+int time_diff_nsec (struct timespec t1, struct timespec t2)
+{
 	return (t1.tv_sec-t2.tv_sec)*pow(10, 9)+(t1.tv_nsec-t2.tv_nsec);
 }
 
@@ -63,22 +70,24 @@ int time_diff_nsec (struct timespec t1, struct timespec t2){
 //----------------------------
 //	Task management functions
 //----------------------------
-void pt_ptask_init (int scheduler){
+void pt_ptask_init (int scheduler)
+{
 	policy = scheduler;
 }
 
-int pt_task_create(void* (*task) (void*), int i, int period, int drel, int prio){
+int pt_task_create(void* (*task) (void*), int i, int period, int drel, int prio)
+{
 	pthread_attr_t		myatt;
 	struct sched_param	mypar;
 	int					tret;
 	
-	if (i>=NT) return -1;
+	if (i >= NT) return -1;
 	
 	tp[i].arg = i;
-	pthread_mutex_lock(&mux_period[i]);
+	pthread_mutex_lock(&mux_task[i]);
 	tp[i].period = period;
 	tp[i].deadline = drel;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 	tp[i].priority = prio;
 	tp[i].dmiss = 0;
 	
@@ -91,63 +100,76 @@ int pt_task_create(void* (*task) (void*), int i, int period, int drel, int prio)
 	return tret;	
 }
 
-int pt_get_index(void* arg){
+int pt_get_index(void* arg)
+{
 	struct task_par	*tpar;
 
 	tpar = (struct task_par *)arg;
 	return tpar->arg;
 }
 
-int pt_get_period(int i){
+int pt_get_period(int i)
+{
 	int per;
 
-	pthread_mutex_lock(&mux_period[i]);
+	pthread_mutex_lock(&mux_task[i]);
 	per = tp[i].period;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 	return per;
 }
 
-void pt_set_period(int i, int per){
-	pthread_mutex_lock(&mux_period[i]);
+void pt_set_period(int i, int per)
+{
+	pthread_mutex_lock(&mux_task[i]);
 	tp[i].period = per;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 }
 
-void pt_set_deadline(int i, int drel){	
-	pthread_mutex_lock(&mux_period[i]);
+void pt_set_deadline(int i, int drel)
+{	
+	pthread_mutex_lock(&mux_task[i]);
 	tp[i].deadline = drel;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 }
 
-int pt_get_deadline(int i){
+int pt_get_deadline(int i)
+{
 	int drel;
 
-	pthread_mutex_lock(&mux_period[i]);
+	pthread_mutex_lock(&mux_task[i]);
 	drel = tp[i].deadline;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 	return drel;
 }
 
-int pt_get_dmiss(int i){
-	return tp[i].dmiss;
+int pt_get_dmiss(int i)
+{
+	int misses;
+
+	pthread_mutex_lock(&mux_task[i]);
+	misses = tp[i].dmiss;
+	pthread_mutex_unlock(&mux_task[i]);
+	return misses;
 }
 
-void pt_set_activation(int i){
+void pt_set_activation (int i)
+{
 	struct timespec	t;
 	int per, drel;
 
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	time_copy(&(tp[i].at), t);
 	time_copy(&(tp[i].dl), t);
-	pthread_mutex_lock(&mux_period[i]);
+	pthread_mutex_lock(&mux_task[i]);
 	per = tp[i].period;
 	drel = tp[i].deadline;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 	time_add_us(&(tp[i].at), per);
 	time_add_us(&(tp[i].dl), drel);	
 }
 
-int pt_deadline_miss(int i){
+int pt_deadline_miss (int i)
+{
 	struct timespec	now;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -158,17 +180,19 @@ int pt_deadline_miss(int i){
 	return 0;
 }
 
-void pt_wait_for_period (int i){
+void pt_wait_for_period (int i)
+{
 	int per;
 
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &(tp[i].at), NULL);
-	pthread_mutex_lock(&mux_period[i]);
+	pthread_mutex_lock(&mux_task[i]);
 	per = tp[i].period;
-	pthread_mutex_unlock(&mux_period[i]);
+	pthread_mutex_unlock(&mux_task[i]);
 	time_add_us(&(tp[i].at), per);
 	time_add_us(&(tp[i].dl), per);
 }
 
-void pt_wait_for_end (int i){
+void pt_wait_for_end (int i)
+{
 	pthread_join(tid[i], NULL);
 }

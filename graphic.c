@@ -1,85 +1,87 @@
 #include <allegro.h>
 #include <math.h>
 #include <stdio.h>
-#include "ptask.h"
 #include <string.h>
+#include "ptask.h"
 #include "matrices.h"
 
-// COSTANTI PER LO STATO DEL SISTEMA
-#define RESET   0
-#define PLAY    1
-#define PAUSE   2
-#define STOP    3
+// System State constnts
+#define RESET   	0
+#define PLAY    	1
+#define PAUSE   	2
+#define STOP    	3
 
-//Window Dimensions Constant
-#define W_WIN 640 
-#define H_WIN 480 
-#define X1 120 
-#define X2 520 
-#define Y1 300
+// Task Constants
+#define INTERFACE   1
+#define GRAPHIC     2
+#define CRAWLER     3
+#define MODEL       4
 
-//Scale Factor Constant 
-#define SCALE 2//fattore di scala
+// Window Dimensions Constants
+#define W_WIN   	640 
+#define H_WIN   	480 
+#define X1      	120 
+#define X2      	520 
+#define Y1      	300
 
-//Crawler plot Constant
-#define BKG 0
-#define CR_CMP_R 160
-#define CR_CMP_G 82
-#define CR_CMP_B 45
-#define CR_All_R 105
-#define CR_All_G 105
-#define CR_All_B 105
-#define H_FLOOR 50
-#define W_CENTRE 150
-#define D_BODY 15.0
-#define H_BODY 3.0
-#define R_WHEEL 1.5
-#define R_JOINT 0.75
+// Scale Factor Constant 
+#define SCALE   	2 
 
+// Crawler plot Constants
+#define BKG         0
+#define CR_CMP_R    160
+#define CR_CMP_G    82
+#define CR_CMP_B    45
+#define CR_All_R    105
+#define CR_All_G    105
+#define CR_All_B    105
+#define H_FLOOR		50
+#define W_CENTRE	150
+#define D_BODY		15.0
+#define H_BODY		3.0
+#define R_WHEEL		1.5
+#define R_JOINT		0.75
 
-//Text plot Constant
+// Text plot Constants
 #define X_TEXT_DATA 15
 #define Y_TEXT_DATA 50
 #define FB 10
 
-//QL_State plot Constant
-#define N_ST_SV 5
+// QL_State plot Constants
+#define N_ST_SV		5
 #define X_MAT_S_OFF 370
-#define Y_MAT_S_OFF  25
+#define Y_MAT_S_OFF 25
 #define Y_LAB_S_OFF 5
 #define X_LAB_S_OFF 405
-#define W_MQ 16 
-#define H_MQ 5
-#define X_OFF 37 
-#define Y_OFF 50
-#define X_TEXT 35
-#define Y_TEXT 10
+#define W_MQ 		16 
+#define H_MQ	 	5
+#define X_OFF 		37 
+#define Y_OFF 		50
+#define X_TEXT 		35
+#define Y_TEXT 		10
 
-//Graphic plot Constant
-#define G_X_OFF 50
-#define G_Y_OFF 165
-#define LEN_AX_X 300
-#define LEN_LINE 10
-#define LEN_AX_Y 141
-#define X_MAX_R_L 20
-#define Y_MAX_R_L 30
-#define X_MIN_R_L 20
-#define Y_MIN_R_L 160
-#define X_EPOCH_L 300
-#define Y_EPOCH_L 170
-#define X_G_NAME 100
-#define Y_G_NAME 10
-#define L_S_RECT 20
-#define C_S_RECT 10
-#define C_S_RAD 10
+// Graphic plot Constants
+#define G_X_OFF 	50
+#define G_Y_OFF 	165
+#define LEN_AX_X 	300
+#define LEN_LINE 	10
+#define LEN_AX_Y 	141
+#define X_MAX_R_L 	20
+#define Y_MAX_R_L 	30
+#define X_MIN_R_L 	20
+#define Y_MIN_R_L 	160
+#define X_EPOCH_L 	300
+#define Y_EPOCH_L 	170
+#define X_G_NAME	100
+#define Y_G_NAME 	10
+#define L_S_RECT 	20
+#define C_S_RECT	10
+#define C_S_RAD 	10
 
 //elementi da togliere perchè nella define di qlearning
 #define N_STATE 49
 #define N_STATE_X_ANG 7
 #define N_ACTION 4
-
-
-
 
 //Reward struct to comunicate with Crawler.c
 typedef struct {
@@ -88,16 +90,13 @@ typedef struct {
     int flag;
 } rs_for_plot;
 
-
-
-
-//Extern Function from command_interface
+//Extern Functions from command_interface
 extern int get_sys_state(int* s);
 extern int get_pause_graphic();
 extern int get_parameter_selected();
 extern void get_parameter_values(float *buff);
 
-//Extern Function from crawler
+//Extern Functions from crawler
 extern int angles2state(float t1, float t2);
 extern void get_rs_for_plot(rs_for_plot* t);
 extern void ql_get_Q(float* dest);
@@ -105,13 +104,6 @@ extern float ql_get_epsilon();
 
 //Extern Function from model
 extern void get_state(state* s);
-
-
-//Extern Function and Variable to manage the deadline miss
-extern void get_interface_dl(int* dl_miss);
-extern void get_crawler_dl(int* dl_miss);
-extern void get_model_dl(int* dl_miss);
-static int graphic_dl;
 
 //Local variable to save crawler state
 state joint_var;
@@ -136,8 +128,8 @@ void reset_command()
 int bkg_col;
 int txt_col;
 
-    bkg_col = makecol(200, 200, 200);
-    txt_col = makecol(0, 0, 255);
+    bkg_col = makecol(200, 200, 200);	//grey
+    txt_col = makecol(0, 0, 255);		//blue
     rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
     textout_ex(screen, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + FB)*SCALE, txt_col, bkg_col);
     textout_ex(screen, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
@@ -174,8 +166,7 @@ int bkg_col;
     textout_ex(screen, font, "R <--> Reset", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 4*FB)*SCALE, txt_col, bkg_col);
     textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 5*FB)*SCALE, txt_col, bkg_col);
     textout_ex(screen, font, "B <--> Boost", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 6*FB)*SCALE, txt_col, bkg_col);
-    //textout_ex(screen,font,"Accelleratore Learning",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+7*FB)*SCALE, txt_col,bkg_col); 
-    textout_ex(screen, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 8*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 7*FB)*SCALE, txt_col, bkg_col);
 
 }
 
@@ -206,14 +197,15 @@ void update_data(BITMAP* BM_TXT,
                 int dl_mod,
                 int dl_cra,
                 int dl_int,
+                int dl_gra,
                 int epoch )
 {
     char str[25];
     int bkg_col;
     int txt_col;
 
-    bkg_col = makecol(200, 200, 200);
-    txt_col = makecol(0, 0, 255);
+    bkg_col = makecol(200, 200, 200);	//grey
+    txt_col = makecol(0, 0, 255);		//blue
 
     clear_to_color(BM_TXT, bkg_col);
     sprintf(str, ">Learning Rate:%.4f", alpha);
@@ -236,7 +228,7 @@ void update_data(BITMAP* BM_TXT,
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 10*FB)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Deadline Interpreter:%d", dl_int);
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 11*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str, ">Deadline Graphic:%d", graphic_dl);
+    sprintf(str, ">Deadline Graphic:%d", dl_gra);
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA + 12*FB)*SCALE, txt_col, bkg_col);
 
     blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
@@ -261,9 +253,9 @@ void update_data_reset(BITMAP* BM_TXT,
     int bkg_col;
     int slc_col;
 
-    bkg_col = makecol(200, 200, 200);
-    txt_col = makecol(0, 0, 255);
-    slc_col = makecol(255, 0, 0);
+    bkg_col = makecol(200, 200, 200);	//grey
+    txt_col = makecol(0, 0, 255);		//blue
+    slc_col = makecol(255, 0, 0);		//red
 
     clear_to_color(BM_TXT, bkg_col);
     select = get_parameter_selected();
@@ -290,64 +282,54 @@ void update_data_reset(BITMAP* BM_TXT,
 //-------------------------------------------
 void update_STAT(BITMAP* BM_SG, int new_state, int reset)
 {
-    static int Sl_count = 0;
-    static int Sl_begin = 0;
-    static int Stat_lp[N_ST_SV];
+    static int sl_count = 0;
+    static int sl_begin = 0;
+    static int stat_lp[N_ST_SV];
     int i, j, k, col, ind, txt_col, bkg_col;
 
-    bkg_col = makecol(255, 255, 255);
-    txt_col = makecol(0, 0, 0);
+    bkg_col = makecol(255, 255, 255);	//grey
+    txt_col = makecol(0, 0, 0);			//white
 
-    if(reset)
-    {
-        Sl_count = 0;
-        Sl_begin = 0;
+    if(reset){
+        sl_count = 0;
+        sl_begin = 0;
     }
-    if(Sl_count < (N_ST_SV))
+    if(sl_count < (N_ST_SV))
     {
-        Stat_lp[Sl_count] = new_state;
-        Sl_count++;
-    }
-    else
-    {
-        Stat_lp[(Sl_begin + N_ST_SV) % (N_ST_SV)] = new_state;
-        Sl_begin = (Sl_begin + 1) % N_ST_SV;
+        stat_lp[sl_count] = new_state;
+        sl_count++;
+    }else{
+        stat_lp[(sl_begin + N_ST_SV) % (N_ST_SV)] = new_state;
+        sl_begin = (sl_begin + 1) % N_ST_SV;
     }
     
     
-    for(k = 0; k < Sl_count; k++)
-    {
-        ind = (k + Sl_begin) % N_ST_SV; 
-    }
+    for(k = 0; k < sl_count; k++)
+        ind = (k + sl_begin) % N_ST_SV; 
 
     textout_ex(BM_SG, font, "State Matrix", X_LAB_S_OFF*SCALE, Y_LAB_S_OFF*SCALE, txt_col, bkg_col);
-    for(i = 0; i < N_STATE_X_ANG; i++)
-    {
-        for(j = 0; j < N_STATE_X_ANG; j++)
-        {
+    for(i = 0; i < N_STATE_X_ANG; i++){
+        for(j = 0; j < N_STATE_X_ANG; j++){
             rect(BM_SG, (X_MAT_S_OFF + i*L_S_RECT)*SCALE,
                         (Y_MAT_S_OFF+j*L_S_RECT)*SCALE,
                         (X_MAT_S_OFF+(i+1)*L_S_RECT)*SCALE,
                         (Y_MAT_S_OFF+(j+1)*L_S_RECT)*SCALE,
-                        txt_col);
+                        txt_col
+			);
 
-            for(k = 0; k < Sl_count ; k++)
-            {
-                ind = (k + Sl_begin) % N_ST_SV;
-                if(Stat_lp[ind] == (i * N_STATE_X_ANG + j))
-                {
+            for(k = 0; k < sl_count ; k++){
+                ind = (k + sl_begin) % N_ST_SV;
+                if(stat_lp[ind] == (i * N_STATE_X_ANG + j)){
                     col = 245 * (4 - k) / N_ST_SV;
-                    circlefill(BM_SG,
-                    (X_MAT_S_OFF + i*L_S_RECT + C_S_RECT)*SCALE,
-                    (Y_MAT_S_OFF + j*L_S_RECT + C_S_RECT)*SCALE,
-                    C_S_RAD,
-                    makecol(col,col,col)
-                    );
+                    circlefill(BM_SG, 
+						(X_MAT_S_OFF + i*L_S_RECT + C_S_RECT)*SCALE,
+                    	(Y_MAT_S_OFF + j*L_S_RECT + C_S_RECT)*SCALE,
+                    	C_S_RAD, makecol(col,col,col)
+					);
                 }
             }   
         }
-    }
-    
+    }   
 }
 
 
@@ -357,18 +339,16 @@ void update_STAT(BITMAP* BM_SG, int new_state, int reset)
 //-------------------------------------------
 void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int reset)
 {
-    static float  Reward_p[(LEN_AX_X / LEN_LINE)];
-    static int rew_count = 0;
-    static int rew_begin = 0;
-    int i, cont_plot, txt_col, bkg_col, ax_col, plot_col;
-    float val;
-    char s[10];
+    static float	reward_p[(LEN_AX_X / LEN_LINE)];
+    static int		rew_count =0, rew_begin = 0;
+    int				i, cont_plot, txt_col, bkg_col, ax_col, plot_col;
+    float			val;
+    char			s[10];
 
     bkg_col = makecol(255, 255, 255);
     ax_col = txt_col = makecol(0, 0, 0);
     plot_col = makecol(255, 0, 0);
-    if(reset)
-    {
+    if(reset){
         rew_begin = 0;
         rew_count = 0;
     }
@@ -382,28 +362,25 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
 
     textout_ex(BM_GS, font, "Epoch", X_EPOCH_L*SCALE, Y_EPOCH_L*SCALE, txt_col, bkg_col);
     textout_ex(BM_GS, font, "Reward Plot", X_G_NAME*SCALE, Y_G_NAME*SCALE, txt_col, bkg_col);
-    if(rew_count < (LEN_AX_X/LEN_LINE))
-    {
-        Reward_p[rew_count] = reward;
+    if(rew_count < (LEN_AX_X/LEN_LINE)){
+        reward_p[rew_count] = reward;
         rew_count++;
-    }
-    else
-    {
+    }else{
         rew_begin = (rew_begin+1)%((LEN_AX_X/LEN_LINE));
-        Reward_p[(rew_begin+(LEN_AX_X/LEN_LINE))%((LEN_AX_X/LEN_LINE))] = reward;
+        reward_p[(rew_begin+(LEN_AX_X/LEN_LINE))%((LEN_AX_X/LEN_LINE))] = reward;
     }
-    for(i=0;i<rew_count;i++)
-    {
+    for(i=0;i<rew_count;i++){
         cont_plot = (i+rew_begin)%(LEN_AX_X/LEN_LINE);
-        if(Reward_p[cont_plot]>=max_range)
+        if(reward_p[cont_plot]>=max_range)
             val = (float)max_range;
-        else if(Reward_p[cont_plot]<=min_range)
+        else if(reward_p[cont_plot]<=min_range)
             val = (float)min_range;
         else
-            val = Reward_p[cont_plot];
+            val = reward_p[cont_plot];
         
         val = ((val-min_range)/(max_range-min_range))*(LEN_AX_Y*SCALE-1);
-        line(BM_GS,(G_X_OFF*SCALE+i*LEN_LINE*SCALE),(G_Y_OFF*SCALE-floor(val)),(G_X_OFF*SCALE+(i+1)*LEN_LINE*SCALE),(G_Y_OFF*SCALE-floor(val)),plot_col);
+        line(BM_GS,(G_X_OFF*SCALE+i*LEN_LINE*SCALE), (G_Y_OFF*SCALE-floor(val)),
+			(G_X_OFF*SCALE+(i+1)*LEN_LINE*SCALE),(G_Y_OFF*SCALE-floor(val)),plot_col);
     }
 
 }
@@ -442,7 +419,7 @@ int MToPx(double val,int xy)
 {
     if (xy==0)
         return(((int)round(val*10)+W_CENTRE)*SCALE);
-    if(xy==1)
+    if (xy==1)
         return((Y1*SCALE)-((int)round(val*10)+H_FLOOR)*SCALE);
     else        
         return((int)round(val*10*SCALE));
@@ -455,8 +432,8 @@ int MToPx(double val,int xy)
 //-------------------------------------------
 void  body_kin(int position[],state s)
 {   
-double rot_body[4];
-double pos_body[2];
+	double rot_body[4];
+	double pos_body[2];
 
     rot_body[0] = cos(s.q3);
     rot_body[1] = -sin(s.q3);
@@ -491,16 +468,12 @@ void L2_kin(int position[],state s)
     position[2] = MToPx(
             -(15.0/2.0)  + (15*cos(s.q3))/2.0 - 3.0*sin(s.q3) -
 			sin(s.q3)*(3.0/2.0 - 6.0*cos(s.q4 + s.q5) + 6.0*sin(s.q4)) +
-			cos(s.q3)*(15.0/2.0 + 6.0*cos(s.q4) + 6.0*sin(s.q4 + s.q5))
-        ,0);
+			cos(s.q3)*(15.0/2.0 + 6.0*cos(s.q4) + 6.0*sin(s.q4 + s.q5)),0);
     position[3] = MToPx( 
             1.5 + 3.0*cos(s.q3) + (15*sin(s.q3))/2 +
 			cos(s.q3)*(3.0/2.0 - 6*cos(s.q4 + s.q5) + 6*sin(s.q4)) +
-			sin(s.q3)*(15.0/2.0 + 6*cos(s.q4) + 6*sin(s.q4 + s.q5))
-        ,1);
+			sin(s.q3)*(15.0/2.0 + 6*cos(s.q4) + 6*sin(s.q4 + s.q5)),1);
 }
-
-
 
 //-------------------------------------------
 //  The Following Function updates the 
@@ -508,12 +481,14 @@ void L2_kin(int position[],state s)
 //-------------------------------------------
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
-int figure[12];
+	int figure[12];
     //printf("SONO DENTRO UPDATE_CR\n");
-   /* BITMAP * floor_cell;
+	/*
+	BITMAP * floor_cell;
     floor_cell=load_bitmap("sky_sfodo.bmp",NULL);
     if(floor_cell==NULL)
-        printf("DIOPORCO\n");*/
+        printf("DIOPORCO\n");
+	*/
     
     clear_to_color(BM_CR,makecol(255,255,255));
     line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
@@ -539,7 +514,7 @@ int figure[12];
 //-----------------------------------------
 void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
 {
-int i,j,val,col,txt_col,bkg_col;
+	int i,j,val,col,txt_col,bkg_col;
     
     bkg_col = makecol(255,255,255);
     txt_col = makecol(0,0,0);
@@ -558,7 +533,7 @@ int i,j,val,col,txt_col,bkg_col;
             }
             else
             {
-                 val = (int)floor(-matrix[i*N_ACTION+j]/step);
+                val = (int)floor(-matrix[i*N_ACTION+j]/step);
                 if(val>255)
                     val = 255;
                 col = makecol(255,255-val,255-val);
@@ -582,13 +557,14 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti, int_dl, mod_dl, craw_dl, epoch = 0, exec;
+    int ti, int_dmiss, mod_dmiss, craw_dmiss, grap_dmiss, epoch = 0, exec;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
     float epsilon;
     float values[5];
     BITMAP *CR, *MQ, *P_data, *GRP_STAT;
+
     //inizializzo allegro e lo schermo 
     init_screen();
     //inizializzo le BITMAP
@@ -603,21 +579,21 @@ void *update_graphic(void *arg)
 
     while (get_sys_state(&exec) != STOP)
     {
-
         if(exec==PLAY || exec==RESET/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
         {
-            //printf("DENTRO IF DI update_graphic\n");
+            //printf("GRAPHIC: dentro if di update_graphic\n");
             get_state(&rob);
             update_CR(CR,rob);
             
-            get_interface_dl(&int_dl);
-            get_model_dl(&mod_dl);
-            get_crawler_dl(&craw_dl);
+            int_dmiss = pt_get_dmiss(INTERFACE);
+            mod_dmiss = pt_get_dmiss(MODEL);
+            craw_dmiss = pt_get_dmiss(CRAWLER);
+            grap_dmiss = pt_get_dmiss(GRAPHIC);
             epsilon = ql_get_epsilon();
 
             if(exec == PLAY)
             {
-                update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dl, craw_dl, int_dl, epoch);
+                update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
                 not_reset_command();
             }
 
@@ -642,8 +618,7 @@ void *update_graphic(void *arg)
             }
         }
         
-        if(pt_deadline_miss(ti))
-            graphic_dl++;
+        pt_deadline_miss(ti);
         pt_wait_for_period(ti);
         
     } 

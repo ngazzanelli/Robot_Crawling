@@ -9,7 +9,8 @@
 #define ROBOT_LENGHT    10.0
 #define WHEEL_RADIUS    1.5
 #define T               0.1  // Trajectory Generation Interval [s]
-//Control Constants
+
+// Control Constants
 #define KC  10 
 #define KD  10
 
@@ -24,7 +25,7 @@
 #define FALSE_ALPHA 0
 
 
-// Desired Robot State
+// Desired Robot State (from crawler task)
 typedef struct {
     float q1d;
     float q2d;
@@ -33,30 +34,27 @@ typedef struct {
 
 
 // Functions from other modules
-extern int get_sys_state(int *s);
-extern void get_desired_joint(target* t);
+extern int get_sys_state(int *s);           //(from command_interface task)
+extern void get_desired_joint(target* t);   //(from crawler task)
 
-//Mutex
-static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;          //Mutex for Integration Interval dt
-static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;             // Mutex for Actual Robot State 
-static pthread_mutex_t mux_model_dl = PTHREAD_MUTEX_INITIALIZER;    // Mutex for Deadline Misses
-
+// Mutexes
+static pthread_mutex_t mux_dt = PTHREAD_MUTEX_INITIALIZER;          // Mutex for Dynamic Integration Interval dt
+static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;             // Mutex for Actual Robot State
 
 // Static Variables
-static float DT = 0.001;    // Dynamic Integration Interval dt [s]
-static target qd;
-static int model_dl;
+static float    delta_t = 0.001;    // Dynamic Integration Interval dt [s]
+static target   qd;
+
 // Actual Robot State: can be accessed only through Interface Function
 static state global_robot;       
 static dot_state dot_robot;
-
 
 //-----------------------------------------------------
 // The following Functions manage Robot State for 
 // initialization and interfacing with other tasks
 //-----------------------------------------------------
-void init_state(){
-
+void init_state()
+{
     pthread_mutex_lock(&mux);
     global_robot.q1 = 0;
     global_robot.q2 = 0;
@@ -76,7 +74,8 @@ void init_state(){
     dot_robot.dq6 = 0;
 }
 
-void get_state(state* s){
+void get_state(state* s)
+{
     pthread_mutex_lock(&mux);
     s->q1 = global_robot.q1;
     s->q2 = global_robot.q2;
@@ -89,7 +88,8 @@ void get_state(state* s){
     pthread_mutex_unlock(&mux);
 }
 
-void set_state(state s){
+void set_state(state s)
+{
     pthread_mutex_lock(&mux);
     global_robot.q1 = s.q1;
     global_robot.q2 = s.q2;
@@ -107,34 +107,21 @@ void set_state(state s){
 // The following Functions manage Dynamic Integration
 // Interval
 //-----------------------------------------------------
-void set_dyn_dt(float dt){
+void set_dyn_dt(float t)
+{
     pthread_mutex_lock(&mux_dt);
-    DT = dt;
+    delta_t = t;
     pthread_mutex_unlock(&mux_dt);
 }
-float get_dyn_dt(){
+
+float get_dyn_dt()
+{
     float ret;
+
     pthread_mutex_lock(&mux_dt);
-    ret = DT;
+    ret = delta_t;
     pthread_mutex_unlock(&mux_dt);
     return ret;
-}
-
-
-//-----------------------------------------------------
-// The following Functions manage Dynamic Task 
-// Deadline Misses
-//-----------------------------------------------------
-void inc_model_dl(){
-    pthread_mutex_lock(&mux_model_dl);
-    model_dl++;
-    pthread_mutex_unlock(&mux_model_dl);
-}
-
-void get_model_dl(int * dl_miss){
-    pthread_mutex_lock(&mux_model_dl);
-    * dl_miss = model_dl;
-    pthread_mutex_unlock(&mux_model_dl);
 }
 
 
@@ -143,15 +130,12 @@ void get_model_dl(int * dl_miss){
 // Trajectory Generation.
 // The Trajectory is a fifth grade polynomial
 //-----------------------------------------------------
-void update_coefficients(float coef1[4], float coef2[4], state robot){
-
+void update_coefficients(float coef1[4], float coef2[4], state robot)
+{
     // Actual Initial Position 
-    float qi_1 = robot.q4;
-    float qi_2 = robot.q5;
-
+    float qi_1 = robot.q4, qi_2 = robot.q5;
     // Desired Final Position controlled by Crawler Task
-    float qf_1 = qd.q1d;
-    float qf_2 = qd.q2d;
+    float qf_1 = qd.q1d, qf_2 = qd.q2d;
 
     // First Joint coefficients update
     coef1[0] = qi_1;
@@ -165,8 +149,6 @@ void update_coefficients(float coef1[4], float coef2[4], state robot){
     coef2[2] = -15*(qf_2 - qi_2)/pow(T, 4);
     coef2[3] =   6*(qf_2 - qi_2)/pow(T, 5);
 
-    return;
-
 }
 
 
@@ -174,8 +156,8 @@ void update_coefficients(float coef1[4], float coef2[4], state robot){
 // The following Function computes the desired joint
 // position, velocity and acceleration at time instant t 
 //------------------------------------------------------
-void compute_qdt(float qdt[2], float dot_qdt[2], float dotdot_qdt[2], float coef1[4], float coef2[4], float t){
-
+void compute_qdt(float qdt[2], float dot_qdt[2], float dotdot_qdt[2], float coef1[4], float coef2[4], float t)
+{
     if(t <= T){
 
         // Desired Joint Position
@@ -189,8 +171,7 @@ void compute_qdt(float qdt[2], float dot_qdt[2], float dotdot_qdt[2], float coef
         // Desired Joint Acceleration
         dotdot_qdt[0] = 6*coef1[1]*t + 12*coef1[2]*pow(t, 2) + 20*coef1[3]*pow(t, 3);
         dotdot_qdt[1] = 6*coef2[1]*t + 12*coef2[2]*pow(t, 2) + 20*coef2[3]*pow(t, 3);
-    }
-    else{
+    } else {
         qdt[0] = qd.q1d;
         qdt[1] = qd.q2d;
         dot_qdt[0] = dot_qdt[1] = 0;
@@ -206,29 +187,22 @@ void compute_qdt(float qdt[2], float dot_qdt[2], float dotdot_qdt[2], float coef
 // tau to be used in Dynamic Intergration.
 // For more details please see the report  
 //-----------------------------------------------------
-void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float G[2]){
+void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float G[2])
+{
     static int step;
-    static float coefficients1[4];
-    static float coefficients2[4];
-
-    // Error Variables
-    float e[2];
-    float dot_e[2];
-    float s[2];
-
-    float q_t[2];           //  Current Joints Position(t)
-    float dot_q_t[2];       //  Current Joints Velocity(t)
-    //float dotdot_q_t[2];    //  Current Joints Acceleration(t)
-    float dot_qr_t[2];      //  Target Joints Velocity(t) 
-    float dotdot_qr_t[2];   //  Target Joints Acceleration(t)
-    float qd_t[2];          //  Desired Joints Position(t)
-    float dot_qd_t[2];      //  Desired Joints Velocity(t) 
-    float dotdot_qd_t[2];   //  Desired Joints Acceleration(t) 
-    float t;                //  Time Instant
+    static float coefficients1[4], coefficients2[4];
+    float e[2], dot_e[2], s[2];     //  Error Variables
+    float q_t[2];                   //  Current Joints Position(t)
+    float dot_q_t[2];               //  Current Joints Velocity(t)
+    float dot_qr_t[2];              //  Target Joints Velocity(t) 
+    float dotdot_qr_t[2];           //  Target Joints Acceleration(t)
+    float qd_t[2];                  //  Desired Joints Position(t)
+    float dot_qd_t[2];              //  Desired Joints Velocity(t) 
+    float dotdot_qd_t[2];           //  Desired Joints Acceleration(t) 
+    float t;                        //  Time Instant
 
     // Support Variables for Linear Algebra Operation
     float ris1[2], ris2[2], ris3[2], ris4[2], ris5[2], ris6[2];
-
 
     get_desired_joint(&qd);
 
@@ -271,7 +245,6 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
     vector_sum(ris6, ris5, tau, 2);
 
     step++;
-    return;
 }
 
 
@@ -279,8 +252,10 @@ void generate_tau(float tau[2], state robot, float M[2][2], float C[2][2], float
 // The following Function manages the numerical error
 // due to Forward Euler Integration
 //------------------------------------------------------
-float adjust_alpha(float x_p, float y_p){
+float adjust_alpha(float x_p, float y_p)
+{
     float theta1, theta2;
+
     y_p -= WHEEL_RADIUS;
     x_p += ROBOT_LENGHT/2; 
     theta1 = atan2(y_p, x_p);
@@ -292,8 +267,8 @@ float adjust_alpha(float x_p, float y_p){
 //------------------------------------------------------
 // Dynamic Task
 //------------------------------------------------------
-void* dynamics(void* arg){
-
+void* dynamics(void* arg)
+{
     printf("DYNAMIC: task started\n");
     int i, exec;            // thread index and system state
     float y_ee;
@@ -334,19 +309,17 @@ void* dynamics(void* arg){
             
 
             if(y_ee > 0){
-
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
 
             }else{
-
                 update_kyn(Tsee, robot, TRUE_ALPHA);
                 y_ee = Tsee[1][3];
 
                 if(y_ee > 0){
                     // Numerical Error Fix
-                    printf("DYN: Sono dentro y < 0 ma il secondo check dice y=%f\n", y_ee);
+                    //printf("DYN: Sono dentro y < 0 ma il secondo check dice y=%f\n", y_ee);
                     theta = adjust_alpha(Tsee[0][3], Tsee[1][3]); 
                     robot.q3 -= theta;  
                     q_dip1[2] = robot.q3;
@@ -403,7 +376,7 @@ void* dynamics(void* arg){
             robot.q2 = q_dip2[1];
             robot.q3 = q_dip2[2];
 
-            /* CHECK SU ALPHA e Y */
+            // Check on ALPHA and Y */
             if(robot.q3 < 0){
                 q_dip1[2] = 0;
                 robot.q3 = 0;
@@ -413,8 +386,8 @@ void* dynamics(void* arg){
                 q_dip1[1] = 0;
                 robot.q2 = 0;   
             }
-            /*********************/
 
+            // Update for next integration step
             robot.q4 = q_ind2[0];
             robot.q5 = q_ind2[1];
             robot.q6 = q_dip2[3];
@@ -438,9 +411,7 @@ void* dynamics(void* arg){
             vector_set_zero(qdot_dip1, 4);
         }
 
-        if(pt_deadline_miss(i))
-            inc_model_dl();
-        
+        pt_deadline_miss(i);
         pt_wait_for_period(i);
     }
 
