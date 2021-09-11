@@ -100,7 +100,7 @@ extern void get_parameter_values(float *buff);
 //Extern Function from crawler
 extern int angles2state(float t1, float t2);
 extern void get_rs_for_plot(rs_for_plot* t);
-extern void ql_get_Q(float * dest);
+extern void ql_get_Q(float* dest);
 extern float ql_get_epsilon();
 
 //Extern Function from model
@@ -108,9 +108,9 @@ extern void get_state(state* s);
 
 
 //Extern Function and Variable to manage the deadline miss
-extern void get_interface_dl(int * dl_miss);
-extern void get_crawler_dl(int * dl_miss);
-extern void get_model_dl(int * dl_miss);
+extern void get_interface_dl(int* dl_miss);
+extern void get_crawler_dl(int* dl_miss);
+extern void get_model_dl(int* dl_miss);
 static int graphic_dl;
 
 //Local variable to save crawler state
@@ -119,7 +119,7 @@ state joint_var;
 //-------------------------------------------
 // 
 //-------------------------------------------
-int conv_col(int col,int cscale)
+int conv_col(int col, int cscale)
 {
     if(col*cscale >= 255)
         return(255);
@@ -129,34 +129,34 @@ int conv_col(int col,int cscale)
 
 //-------------------------------------------
 //  The Following Function plot possible 
-//  keyboard command allowed in reset state   
+//  keyboard commands allowed in reset state   
 //-------------------------------------------
 void reset_command()
 {
 int bkg_col;
 int txt_col;
 
-    bkg_col = makecol(200,200,200);
-    txt_col = makecol(0,0,255);
-    rectfill(screen,0,Y1*SCALE,X1*SCALE,H_WIN*SCALE,bkg_col);
-    textout_ex(screen,font,"Pulsanti di controllo:",X_TEXT_DATA*SCALE,(Y1+Y_TEXT +FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"E <--> Chiusura",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+2*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"del Programma",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+3*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"S <--> Avvio",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+4*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"del Learning",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+5*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"UP/DOWN <--> Cambio",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+6*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"Par. di Apprendimento",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+7*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"RIGHT <--> Incremento",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+8*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"Par. di Apprendimento ",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+9*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"LEFT <--> Decremento",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+10*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"Par. di Apprendimento",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+11*FB)*SCALE, txt_col,bkg_col);
+    bkg_col = makecol(200, 200, 200);
+    txt_col = makecol(0, 0, 255);
+    rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
+    textout_ex(screen, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 3*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "S <--> Avvio", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 4*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "del Learning", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 5*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "UP/DOWN <--> Cambio", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 6*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 7*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "RIGHT <--> Incremento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 8*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "Par. di Apprendimento ", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 9*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "LEFT <--> Decremento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 10*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 11*FB)*SCALE, txt_col, bkg_col);
     
 }
 
 
 //-------------------------------------------
 //  The Following Function plot possible 
-//  keyboard command allowed in all not 
+//  keyboard commands allowed in all not 
 //  reset state   
 //-------------------------------------------
 void not_reset_command()
@@ -164,23 +164,23 @@ void not_reset_command()
 int txt_col;  
 int bkg_col;  
 
-    txt_col = makecol(0,0,255);       //blue
-    bkg_col = makecol(200,200,200);   //grey
+    txt_col = makecol(0, 0, 255);       //blue
+    bkg_col = makecol(200, 200, 200);   //grey
 
-    rectfill(screen,0,Y1*SCALE,X1*SCALE,H_WIN*SCALE,bkg_col);
-    textout_ex(screen,font,"Pulsanti di controllo:",X_TEXT_DATA*SCALE,(Y1+Y_TEXT +FB)*SCALE,txt_col,bkg_col);
-    textout_ex(screen,font,"E <--> Chiusura",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+2*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"del Programma",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+3*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"R <--> Reset",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+4*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"del Programma",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+5*FB)*SCALE, txt_col,bkg_col);
-    textout_ex(screen,font,"B <--> Boost",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+6*FB)*SCALE, txt_col,bkg_col);
+    rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
+    textout_ex(screen, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 3*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "R <--> Reset", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 4*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 5*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(screen, font, "B <--> Boost", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 6*FB)*SCALE, txt_col, bkg_col);
     //textout_ex(screen,font,"Accelleratore Learning",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+7*FB)*SCALE, txt_col,bkg_col); 
-    textout_ex(screen,font,"P <--> Pause/Play",X_TEXT_DATA*SCALE,(Y1+Y_TEXT+8*FB)*SCALE, txt_col,bkg_col);
+    textout_ex(screen, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 8*FB)*SCALE, txt_col, bkg_col);
 
 }
 
 //---------------------------------------------
-//  The Following Function initialize the
+//  The Following Function initializes the
 //  application's window
 //---------------------------------------------
 void   init_screen()
@@ -194,8 +194,8 @@ void   init_screen()
 
 
 //-------------------------------------------
-//  The Following Function plot data of 
-//  interest in all not reset state  
+//  The Following Function plots data of 
+//  interest in all not-reset state  
 //-------------------------------------------
 void update_data(BITMAP* BM_TXT,
                 float alpha,
@@ -208,42 +208,42 @@ void update_data(BITMAP* BM_TXT,
                 int dl_int,
                 int epoch )
 {
-char str[25];
-int bkg_col;
-int txt_col;
+    char str[25];
+    int bkg_col;
+    int txt_col;
 
-    bkg_col = makecol(200,200,200);
-    txt_col = makecol(0,0,255);
+    bkg_col = makecol(200, 200, 200);
+    txt_col = makecol(0, 0, 255);
 
-    clear_to_color(BM_TXT,bkg_col);
-    sprintf(str,">Learning Rate:%.4f",alpha);
+    clear_to_color(BM_TXT, bkg_col);
+    sprintf(str, ">Learning Rate:%.4f", alpha);
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, txt_col, bkg_col);
-    sprintf(str,">Discount Factor:%.4f",gam);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA+2*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(BM_TXT, font,">Actual Exploration", X_TEXT_DATA*SCALE, (Y_TEXT_DATA+3*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, ">Discount Factor:%.4f", gam);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, ">Actual Exploration", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB)*SCALE, txt_col, bkg_col);
     sprintf(str,"Probability:%.4f",eps);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA+4*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA+5*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str," Epsilon:%.4f",decay);
-    textout_ex(BM_TXT, font, str,X_TEXT_DATA*SCALE, (Y_TEXT_DATA+6*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 5*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, " Epsilon:%.4f", decay);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 6*FB)*SCALE, txt_col, bkg_col);
     sprintf(str,">Distance:%.4f",dis);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA+7*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str,">Epoch:%d",epoch);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA+8*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str,">Deadline Crawler:%d",dl_cra);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA+9*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str,">Deadline Model:%d",dl_mod);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA+10*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str,">Deadline Interpreter:%d",dl_int);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA+11*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str,">Deadline Graphic:%d",graphic_dl);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA+12*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 7*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, ">Epoch:%d", epoch);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 8*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, ">Deadline Crawler:%d", dl_cra);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 9*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, ">Deadline Model:%d", dl_mod);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 10*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, ">Deadline Interpreter:%d", dl_int);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 11*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str, ">Deadline Graphic:%d", graphic_dl);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA + 12*FB)*SCALE, txt_col, bkg_col);
 
-    blit(BM_TXT,screen,0,0,X2*SCALE,0,BM_TXT->w,BM_TXT->h);
+    blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
 
 //-------------------------------------------
-//  The Following Function plot data of 
+//  The Following Function plots data of 
 //  interest in reset state and show which 
 //  is going to be modified by the user 
 //-------------------------------------------
@@ -255,48 +255,49 @@ void update_data_reset(BITMAP* BM_TXT,
                 float decay )
 {
     
-char str[25];
-int select;
-int txt_col;  
-int bkg_col;
-int slc_col;
+    char str[25];
+    int select;
+    int txt_col;  
+    int bkg_col;
+    int slc_col;
 
-    bkg_col = makecol(200,200,200);
-    txt_col = makecol(0,0,255);
-    slc_col = makecol(255,0,0);
+    bkg_col = makecol(200, 200, 200);
+    txt_col = makecol(0, 0, 255);
+    slc_col = makecol(255, 0, 0);
 
-    clear_to_color(BM_TXT,bkg_col);
+    clear_to_color(BM_TXT, bkg_col);
     select = get_parameter_selected();
-    sprintf(str,">Learning Rate:%.4f",alpha);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, txt_col, select == 0? slc_col: bkg_col);
-    sprintf(str,">Discount Factor:%.4f",gam);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA+1*FB)*SCALE, txt_col, select == 1? slc_col: bkg_col);
-    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA+2*FB)*SCALE, txt_col, select == 2? slc_col: bkg_col);
-    sprintf(str,"Epsilon:%.4f",decay);
-    textout_ex(BM_TXT, font, str,X_TEXT_DATA*SCALE, (Y_TEXT_DATA+3*FB)*SCALE, txt_col, select == 2? slc_col: bkg_col);
+    sprintf(str, ">Learning Rate:%.4f", alpha);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, txt_col, select == 0 ? slc_col : bkg_col);
+    sprintf(str, ">Discount Factor:%.4f", gam);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 1*FB)*SCALE, txt_col, select == 1 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
+    sprintf(str, "Epsilon:%.4f", decay);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
     sprintf(str,">Maximum Epsilon:%.4f",eps_in);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA+4*FB)*SCALE, txt_col, select == 3? slc_col: bkg_col);
-    sprintf(str,">Minimum Epsilon:%.4f",eps_fi);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA+5*FB)*SCALE, txt_col, select == 4? slc_col: bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB)*SCALE, txt_col, select == 3 ? slc_col : bkg_col);
+    sprintf(str, ">Minimum Epsilon:%.4f", eps_fi);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 5*FB)*SCALE, txt_col, select == 4 ? slc_col : bkg_col);
 
-    blit(BM_TXT,screen,0,0,X2*SCALE,0,BM_TXT->w,BM_TXT->h);
+    blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
 
 
 //-------------------------------------------
-//  The Following Function update the plot
+//  The Following Function updates the plot
 //  of the ql_state memorizing the last 
 //  N_ST_SV ql_state
 //-------------------------------------------
-void update_STAT(BITMAP* BM_SG,int new_state,int reset)
+void update_STAT(BITMAP* BM_SG, int new_state, int reset)
 {
-static int Sl_count=0;
-static int Sl_begin=0;
-static int Stat_lp[N_ST_SV];
-int i,j,k,col,ind,txt_col,bkg_col;
+    static int Sl_count = 0;
+    static int Sl_begin = 0;
+    static int Stat_lp[N_ST_SV];
+    int i, j, k, col, ind, txt_col, bkg_col;
 
-    bkg_col = makecol(255,255,255);
-    txt_col = makecol(0,0,0);
+    bkg_col = makecol(255, 255, 255);
+    txt_col = makecol(0, 0, 0);
+
     if(reset)
     {
         Sl_count = 0;
@@ -309,35 +310,36 @@ int i,j,k,col,ind,txt_col,bkg_col;
     }
     else
     {
-        Stat_lp[(Sl_begin+N_ST_SV)%(N_ST_SV)] = new_state;
-        Sl_begin = (Sl_begin+1)%N_ST_SV;
+        Stat_lp[(Sl_begin + N_ST_SV) % (N_ST_SV)] = new_state;
+        Sl_begin = (Sl_begin + 1) % N_ST_SV;
     }
     
     
-    for(k=0;k<Sl_count;k++)
+    for(k = 0; k < Sl_count; k++)
     {
-        ind = (k+Sl_begin)%N_ST_SV; 
+        ind = (k + Sl_begin) % N_ST_SV; 
     }
 
     textout_ex(BM_SG, font, "State Matrix", X_LAB_S_OFF*SCALE, Y_LAB_S_OFF*SCALE, txt_col, bkg_col);
-    for(i=0;i<N_STATE_X_ANG;i++)
+    for(i = 0; i < N_STATE_X_ANG; i++)
     {
-        for(j=0;j<N_STATE_X_ANG;j++)
+        for(j = 0; j < N_STATE_X_ANG; j++)
         {
-            rect(BM_SG,(X_MAT_S_OFF+i*L_S_RECT)*SCALE,
-            (Y_MAT_S_OFF+j*L_S_RECT)*SCALE,
-            (X_MAT_S_OFF+(i+1)*L_S_RECT)*SCALE,
-            (Y_MAT_S_OFF+(j+1)*L_S_RECT)*SCALE,
-            makecol(0,0,0));
-            for(k=0;k<Sl_count;k++)
+            rect(BM_SG, (X_MAT_S_OFF + i*L_S_RECT)*SCALE,
+                        (Y_MAT_S_OFF+j*L_S_RECT)*SCALE,
+                        (X_MAT_S_OFF+(i+1)*L_S_RECT)*SCALE,
+                        (Y_MAT_S_OFF+(j+1)*L_S_RECT)*SCALE,
+                        txt_col);
+
+            for(k = 0; k < Sl_count ; k++)
             {
-                ind=(k+Sl_begin)%N_ST_SV;
-                if(Stat_lp[ind]==(i*N_STATE_X_ANG+j))
+                ind = (k + Sl_begin) % N_ST_SV;
+                if(Stat_lp[ind] == (i * N_STATE_X_ANG + j))
                 {
-                    col = 245*(4-k)/N_ST_SV;
+                    col = 245 * (4 - k) / N_ST_SV;
                     circlefill(BM_SG,
-                    (X_MAT_S_OFF+i*L_S_RECT+C_S_RECT)*SCALE,
-                    (Y_MAT_S_OFF+j*L_S_RECT+C_S_RECT)*SCALE,
+                    (X_MAT_S_OFF + i*L_S_RECT + C_S_RECT)*SCALE,
+                    (Y_MAT_S_OFF + j*L_S_RECT + C_S_RECT)*SCALE,
                     C_S_RAD,
                     makecol(col,col,col)
                     );
@@ -350,21 +352,21 @@ int i,j,k,col,ind,txt_col,bkg_col;
 
 
 //-------------------------------------------
-//  The Following Function update the 
+//  The Following Function updates the 
 //  reward plot
 //-------------------------------------------
-void update_graph(BITMAP* BM_GS,float reward,int min_range,int max_range,int reset)
+void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int reset)
 {
-static float  Reward_p[(LEN_AX_X/LEN_LINE)];
-static int rew_count=0;
-static int rew_begin=0;
-int i,cont_plot,txt_col,bkg_col,ax_col,plot_col;
-float val;
-char s[10];
+    static float  Reward_p[(LEN_AX_X / LEN_LINE)];
+    static int rew_count = 0;
+    static int rew_begin = 0;
+    int i, cont_plot, txt_col, bkg_col, ax_col, plot_col;
+    float val;
+    char s[10];
 
-    bkg_col = makecol(255,255,255);
-    ax_col = txt_col = makecol(0,0,0);
-    plot_col = makecol(255,0,0);
+    bkg_col = makecol(255, 255, 255);
+    ax_col = txt_col = makecol(0, 0, 0);
+    plot_col = makecol(255, 0, 0);
     if(reset)
     {
         rew_begin = 0;
@@ -408,7 +410,7 @@ char s[10];
 
 
 //-------------------------------------------
-//  The Following Function manage the 
+//  The Following Function manages the 
 //  update of reward plot and ql_state 
 //  plot in reset and not reset mode
 //-------------------------------------------
@@ -447,7 +449,7 @@ int MToPx(double val,int xy)
 }
 
 //-------------------------------------------
-//  The Following Functions produce the 
+//  The Following Functions produces the 
 //  point in Pixel to draw the crawler from 
 //  its kinematics
 //-------------------------------------------
@@ -501,7 +503,7 @@ void L2_kin(int position[],state s)
 
 
 //-------------------------------------------
-//  The Following Function update the 
+//  The Following Function updates the 
 //  drawing of crawler
 //-------------------------------------------
 void update_CR(BITMAP* BM_CR,state joint_v)
@@ -530,7 +532,7 @@ int figure[12];
 }
 
 //-----------------------------------------
-//  The Following Function update the plot
+//  The Following Function updates the plot
 //  of the Q Matrix, the parameter step 
 //  allow to tune the intensity of color 
 //  according on the values into Q Matrix
@@ -580,21 +582,21 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti,int_dl,mod_dl,craw_dl,epoch = 0,exec;
+    int ti, int_dl, mod_dl, craw_dl, epoch = 0, exec;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
     float epsilon;
     float values[5];
-    BITMAP *CR,*MQ,*P_data,*GRP_STAT;
+    BITMAP *CR, *MQ, *P_data, *GRP_STAT;
     //inizializzo allegro e lo schermo 
     init_screen();
     //inizializzo le BITMAP
 
-    CR = create_bitmap((X2-X1)*SCALE,Y1*SCALE);
-    MQ = create_bitmap(X1*SCALE,Y1*SCALE);
-    P_data = create_bitmap((W_WIN-X2)*SCALE,Y1*SCALE);
-    GRP_STAT = create_bitmap((W_WIN-X1)*SCALE,(Y1)*SCALE);
+    CR = create_bitmap((X2 - X1)*SCALE, Y1*SCALE);
+    MQ = create_bitmap(X1*SCALE, Y1*SCALE);
+    P_data = create_bitmap((W_WIN - X2)*SCALE, Y1*SCALE);
+    GRP_STAT = create_bitmap((W_WIN - X1)*SCALE, Y1*SCALE);
     
     ti = pt_get_index(arg);
     pt_set_activation(ti);
@@ -612,28 +614,30 @@ void *update_graphic(void *arg)
             get_model_dl(&mod_dl);
             get_crawler_dl(&craw_dl);
             epsilon = ql_get_epsilon();
-            if(exec==PLAY)
+
+            if(exec == PLAY)
             {
-                update_data(P_data,values[0],values[1],epsilon,values[2],rob.q1,mod_dl,craw_dl,int_dl,epoch);
+                update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dl, craw_dl, int_dl, epoch);
                 not_reset_command();
             }
-            if (exec==RESET)
+
+            if (exec == RESET)
             {
                 get_parameter_values(values);
-                update_data_reset(P_data,values[0],values[1],values[3],values[4],values[2]);
+                update_data_reset(P_data, values[0], values[1], values[3], values[4], values[2]);
                 ql_get_Q(Matrix_Q);
                 update_MQ(MQ, Matrix_Q, 0.1);
-                update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,1);
+                update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 1);
                 reset_command();
             }
-            get_rs_for_plot(&rew_st);
-            update_GRP_STAT(GRP_STAT,rew_st.state,rew_st.reward,50,-50,rew_st.flag,0);
-            
 
-            if(rew_st.flag==1)
+            get_rs_for_plot(&rew_st);
+            update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 0);
+            
+            if(rew_st.flag == 1)
             {
                 ql_get_Q(Matrix_Q);
-                update_MQ(MQ,Matrix_Q,0.1);
+                update_MQ(MQ,Matrix_Q, 0.1);
                 epoch++;
             }
         }
