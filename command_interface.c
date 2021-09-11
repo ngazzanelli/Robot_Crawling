@@ -281,12 +281,10 @@ void key_manager(int exec)
 }
 
 
-
 //---------------------------------------
 // User Interface Task
 // --------------------------------------
-void* interface(void * arg)
-{
+void* interface(void * arg){
     printf("INTERPRETER: task started\n");
     int i,  exec;
     i = pt_get_index(arg);
@@ -295,113 +293,103 @@ void* interface(void * arg)
 
     init_parameter_values();
 
-    while(get_sys_state(&exec) != STOP)
-    {
+    while(get_sys_state(&exec) != STOP){
         key_manager(exec);
+
         if(pt_deadline_miss(i))
             inc_interface_dl();
+
         pt_wait_for_period(i);
     }
+
     printf("INTERPRETER: task end\n");
     return NULL;
 }
 
 
-
-
-
-
-// Manual Mode
-
-void key_manager_manual(int *exec){
-    /*int p;          //Serve per gestire il cambio di parametro del qlearning
-    float step;     //Dice di quanto incrementare/decrementare value
+//---------------------------------------
+// Manual Mode Functions
+// --------------------------------------
+void key_manager_manual(int exec){        
+    
     char cm;
-    int s;*/
-
-/*DA RIFARE TOGLIENDO GET_STOP ETC
     cm = get_scancode();
+
     switch(cm){
 
         case KEY_R:
             printf("INTERFACE: hai premuto il tasto R\n");
-            set_sys_state(0);
-            //TODO: gestire il reset dei vari task
+            set_sys_state(RESET);
             break;
 
         case KEY_S:
             printf("INTERFACE: hai premuto il tasto S\n");
-            if(get_reset()){
+
+            if(exec == RESET){
                 init_state();
-                //init_graphics();
-                //init_qlearning();
                 set_sys_state(1);
             }
             break;
 
         case KEY_P:
             printf("INTERFACE: hai premuto il tasto P\n");
-            if(get_play())
-                set_sys_state(2);
-            else if(get_pause())
-                set_sys_state(1);
+
+            if(exec == PAUSE)
+                set_sys_state(PLAY);
+            else if(exec == PLAY)
+                set_sys_state(PAUSE);
+
             break;
 
         case KEY_E:
             printf("INTERFACE: hai premuto il tasto E\n");
-            set_sys_state(3);  
-            *exec=0;
+            set_sys_state(STOP);  
             break;
 
         case KEY_UP:
             printf("INTERFACE: hai premuto il tasto UP\n");
-            s = next_desired_state(0);
-            printf("sei andato nello stato %d\n", s);
+            next_desired_state(0);
             break;
 
         case KEY_DOWN:
             printf("INTERFACE: hai premuto il tasto DOWN\n");
-            s = next_desired_state(1);
-            printf("sei andato nello stato %d\n", s);
+            next_desired_state(1);
             break;
 
         case KEY_RIGHT:
             printf("INTERFACE: hai premuto il tasto RIGHT\n");
-            s = next_desired_state(2);
-            printf("sei andato nello stato %d\n", s);
+            next_desired_state(2);
             break;
 
         case KEY_LEFT:
             printf("INTERFACE: hai premuto il tasto LEFT\n");
-            s = next_desired_state(3);
-            printf("sei andato nello stato %d\n", s);
+            next_desired_state(3);
             break;
 
         default: break;
-    }*/
+    }
 }
 
 
-
-void* manual_interface(void * arg)
-{
+void* manual_interface(void* arg){
     printf("INTERPRETER: task started\n");
     int i,  exec;
     i = pt_get_index(arg);
     pt_set_activation(i);
     set_sys_state(RESET);
 
-    while(exec)
-    {
-        key_manager_manual(&exec);
+    init_parameter_values();
+
+    while(get_sys_state(&exec) != STOP){
+        key_manager_manual(exec);
+
         if(pt_deadline_miss(i))
             inc_interface_dl();
+
         pt_wait_for_period(i);
-        if(exec==0)
-        {
-            printf("ho finito \n");
-        }
+
     }
+
     printf("INTERPRETER: task end\n");
     return NULL;
 }
