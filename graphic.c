@@ -41,6 +41,17 @@
 #define H_BODY		3.0
 #define R_WHEEL		1.5
 #define R_JOINT		0.75
+#define N_BLOCKS    2       // # of big blocks shown in the floor 
+#define BM_BLOCKS	4		// # of big blocks in floor_bitmap 
+#define W_BLOCK     100     // length of little blocks (1 big block = 2x2 little block)
+#define X			0		// flag used in metres2pixel conversion
+#define Y			1		// flag used in metres2pixel conversion
+#define W_LAND		600
+#define H_LAND		250
+#define TREE_SPACE	100		// distance between trees
+#define TREE_RADIUS 25		// tree's crown radius
+#define TREE_W		20		// tree's trunk width
+#define TREE_H		100		// tree's trunk heigh
 
 // Text plot Constants
 #define X_TEXT_DATA 15
@@ -105,8 +116,9 @@ extern float ql_get_epsilon();
 //Extern Function from model
 extern void get_state(state* s);
 
-//Local variable to save crawler state
-state joint_var;
+// Static variable for floor and landscape bitmap
+static BITMAP*  floor_bitmap;
+static BITMAP*	landscape_bitmap;
 
 //-------------------------------------------
 // 
@@ -174,7 +186,7 @@ int bkg_col;
 //  The Following Function initializes the
 //  application's window
 //---------------------------------------------
-void   init_screen()
+void init_screen()
 {
     allegro_init();
     install_keyboard();
@@ -415,11 +427,11 @@ void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,in
 //  size of the crawler part from cm to 
 //  Pixel
 //-------------------------------------------
-int MToPx(double val,int xy)
+int MToPx(double val, int flag)
 {
-    if (xy==0)
+    if (flag == X)
         return(((int)round(val*10)+W_CENTRE)*SCALE);
-    if (xy==1)
+    if (flag == Y)
         return((Y1*SCALE)-((int)round(val*10)+H_FLOOR)*SCALE);
     else        
         return((int)round(val*10*SCALE));
@@ -482,6 +494,7 @@ void L2_kin(int position[],state s)
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
 	int figure[12];
+	int x_floor_offset, x_land_offset;
     //printf("SONO DENTRO UPDATE_CR\n");
 	/*
 	BITMAP * floor_cell;
@@ -490,11 +503,14 @@ void update_CR(BITMAP* BM_CR,state joint_v)
         printf("DIOPORCO\n");
 	*/
     
-    clear_to_color(BM_CR,makecol(255,255,255));
+    //clear_to_color(BM_CR,makecol(150,150,5)); //ocra yellow
+	x_land_offset = MToPx(joint_v.q1/10, 2)%(TREE_SPACE*SCALE)+TREE_SPACE*SCALE;
+	blit(landscape_bitmap, BM_CR, x_land_offset, 0, 0, 0, BM_CR->w, landscape_bitmap->h);
     line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
     body_kin(figure,joint_v);
     polygon(BM_CR,5,figure,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),makecol(CR_All_R,CR_All_G,CR_All_B));
+    circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),makecol(10,10,10)); //very dark grey
+	circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2)/2,makecol(CR_All_R,CR_All_G,CR_All_B));
     circlefill(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
     L1_kin(figure,joint_v);
     line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
@@ -502,6 +518,8 @@ void update_CR(BITMAP* BM_CR,state joint_v)
     L2_kin(figure,joint_v);
     line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
     //blit(floor_cell,BM_CR,0,0,0,0,floor_cell->w,floor_cell->h);
+	x_floor_offset = MToPx(joint_v.q1/2, 2)%(W_BLOCK*2*SCALE)+W_BLOCK*2*SCALE;
+	blit(floor_bitmap, BM_CR, x_floor_offset, 0, 0, BM_CR->h - H_FLOOR*SCALE, BM_CR->w, floor_bitmap->h);
     blit(BM_CR,screen,0,0,X1*SCALE,0,BM_CR->w,BM_CR->h);
 
 }
@@ -550,6 +568,51 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
 }
 
 
+void init_floor_bitmap()
+{
+    int i, x1, x2;
+    int floor_color1, floor_color2;
+
+    floor_color1 = makecol(100, 200, 100);	//light green
+    floor_color2 = makecol(100, 250, 100);	//dark green
+	clear_to_color(floor_bitmap, floor_color1);
+    for(i=0; i < BM_BLOCKS; i++){
+		x1 = (i*2*W_BLOCK + W_BLOCK)*SCALE;
+		x2 = i*2*W_BLOCK*SCALE;
+		//printf("GRAPHIC: la x1 vale %d mentre x2 vale %d\n", x1, x2);
+        rectfill(floor_bitmap, x1, H_FLOOR/2*SCALE, ((i+1)*2*W_BLOCK)*SCALE, 0, floor_color2);
+		rectfill(floor_bitmap, x2, H_FLOOR*SCALE, ((i+1)*2*W_BLOCK - W_BLOCK)*SCALE, H_FLOOR/2*SCALE, floor_color2);
+    }
+}
+
+void draw_tree(int i)
+{
+	int x1, x2, y1, y2, xc, yc;
+	int trunk_col = makecol(91, 58, 41);	//dark brown
+	int crown_col = makecol(49, 127, 67);	//dark green
+
+	x1 = (i*TREE_SPACE-TREE_W/2)*SCALE;
+	x2 = (i*TREE_SPACE+TREE_W/2)*SCALE;
+	y1 = H_LAND*SCALE;
+	y2 = (H_LAND - TREE_H)*SCALE;
+	xc = i*TREE_SPACE*SCALE;
+	yc = y2-TREE_RADIUS*SCALE;
+
+	rectfill(landscape_bitmap, x1, y1, x2, y2, trunk_col );
+	circlefill(landscape_bitmap, xc, yc, TREE_RADIUS*SCALE, crown_col);
+}
+
+void init_landscape_bitmap()
+{
+    int i;
+	int sky;
+
+	sky = makecol(8, 232, 222); //light blue
+	clear_to_color(landscape_bitmap, sky);
+    for(i=0; i < 7; i++)
+			draw_tree(i);
+}
+
 //--------------------------------------------
 // Graphic Task
 //-------------------------------------------
@@ -573,7 +636,12 @@ void *update_graphic(void *arg)
     MQ = create_bitmap(X1*SCALE, Y1*SCALE);
     P_data = create_bitmap((W_WIN - X2)*SCALE, Y1*SCALE);
     GRP_STAT = create_bitmap((W_WIN - X1)*SCALE, Y1*SCALE);
-    
+    floor_bitmap = create_bitmap(2*W_BLOCK*BM_BLOCKS*SCALE, H_FLOOR*SCALE);
+	landscape_bitmap = create_bitmap(W_LAND*SCALE, H_LAND*SCALE);
+	//printf("GRAPHIC: le dimensioni della floor bitmap sono %d, %d\n", floor_bitmap->h, floor_bitmap->w);
+    init_floor_bitmap();
+	init_landscape_bitmap();
+
     ti = pt_get_index(arg);
     pt_set_activation(ti);
 
