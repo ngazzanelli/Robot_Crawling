@@ -29,9 +29,9 @@
 
 // Crawler plot Constants
 #define BKG         0
-#define CR_CMP_R    160
-#define CR_CMP_G    82
-#define CR_CMP_B    45
+#define CR_CMP_R    14
+#define CR_CMP_G    75
+#define CR_CMP_B    239
 #define CR_All_R    105
 #define CR_All_G    105
 #define CR_All_B    105
@@ -495,31 +495,36 @@ void update_CR(BITMAP* BM_CR,state joint_v)
 {   
 	int figure[12];
 	int x_floor_offset, x_land_offset;
-    //printf("SONO DENTRO UPDATE_CR\n");
-	/*
-	BITMAP * floor_cell;
-    floor_cell=load_bitmap("sky_sfodo.bmp",NULL);
-    if(floor_cell==NULL)
-        printf("DIOPORCO\n");
-	*/
-    
-    //clear_to_color(BM_CR,makecol(150,150,5)); //ocra yellow
+
+    // Landscape drawing
 	x_land_offset = MToPx(joint_v.q1/10, 2)%(TREE_SPACE*SCALE)+TREE_SPACE*SCALE;
 	blit(landscape_bitmap, BM_CR, x_land_offset, 0, 0, 0, BM_CR->w, landscape_bitmap->h);
+    // Floor drawing
     line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
+   	x_floor_offset = MToPx(joint_v.q1/2, 2)%(W_BLOCK*2*SCALE)+W_BLOCK*2*SCALE;
+	blit(floor_bitmap, BM_CR, x_floor_offset, 0, 0, BM_CR->h - H_FLOOR*SCALE, BM_CR->w, floor_bitmap->h);
+    // Body drawing
     body_kin(figure,joint_v);
     polygon(BM_CR,5,figure,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+   /*line()
+    line
+    line
+    line
+    line*/
+    // Wheel drawing
     circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),makecol(10,10,10)); //very dark grey
 	circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2)/2,makecol(CR_All_R,CR_All_G,CR_All_B));
+    // First link drawing
     circlefill(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
+    circle(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(0,0,0));
     L1_kin(figure,joint_v);
     line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    // Second link drawing
     circlefill(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
+    circle(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),makecol(0, 0, 0));
     L2_kin(figure,joint_v);
     line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    //blit(floor_cell,BM_CR,0,0,0,0,floor_cell->w,floor_cell->h);
-	x_floor_offset = MToPx(joint_v.q1/2, 2)%(W_BLOCK*2*SCALE)+W_BLOCK*2*SCALE;
-	blit(floor_bitmap, BM_CR, x_floor_offset, 0, 0, BM_CR->h - H_FLOOR*SCALE, BM_CR->w, floor_bitmap->h);
+    
     blit(BM_CR,screen,0,0,X1*SCALE,0,BM_CR->w,BM_CR->h);
 
 }
