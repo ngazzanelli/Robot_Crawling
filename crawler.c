@@ -179,10 +179,16 @@ int get_reward(int s, int snew, state robot){
 
     int r = 0;
 
-    if(robot.dt3 != 0)
-        r = 10*robot.dt3;
+    if(robot.dt3 > 0){
+        r = round(10 * robot.dt3);
+        //printf("DT3 > 0: %f\n", robot.dt3);
+    }
+    else if(robot.dt3 < 0){
+        r = round(15 * robot.dt3);
+        //printf("DT3 > 0: %f\n", robot.dt3);
+    }
 
-    r-=1;
+    r -= 1;
 
     if (snew == s) 
         r += RHIT;        // hit the limit angle
@@ -284,7 +290,7 @@ void* qlearning(void* arg){
             //err +=  (newerr - err)/step;
             //if (step % 100 == 0)
                 //ql_print_Qmatrix();
-            if (step % 10 == 0)
+            if (step % 3000 == 0)
                 ql_reduce_exploration();
               
         }
