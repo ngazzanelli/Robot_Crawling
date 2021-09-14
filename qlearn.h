@@ -42,4 +42,7 @@ extern void ql_set_epsini(float eps_ini);
 extern void ql_set_epsfin(float eps_fin);
 extern void ql_set_epsilon(float e);
 
+extern void ql_Q_to_file(char* filename);
+extern void ql_Q_from_file(char* filename);
+
 #endif

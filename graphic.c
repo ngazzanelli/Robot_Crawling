@@ -41,6 +41,7 @@
 #define H_BODY		3.0
 #define R_WHEEL		1.5
 #define R_JOINT		0.75
+#define ARM_THICK   2
 #define N_BLOCKS    2       // # of big blocks shown in the floor 
 #define BM_BLOCKS	4		// # of big blocks in floor_bitmap 
 #define W_BLOCK     100     // length of little blocks (1 big block = 2x2 little block)
@@ -49,14 +50,18 @@
 #define W_LAND		600
 #define H_LAND		250
 #define TREE_SPACE	100		// distance between trees
-#define TREE_RADIUS 25		// tree's crown radius
+#define TREE_RADIUS 35		// tree's crown radius
 #define TREE_W		20		// tree's trunk width
 #define TREE_H		100		// tree's trunk heigh
+#define X_SUN       300
+#define Y_SUN       250
+#define RADIUS_SUN  25
 
 // Text plot Constants
 #define X_TEXT_DATA 15
 #define Y_TEXT_DATA 50
-#define FB 10
+#define FB 15
+#define NL 5
 
 // QL_State plot Constants
 #define N_ST_SV		5
@@ -66,7 +71,7 @@
 #define X_LAB_S_OFF 405
 #define W_MQ 		16 
 #define H_MQ	 	5
-#define X_OFF 		37 
+#define X_OFF 		25 
 #define Y_OFF 		50
 #define X_TEXT 		35
 #define Y_TEXT 		10
@@ -131,29 +136,62 @@ int conv_col(int col, int cscale)
         return(col*cscale);
 }
 
+
+//---------------------------------------------------------------------
+// DRAW A THICK LINE
+//---------------------------------------------------------------------
+
+void    thick_line(BITMAP *bmp, float x1, float y1, float x2, float y2, float thi, int color)
+{
+float   dx = x1 - x2;
+float   dy = y1 - y2;
+float   d = 2*sqrt(dx*dx + dy*dy);
+float   ca = dx/d;
+float   sa = dy/d;
+int v[4*2];
+
+    if (!d) return;
+
+    v[0] = x1 - thi*sa; // left up
+    v[1] = y1 + thi*ca;
+
+    v[2] = x1 + thi*sa; // right up
+    v[3] = y1 - thi*ca;
+
+    v[4] = x2 + thi*sa; // right down
+    v[5] = y2 - thi*ca;
+
+    v[6] = x2 - thi*sa; // left down
+    v[7] = y2 + thi*ca;
+ 
+    polygon(bmp, 4, v, color);
+}
+
 //-------------------------------------------
 //  The Following Function plot possible 
 //  keyboard commands allowed in reset state   
 //-------------------------------------------
-void reset_command()
+void reset_command(BITMAP* BM_CMD)
 {
 int bkg_col;
 int txt_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
-    txt_col = makecol(0, 0, 255);		//blue
-    rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
-    textout_ex(screen, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 3*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "S <--> Avvio", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 4*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "del Learning", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 5*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "UP/DOWN <--> Cambio", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 6*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 7*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "RIGHT <--> Incremento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 8*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "Par. di Apprendimento ", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 9*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "LEFT <--> Decremento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 10*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 11*FB)*SCALE, txt_col, bkg_col);
+    txt_col = makecol(0, 0, 0);		//black
+    //rectfill(BM_CMD, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
+    clear_to_color(BM_CMD,bkg_col);
+    textout_ex(BM_CMD, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (BM_CMD->h- Y_TEXT + FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB + NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "S <--> Avvio", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "del Learning", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "UP/DOWN <--> Cambio", X_TEXT_DATA*SCALE, (Y_TEXT + 4*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y_TEXT + 4*FB + 3*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "RIGHT <--> Incremento", X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 3*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "Par. di Apprendimento ", X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 4*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "LEFT <--> Decremento", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 4*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 5*NL)*SCALE, txt_col, bkg_col);
+    blit(BM_CMD,screen,0,0,0,Y1*SCALE,BM_CMD->w,BM_CMD->h);
     
 }
 
@@ -163,23 +201,24 @@ int txt_col;
 //  keyboard commands allowed in all not 
 //  reset state   
 //-------------------------------------------
-void not_reset_command()
+void not_reset_command(BITMAP* BM_CMD)
 {
 int txt_col;  
 int bkg_col;  
 
-    txt_col = makecol(0, 0, 255);       //blue
+    txt_col = makecol(0, 0, 0);       //black
     bkg_col = makecol(200, 200, 200);   //grey
 
-    rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
-    textout_ex(screen, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 3*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "R <--> Reset", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 4*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "del Programma", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 5*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font, "B <--> Boost", X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 6*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(screen, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y1 + Y_TEXT + 7*FB)*SCALE, txt_col, bkg_col);
-
+    //rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
+    clear_to_color(BM_CMD,bkg_col);
+    textout_ex(BM_CMD, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y_TEXT + FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB + NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "R <--> Reset", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "B <--> Boost", X_TEXT_DATA*SCALE, (Y_TEXT + 4*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    blit(BM_CMD,screen,0,0,0,Y1*SCALE,BM_CMD->w,BM_CMD->h);
 }
 
 //---------------------------------------------
@@ -217,31 +256,31 @@ void update_data(BITMAP* BM_TXT,
     int txt_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
-    txt_col = makecol(0, 0, 255);		//blue
+    txt_col = makecol(0, 0, 0);		//black
 
     clear_to_color(BM_TXT, bkg_col);
     sprintf(str, ">Learning Rate:%.4f", alpha);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + FB)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Discount Factor:%.4f", gam);
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, txt_col, bkg_col);
     textout_ex(BM_TXT, font, ">Actual Exploration", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB)*SCALE, txt_col, bkg_col);
-    sprintf(str,"Probability:%.4f",eps);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB)*SCALE, txt_col, bkg_col);
-    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 5*FB)*SCALE, txt_col, bkg_col);
+    sprintf(str," Probability:%.4f",eps);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB+ NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + NL)*SCALE, txt_col, bkg_col);
     sprintf(str, " Epsilon:%.4f", decay);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 6*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + 2*NL)*SCALE, txt_col, bkg_col);
     sprintf(str,">Distance:%.4f",dis);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 7*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 5*FB + 2*NL)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Epoch:%d", epoch);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 8*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 6*FB + 2*NL)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Deadline Crawler:%d", dl_cra);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 9*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 7*FB + 2*NL)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Deadline Model:%d", dl_mod);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 10*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 8*FB + 2*NL)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Deadline Interpreter:%d", dl_int);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 11*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 9*FB + 2*NL)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Deadline Graphic:%d", dl_gra);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA + 12*FB)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE,  (Y_TEXT_DATA + 10*FB + 2*NL)*SCALE, txt_col, bkg_col);
 
     blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
@@ -266,7 +305,7 @@ void update_data_reset(BITMAP* BM_TXT,
     int slc_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
-    txt_col = makecol(0, 0, 255);		//blue
+    txt_col = makecol(0, 0, 0);		//black
     slc_col = makecol(255, 0, 0);		//red
 
     clear_to_color(BM_TXT, bkg_col);
@@ -277,11 +316,11 @@ void update_data_reset(BITMAP* BM_TXT,
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 1*FB)*SCALE, txt_col, select == 1 ? slc_col : bkg_col);
     textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
     sprintf(str, "Epsilon:%.4f", decay);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB + NL)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
     sprintf(str,">Maximum Epsilon:%.4f",eps_in);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB)*SCALE, txt_col, select == 3 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB + NL)*SCALE, txt_col, select == 3 ? slc_col : bkg_col);
     sprintf(str, ">Minimum Epsilon:%.4f", eps_fi);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 5*FB)*SCALE, txt_col, select == 4 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + NL)*SCALE, txt_col, select == 4 ? slc_col : bkg_col);
 
     blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
@@ -394,6 +433,9 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
         line(BM_GS,(G_X_OFF*SCALE+i*LEN_LINE*SCALE), (G_Y_OFF*SCALE-floor(val)),
 			(G_X_OFF*SCALE+(i+1)*LEN_LINE*SCALE),(G_Y_OFF*SCALE-floor(val)),plot_col);
     }
+        val =(float)(0-min_range)/((max_range-min_range))*(LEN_AX_Y*SCALE-1);
+        line(BM_GS,(G_X_OFF*SCALE), (G_Y_OFF*SCALE-floor(val)),
+            (G_X_OFF +LEN_AX_X) *SCALE,(G_Y_OFF*SCALE-floor(val)),ax_col);
 
 }
 
@@ -494,23 +536,28 @@ void L2_kin(int position[],state s)
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
 	int figure[12];
-	int x_floor_offset, x_land_offset;
+	int x_floor_offset, x_land_offset, sun_col, sun_border;
+    sun_col=makecol(255, 255, 0);         //yellow
+    sun_border = makecol(255, 165, 0);    //orange
 
     // Landscape drawing
 	x_land_offset = MToPx(joint_v.q1/10, 2)%(TREE_SPACE*SCALE)+TREE_SPACE*SCALE;
 	blit(landscape_bitmap, BM_CR, x_land_offset, 0, 0, 0, BM_CR->w, landscape_bitmap->h);
+    // Sun drawing
+    circlefill(BM_CR,X_SUN*SCALE,(Y1-Y_SUN)*SCALE,RADIUS_SUN*SCALE,sun_col);
+    circle(BM_CR,X_SUN*SCALE,(Y1-Y_SUN)*SCALE,RADIUS_SUN*SCALE,sun_border);
     // Floor drawing
-    line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
-   	x_floor_offset = MToPx(joint_v.q1/2, 2)%(W_BLOCK*2*SCALE)+W_BLOCK*2*SCALE;
+   	x_floor_offset = MToPx(joint_v.q1, 2)%(W_BLOCK*2*SCALE)+W_BLOCK*2*SCALE;
 	blit(floor_bitmap, BM_CR, x_floor_offset, 0, 0, BM_CR->h - H_FLOOR*SCALE, BM_CR->w, floor_bitmap->h);
+    line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
     // Body drawing
     body_kin(figure,joint_v);
     polygon(BM_CR,5,figure,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-   /*line()
-    line
-    line
-    line
-    line*/
+    line(BM_CR, figure[0], figure[1], figure[2], figure[3], makecol(0,0,0));
+    line(BM_CR, figure[2], figure[3], figure[4], figure[5], makecol(0,0,0));
+    line(BM_CR, figure[4], figure[5], figure[6], figure[7], makecol(0,0,0));
+    line(BM_CR, figure[6], figure[7], figure[8], figure[9], makecol(0,0,0));
+    line(BM_CR, figure[8], figure[9], figure[0], figure[1], makecol(0,0,0));
     // Wheel drawing
     circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),makecol(10,10,10)); //very dark grey
 	circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2)/2,makecol(CR_All_R,CR_All_G,CR_All_B));
@@ -518,13 +565,14 @@ void update_CR(BITMAP* BM_CR,state joint_v)
     circlefill(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
     circle(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(0,0,0));
     L1_kin(figure,joint_v);
-    line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
     // Second link drawing
     circlefill(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
     circle(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),makecol(0, 0, 0));
     L2_kin(figure,joint_v);
-    line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    
+    //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
     blit(BM_CR,screen,0,0,X1*SCALE,0,BM_CR->w,BM_CR->h);
 
 }
@@ -539,7 +587,7 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
 {
 	int i,j,val,col,txt_col,bkg_col;
     
-    bkg_col = makecol(255,255,255);
+    bkg_col = makecol(200,200,200);
     txt_col = makecol(0,0,0);
     clear_to_color(BM_MQ,bkg_col);
     textout_ex(BM_MQ, font, "Matrice Q", X_TEXT*SCALE, Y_TEXT*SCALE, txt_col, bkg_col);
@@ -549,7 +597,7 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
         {
             if(matrix[i*N_ACTION+j]>0)
             {
-                    val = (int)floor(matrix[i*N_ACTION+j]/step);
+                    val = (int)floor(sqrt(matrix[i*N_ACTION+j])/step);
                     if(val>255)
                         val=255;
                     col = makecol(255-val,255-val,255);
@@ -567,6 +615,12 @@ void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
                 SCALE*(W_MQ*(j+1)+X_OFF),
                 SCALE*(H_MQ*(i+1)+Y_OFF),
                 col);
+            rect(BM_MQ,
+                SCALE*((W_MQ)*j+X_OFF),
+                SCALE*(H_MQ*i+Y_OFF),
+                SCALE*(W_MQ*(j+1)+X_OFF),
+                SCALE*(H_MQ*(i+1)+Y_OFF),
+                txt_col);
         }
     }
     blit(BM_MQ,screen,0,0,0,0,BM_MQ->w,BM_MQ->h);
@@ -595,7 +649,7 @@ void draw_tree(int i)
 	int x1, x2, y1, y2, xc, yc;
 	int trunk_col = makecol(91, 58, 41);	//dark brown
 	int crown_col = makecol(49, 127, 67);	//dark green
-
+    int edge_col = makecol(0,0,0);
 	x1 = (i*TREE_SPACE-TREE_W/2)*SCALE;
 	x2 = (i*TREE_SPACE+TREE_W/2)*SCALE;
 	y1 = H_LAND*SCALE;
@@ -604,7 +658,9 @@ void draw_tree(int i)
 	yc = y2-TREE_RADIUS*SCALE;
 
 	rectfill(landscape_bitmap, x1, y1, x2, y2, trunk_col );
+    rect(landscape_bitmap, x1, y1, x2, y2, edge_col );
 	circlefill(landscape_bitmap, xc, yc, TREE_RADIUS*SCALE, crown_col);
+    circle(landscape_bitmap, xc, yc, TREE_RADIUS*SCALE, edge_col);
 }
 
 void init_landscape_bitmap()
@@ -631,7 +687,7 @@ void *update_graphic(void *arg)
     float Matrix_Q[49*4];
     float epsilon;
     float values[5];
-    BITMAP *CR, *MQ, *P_data, *GRP_STAT;
+    BITMAP *CR, *MQ, *P_data, *GRP_STAT, *CMD;
 
     //inizializzo allegro e lo schermo 
     init_screen();
@@ -641,6 +697,7 @@ void *update_graphic(void *arg)
     MQ = create_bitmap(X1*SCALE, Y1*SCALE);
     P_data = create_bitmap((W_WIN - X2)*SCALE, Y1*SCALE);
     GRP_STAT = create_bitmap((W_WIN - X1)*SCALE, Y1*SCALE);
+    CMD=create_bitmap(X1*SCALE,(H_WIN-Y1)*SCALE);
     floor_bitmap = create_bitmap(2*W_BLOCK*BM_BLOCKS*SCALE, H_FLOOR*SCALE);
 	landscape_bitmap = create_bitmap(W_LAND*SCALE, H_LAND*SCALE);
 	//printf("GRAPHIC: le dimensioni della floor bitmap sono %d, %d\n", floor_bitmap->h, floor_bitmap->w);
@@ -667,7 +724,7 @@ void *update_graphic(void *arg)
             if(exec == PLAY)
             {
                 update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
-                not_reset_command();
+                not_reset_command(CMD);
             }
 
             if (exec == RESET)
@@ -677,7 +734,7 @@ void *update_graphic(void *arg)
                 ql_get_Q(Matrix_Q);
                 update_MQ(MQ, Matrix_Q, 0.1);
                 update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 1);
-                reset_command();
+                reset_command(CMD);
             }
 
             get_rs_for_plot(&rew_st);

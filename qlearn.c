@@ -257,13 +257,83 @@ float ql_updateQ(int s, int a, int r, int snew){
 //-----------------------------------------------------
 void ql_print_Qmatrix()
 {
-int i, j;
+	int i, j;
 	printf("Q matrix:\n");
-	for(i=0; i<nsta; i++){
-		for(j=0; j<nact; j++)
+	for(i = 0; i < nsta; i++){
+		for(j = 0; j < nact; j++)
 			printf("%f ", Q[i][j]);
 		printf("\n");
 	}
+}
+
+
+//-----------------------------------------------------
+// The following Function saves Q-Matrix in the file
+// named "filename"; if this file doesn't exist, it's
+// created.
+//-----------------------------------------------------
+void ql_Q_to_file(char* filename)
+{
+	int i, j;
+	FILE* fptr;
+
+	fptr = fopen(filename, "w");
+
+	if(fptr == NULL){
+		printf("QLEARN: Error in opening file\n");
+		return;
+	}
+
+	for(i = 0; i < nsta; i++)
+		for(j = 0; j < nact; j++)
+			fprintf(fptr, "%f ", Q[i][j]);
+
+	fclose(fptr);
+
+	return;
+
+}
+
+
+//-----------------------------------------------------
+// The following Function loads Q-Matrix from the file
+// named "filename"; if this doesn't exist, the function
+// prints an Error Message.
+//-----------------------------------------------------
+void ql_Q_from_file(char* filename)
+{
+	int i, j;
+	float v;
+	char c;
+	FILE* fptr;
+		
+
+	fptr = fopen(filename, "r");
+
+	if(fptr == NULL){
+		printf("QLEARN: Error, file: %s doesn't exist!\n", filename);
+		return;
+	}
+
+	
+	/*for(i = 0; i < nsta; i++){
+		for(j = 0; j < nact; j++){
+			fscanf(fptr, "%f", &v);
+			printf("%f ", v);
+		}
+		printf("\n");
+	}*/  
+	do {c = getc(fptr);} while (c != ':');
+
+	for(i = 0; i < 196; i++){
+		fscanf(fptr, "%f", &v);
+        printf("%f ", v);
+    }
+
+
+	fclose(fptr);
+
+	return;
 }
 
 

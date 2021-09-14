@@ -20,8 +20,8 @@ OBJ4 = model
 OBJ5 = command_interface
 OBJ6 = graphic
 OBJ7 = matrices
-OBJ8 = graphic_for_DC
-OBJS = $(OBJ1).o $(OBJ2).o $(OBJ3).o $(OBJ4).o $(OBJ5).o $(OBJ6).o $(OBJ7).o $(OBJ8).o
+OBJS = $(OBJ1).o $(OBJ2).o $(OBJ3).o $(OBJ4).o $(OBJ5).o $(OBJ6).o $(OBJ7).o 
+
 #---------------------------------------------
 # LIBS are the external libraries to be used
 #--------------------------------------------
@@ -55,8 +55,6 @@ $(OBJ6).o: $(OBJ6).c ptask.h
 $(OBJ7).o: $(OBJ7).c  
 	$(CC) $(CFLAGS) -c $(OBJ7).c
 
-$(OBJ8).o: $(OBJ8).c ptask.h
-	$(CC) $(CFLAGS) -c $(OBJ8).c
 
 #-------------------------------------------
 # Command that can be specified inline: make clean

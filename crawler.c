@@ -179,16 +179,17 @@ int get_reward(int s, int snew, state robot){
 
     int r = 0;
 
-    if(robot.dt3 > 0){
-        r = round(10 * robot.dt3);
-        //printf("DT3 > 0: %f\n", robot.dt3);
-    }
-    else if(robot.dt3 < 0){
-        r = round(15 * robot.dt3);
-        //printf("DT3 > 0: %f\n", robot.dt3);
+    if(robot.dt3 > 0)
+        r = round(13 * robot.dt3);
+    else if(robot.dt3 < 0)
+        r = round(20 * robot.dt3);
+    
+    else{
+        if(robot.energy > 0) //old_dt3
+            r = round(5 * robot.energy);
     }
 
-    r -= 1;
+    r -= 5;
 
     if (snew == s) 
         r += RHIT;        // hit the limit angle
@@ -248,6 +249,7 @@ void* qlearning(void* arg){
     init_parameter_values();
     //printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
+    float old_dt3 = 0;
     
     while (get_sys_state(&exec) != STOP){
 
@@ -264,6 +266,10 @@ void* qlearning(void* arg){
             step++;
 
             get_state(&robot);
+
+            old_dt3 = robot.dt3;
+            robot.energy = old_dt3;
+
             robot.dt3 = robot.q1 - old_q1;
             old_q1 = robot.q1;
 
@@ -290,7 +296,7 @@ void* qlearning(void* arg){
             //err +=  (newerr - err)/step;
             //if (step % 100 == 0)
                 //ql_print_Qmatrix();
-            if (step % 3000 == 0)
+            if (step % 100 == 0)
                 ql_reduce_exploration();
               
         }
@@ -341,6 +347,7 @@ int main(){
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
     pt_task_create( dynamics, MODEL, PER_D*1000, PER_D*1000, PRI);
     //printf("con il risultato %d\n",ris);
+    ql_Q_from_file("./prova.txt");    
 
     for(i = 1; i <= 4; i++){
           pt_wait_for_end(i);

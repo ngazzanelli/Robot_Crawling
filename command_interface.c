@@ -213,7 +213,8 @@ void key_manager(int exec)
 
 		case KEY_E:
 			printf("INTERPRETER: hai premuto il tasto E\n");
-			set_sys_state(STOP); 
+			set_sys_state(STOP);
+			//ql_Q_to_file("./prova.txt"); 
 			break;
 
 		case KEY_UP:
