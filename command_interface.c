@@ -16,8 +16,12 @@
 
 // Q-learning Parameters Change Constants
 #define NPARAM  5                  // Total Number of Possible Learning Parameters
-#define STEP    0.1                // Increase/Decrease Step of Learning Parameters
-
+#define STEP    0.01               // Increase/Decrease Step of Learning Parameters
+#define ALPHA	0
+#define GAMMA	1
+#define	DECAY	2
+#define EPS_MAX	3
+#define EPS_MIN	4
 
 // Functions from other modules
 extern void init_state();
@@ -80,16 +84,30 @@ int get_parameter_selected()
 void inc_parameter_value(int p)
 {
 	pthread_mutex_lock(&mux_parameter_values);
-	if(values[p] < 1)
-		values[p] += STEP;
+	//printf("GRAPHIC: il parametro %d valeva %f ", p, values[p]);
+	values[p] += STEP;
+	if(values[p] > 1) 
+		values[p] = 1;
+	if(p == EPS_MIN){	//epsilon min
+		if(values[p] > values[EPS_MAX])
+			values[p] = values[EPS_MAX];
+	}
+	//printf("e ora vale %f\n", values[p]);
 	pthread_mutex_unlock(&mux_parameter_values);
 }
 
 void dec_parameter_value(int p)
 {
 	pthread_mutex_lock(&mux_parameter_values);
-	if(values[p]>0.01)
-	   values[p] -= STEP;
+	//printf("il parametro %d valeva %f ", p, values[p]);
+	values[p] -= STEP;
+	if(values[p] < 0) 
+		values[p] = 0;
+	if(p == EPS_MAX){//epsilon max
+		if(values[p] < values[EPS_MIN])
+			values[p] = values[EPS_MIN];
+	}
+	//printf("e ora vale %f\n", values[p]);
 	pthread_mutex_unlock(&mux_parameter_values);
 }
 
@@ -102,22 +120,22 @@ void get_parameter_values(float *buff)
 
 void init_parameter_values()
 {
-	values[0] = ql_get_learning_rate();
-	values[1] = ql_get_discount_factor();
-	values[2] = ql_get_expl_decay();
-	values[3] = ql_get_epsini();
-	values[4] = ql_get_epsfin();
+	values[ALPHA] = ql_get_learning_rate();
+	values[GAMMA] = ql_get_discount_factor();
+	values[DECAY] = ql_get_expl_decay();
+	values[EPS_MAX] = ql_get_epsini();
+	values[EPS_MIN] = ql_get_epsfin();
 }
 
 void set_qlearning_values()
 {
 	pthread_mutex_lock(&mux_parameter_values);
-	ql_set_learning_rate(values[0]);
-	ql_set_discount_factor(values[1]);
-	ql_set_expl_decay(values[2]);
-	ql_set_epsini(values[3]);
-	ql_set_epsfin(values[4]);
-	ql_set_epsilon(values[3]);
+	ql_set_learning_rate(values[ALPHA]);
+	ql_set_discount_factor(values[GAMMA]);
+	ql_set_expl_decay(values[DECAY]);
+	ql_set_epsini(values[EPS_MAX]);
+	ql_set_epsfin(values[EPS_MIN]);
+	ql_set_epsilon(values[EPS_MAX]);
 	pthread_mutex_unlock(&mux_parameter_values);
 }
 
@@ -149,9 +167,9 @@ int get_pause_graphic()
 //-----------------------------------------------------
 void set_sys_state(int i)
 {
-	if(i>=0 && i<4){
+	if(i >= 0 && i < 4){
 		pthread_mutex_lock(&mux_sys_state);
-		sys_state=i;
+		sys_state = i;
 		pthread_mutex_unlock(&mux_sys_state);
 	}
 }
