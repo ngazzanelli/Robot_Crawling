@@ -17,6 +17,13 @@
 #define CRAWLER     3
 #define MODEL       4
 
+// Parameter selected constants
+#define ALPHA	0
+#define GAMMA	1
+#define	DECAY	2
+#define EPS_MAX	3
+#define EPS_MIN	4
+
 // Window Dimensions Constants
 #define W_WIN   	640    // Window Width
 #define H_WIN   	480    // Window Height 
@@ -323,23 +330,25 @@ void update_data_reset(BITMAP* BM_TXT,
     int border_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
-    txt_col = makecol(0, 0, 0);		//black
-    slc_col = makecol(0, 0, 0);		//red
-    border_col = makecol(0,0,0);    //black
+    txt_col = makecol(0, 0, 0);			//black
+    slc_col = makecol(0, 0, 0);			//red
+    border_col = makecol(0,0,0);    	//black
+	//Border drawing
     clear_to_color(BM_TXT, border_col);
     rectfill(BM_TXT, BRD_THICK,BM_TXT->h - BRD_THICK, BM_TXT->w - BRD_THICK, BRD_THICK, bkg_col);
+	//Data variables printing
     select = get_parameter_selected();
-    sprintf(str, ">Learning Rate:%.4f", alpha);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, select == 0 ? bkg_col : txt_col, select == 0 ? slc_col : bkg_col);
-    sprintf(str, ">Discount Factor:%.4f", gam);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 1*FB)*SCALE, select == 1 ? bkg_col : txt_col, select == 1 ? slc_col : bkg_col);
-    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, select == 2 ? bkg_col : txt_col, select == 2 ? slc_col : bkg_col);
-    sprintf(str, "Epsilon:%.4f", decay);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB + NL)*SCALE, select == 2 ? bkg_col : txt_col, select == 2 ? slc_col : bkg_col);
-    sprintf(str,">Maximum Epsilon:%.4f",eps_in);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB + NL)*SCALE, select == 3 ? bkg_col : txt_col, select == 3 ? slc_col : bkg_col);
-    sprintf(str, ">Minimum Epsilon:%.4f", eps_fi);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + NL)*SCALE, select == 4 ? bkg_col : txt_col, select == 4 ? slc_col : bkg_col);
+    sprintf(str, ">Learning Rate: %.2f", alpha);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, select == ALPHA ? bkg_col : txt_col, select == ALPHA ? slc_col : bkg_col);
+    sprintf(str, ">Discount Factor: %.2f", gam);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 1*FB)*SCALE, select == GAMMA ? bkg_col : txt_col, select == GAMMA ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, select == DECAY ? bkg_col : txt_col, select == DECAY ? slc_col : bkg_col);
+    sprintf(str, "Epsilon: %.2f", decay);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB + NL)*SCALE, select == DECAY ? bkg_col : txt_col, select == DECAY ? slc_col : bkg_col);
+    sprintf(str,">Maximum Epsilon: %.2f",eps_in);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB + NL)*SCALE, select == EPS_MAX ? bkg_col : txt_col, select == EPS_MAX ? slc_col : bkg_col);
+    sprintf(str, ">Minimum Epsilon: %.2f", eps_fi);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + NL)*SCALE, select == EPS_MIN ? bkg_col : txt_col, select == EPS_MIN ? slc_col : bkg_col);
 
     blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
@@ -490,26 +499,24 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
 //  update of reward plot and joints state
 //  matrix in reset and not reset mode
 //-------------------------------------------
-void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int flag,int reset)
+void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int reset)
 {
     int border_col;
     int bkg_col;
 
-    if(flag==1)
-    {
-        border_col = makecol(0,0,0);    //black
-        bkg_col = makecol(255,255,255); //white
-        clear_to_color(BM_GS, border_col);
-        rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
+	border_col = makecol(0,0,0);    //black
+	bkg_col = makecol(255,255,255); //white
+	clear_to_color(BM_GS, border_col);
+	rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
 	if(reset){
-	update_STAT(BM_GS,angles2state(0,0),reset);
-        update_graph(BM_GS,0,min_r,max_r,reset);
+		update_STAT(BM_GS,angles2state(0,0),reset);
+		update_graph(BM_GS,0,min_r,max_r,reset);
 	}else{
-        update_STAT(BM_GS,state,reset);
-        update_graph(BM_GS,reward,min_r,max_r,reset);
+		update_STAT(BM_GS,state,reset);
+		update_graph(BM_GS,reward,min_r,max_r,reset);
 	}
-        blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
-    }
+blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
+
 }
 
 //-------------------------------------------
@@ -767,9 +774,8 @@ void *update_graphic(void *arg)
 
     while (get_sys_state(&exec) != STOP){
 
-        if(exec==PLAY || exec==RESET ) //decommenta se vuoi vedere la grafica che si ferma
-        {
-            //printf("GRAPHIC: dentro if di update_graphic\n");
+        if(exec != PAUSE) 
+		{
             get_rs_for_plot(&rew_st);
             if(rew_st.flag == 1)
                 epoch++;
@@ -787,25 +793,19 @@ void *update_graphic(void *arg)
                 {
                     update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
                     not_reset_command(CMD);
-                }
-
-                if (exec == RESET)
-                {
+					if(rew_st.flag){ 	               
+                		update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, 0);
+                    	ql_get_Q(Matrix_Q);
+                    	update_MQ(MQ,Matrix_Q, 0.1);
+                	}
+                }else{ //(exec == RESET)
                     get_parameter_values(values);
                     update_data_reset(P_data, values[0], values[1], values[3], values[4], values[2]);
                     ql_get_Q(Matrix_Q);
                     update_MQ(MQ, Matrix_Q, 0.1);
-                    update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 1);
+					if(rew_st.flag)
+	                    update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, 1);
                     reset_command(CMD);
-                }
-
-                
-                update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 0);
-                
-                if(rew_st.flag == 1)
-                {
-                    ql_get_Q(Matrix_Q);
-                    update_MQ(MQ,Matrix_Q, 0.1);
                 }
             }
         }
