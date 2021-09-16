@@ -305,20 +305,19 @@ void* dynamics(void* arg)
 
             dt = get_dyn_dt();
             update_kyn(Tsee, robot, FALSE_ALPHA);
-            y_ee = Tsee[1][3];  // End-Effector Position
+            y_ee = Tsee[1][3];  // End-Effector altitude
             
-
+            //Update dynamics matrices
             if(y_ee > 0){
                 update_M1(M, robot);
                 update_C1(C, robot, dot_robot);
                 update_G1(G, robot);
 
             }else{
+                // Numerical Error Fix
                 update_kyn(Tsee, robot, TRUE_ALPHA);
                 y_ee = Tsee[1][3];
-
                 if(y_ee > 0){
-                    // Numerical Error Fix
                     //printf("DYN: Sono dentro y < 0 ma il secondo check dice y=%f\n", y_ee);
                     theta = adjust_alpha(Tsee[0][3], Tsee[1][3]); 
                     robot.q3 -= theta;  
@@ -376,12 +375,11 @@ void* dynamics(void* arg)
             robot.q2 = q_dip2[1];
             robot.q3 = q_dip2[2];
 
-            // Check on ALPHA and Y */
+            // Check on ALPHA and Y
             if(robot.q3 < 0){
                 q_dip1[2] = 0;
                 robot.q3 = 0;
             }
-
             if(robot.q2 != 0){
                 q_dip1[1] = 0;
                 robot.q2 = 0;   
