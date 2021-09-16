@@ -637,12 +637,14 @@ int x_floor_offset, x_land_offset, sun_col, sun_border,border_col, body_col, whe
     circle(BM_CR, figure[2], figure[3], MToPx(R_JOINT, 2), border_col);
     L2_kin(figure, joint_v);
 
+	// Border drawing???????
     //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
     thick_line(BM_CR, figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,body_col);
     rectfill(BM_CR, 0, BM_CR->h,BRD_THICK,0,border_col);
     rectfill(BM_CR, 0, BM_CR->h,BM_CR->w,BM_CR->h - BRD_THICK, border_col);
     rectfill(BM_CR, 0, BRD_THICK,BM_CR->w, 0, border_col);
     rectfill(BM_CR, BM_CR->w - BRD_THICK, BM_CR-> h, BM_CR->w, 0, border_col);
+	
     blit(BM_CR, screen, 0, 0, X1*SCALE, 0, BM_CR->w, BM_CR->h );
 
 }
@@ -697,7 +699,10 @@ void update_MQ(BITMAP* BM_MQ, float* matrix, float step)
     blit(BM_MQ, screen, 0, 0, 0, 0, BM_MQ->w, BM_MQ->h);
 }
 
-
+//-----------------------------------------
+//	The Following Function initializes the
+//	floor bitmap with predefined pattern
+//-----------------------------------------
 void init_floor_bitmap()
 {
     int i, x1, x2;
@@ -715,6 +720,10 @@ void init_floor_bitmap()
     }
 }
 
+//-----------------------------------------
+//	The Following Function draws a tree 
+//	in the landscape bitmap
+//-----------------------------------------
 void draw_tree(int i)
 {
 	int x1, x2, y1, y2, xc, yc;
@@ -734,6 +743,10 @@ void draw_tree(int i)
     circle(landscape_bitmap, xc, yc, TREE_RADIUS*SCALE, edge_col);
 }
 
+//-----------------------------------------
+//	The Following Function initializes the
+//	floor bitmap with predefined pattern
+//-----------------------------------------
 void init_landscape_bitmap()
 {
     int i;
