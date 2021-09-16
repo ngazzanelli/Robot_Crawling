@@ -181,13 +181,16 @@ int get_reward(int s, int snew, int old_s, state robot, int random){
 
     if(robot.dt3 > 0)
         r = round(20 * robot.dt3);
+
     else if(robot.dt3 < 0) //&& robot.q3 != 0)
-        r = round(20 * robot.dt3);
-    else    //robot.dt3 == 0
-        r = round(10 * robot.energy);
+        r = round(21 * robot.dt3);
+
+    else{    //robot.dt3 == 0
+        if(robot.energy > 0)
+            r = round(10 * robot.energy);
+    }
     
-    
-    if( old_s == snew && random == 1)
+    if( old_s == snew) 
         r -= 5;
 
     if (snew == s) 

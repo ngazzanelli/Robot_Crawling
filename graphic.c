@@ -137,6 +137,7 @@ extern void get_state(state* s);
 static BITMAP*  floor_bitmap;
 static BITMAP*	landscape_bitmap;
 
+
 //-------------------------------------------
 // 
 //-------------------------------------------
@@ -152,7 +153,6 @@ int conv_col(int col, int cscale)
 //---------------------------------------------------------------------
 // The following function draws a thick line
 //---------------------------------------------------------------------
-
 void    thick_line(BITMAP *bmp, float x1, float y1, float x2, float y2, float thi, int color)
 {
 float   dx = x1 - x2;
@@ -179,6 +179,7 @@ int v[4*2];
     polygon(bmp, 4, v, color);
 }
 
+
 //-------------------------------------------
 //  The Following Function plot possible 
 //  keyboard commands allowed in reset state   
@@ -190,9 +191,8 @@ int txt_col;
 int border_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
-    txt_col = makecol(0, 0, 0);		//black
-    //rectfill(BM_CMD, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
-    border_col = makecol(0,0,0);    //black
+    txt_col = makecol(0, 0, 0);		    //black
+    border_col = makecol(0,0,0);        //black
 
     clear_to_color(BM_CMD, border_col);
     rectfill(BM_CMD, BRD_THICK,BM_CMD->h - BRD_THICK, BM_CMD->w - BRD_THICK, BRD_THICK, bkg_col);
@@ -209,7 +209,7 @@ int border_col;
     textout_ex(BM_CMD, font, "Par. di Apprendimento ", X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 4*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "LEFT <--> Decremento", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 4*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 5*NL)*SCALE, txt_col, bkg_col);
-    blit(BM_CMD,screen,0,0,0,Y1*SCALE,BM_CMD->w,BM_CMD->h);
+    blit(BM_CMD, screen, 0, 0, 0, Y1*SCALE, BM_CMD->w, BM_CMD->h);
     
 }
 
@@ -224,10 +224,9 @@ void not_reset_command(BITMAP* BM_CMD)
 int txt_col;  
 int bkg_col;  
 int border_col;
-    txt_col = makecol(0, 0, 0);       //black
+    txt_col = makecol(0, 0, 0);         //black
     bkg_col = makecol(200, 200, 200);   //grey
-
-    border_col = makecol(0,0,0);    //black
+    border_col = makecol(0,0,0);        //black
 
     clear_to_color(BM_CMD, border_col);
     rectfill(BM_CMD, BRD_THICK,BM_CMD->h - BRD_THICK, BM_CMD->w - BRD_THICK, BRD_THICK, bkg_col);
@@ -238,8 +237,9 @@ int border_col;
     textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + 2*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "B <--> Boost", X_TEXT_DATA*SCALE, (Y_TEXT + 4*FB + 2*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 2*NL)*SCALE, txt_col, bkg_col);
-    blit(BM_CMD,screen,0,0,0,Y1*SCALE,BM_CMD->w,BM_CMD->h);
+    blit(BM_CMD, screen, 0, 0, 0, Y1*SCALE, BM_CMD->w, BM_CMD->h);
 }
+
 
 //---------------------------------------------
 //  The Following Function initializes the
@@ -277,8 +277,8 @@ void update_data(BITMAP* BM_TXT,
     int border_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
-    txt_col = makecol(0, 0, 0);		//black
-    border_col = makecol(0,0,0);    //black
+    txt_col = makecol(0, 0, 0);		    //black
+    border_col = makecol(0,0,0);        //black
 
     clear_to_color(BM_TXT, border_col);
     rectfill(BM_TXT, BRD_THICK,BM_TXT->h - BRD_THICK, BM_TXT->w - BRD_THICK, BRD_THICK, bkg_col);
@@ -308,6 +308,7 @@ void update_data(BITMAP* BM_TXT,
 
     blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
+
 
 //-------------------------------------------
 //  The Following Function plots data of 
@@ -369,11 +370,11 @@ void update_STAT(BITMAP* BM_SG, int new_state, int reset)
     bkg_col = makecol(255, 255, 255);	//grey
     txt_col = makecol(0, 0, 0);			//white
 
-    //-------------------------------------------
-    //  Circular Array update adding a new state 
-    //  if it isn't full or replacing the 
-    //  oldest state memorized in it 
-    //-------------------------------------------
+    /*-------------------------------------------
+      Circular Array update adding a new state 
+      if it isn't full or replacing the 
+      oldest state memorized in it 
+    ------------------------------------------*/
     if(reset){
         sl_count = 0;
         sl_begin = 0;
@@ -387,13 +388,13 @@ void update_STAT(BITMAP* BM_SG, int new_state, int reset)
         sl_begin = (sl_begin + 1) % N_ST_SV;
     }
     
-    //-------------------------------------------
-    //  Plot N_STATE Cell and if the 
-    //  corrispond state is memorize into the 
-    //  array plot a circle inside, the level
-    // of brightness corrensond to the oldness 
-    // of the state 
-    //-------------------------------------------
+    /*-------------------------------------------
+      Plot N_STATE Cell and if the 
+      corrispond state is memorize into the 
+      array plot a circle inside, the level
+     of brightness corrensond to the oldness 
+     of the state 
+    -------------------------------------------*/
     for(k = 0; k < sl_count; k++)
         ind = (k + sl_begin) % N_ST_SV; 
 
@@ -438,58 +439,59 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
     bkg_col = makecol(255, 255, 255);
     ax_col = txt_col = makecol(0, 0, 0);
     plot_col = makecol(255, 0, 0);
+
     if(reset){
         rew_begin = 0;
         rew_count = 0;
     }
 
-    line(BM_GS,G_X_OFF*SCALE,G_Y_OFF*SCALE,G_X_OFF*SCALE,(G_Y_OFF-LEN_AX_Y)*SCALE,ax_col);
-    line(BM_GS,G_X_OFF*SCALE,G_Y_OFF*SCALE,(G_X_OFF+LEN_AX_X)*SCALE,G_Y_OFF*SCALE,ax_col);
-    sprintf(s,"%d",max_range);
+    line(BM_GS,G_X_OFF*SCALE, G_Y_OFF*SCALE, G_X_OFF*SCALE, (G_Y_OFF-LEN_AX_Y)*SCALE, ax_col);
+    line(BM_GS,G_X_OFF*SCALE, G_Y_OFF*SCALE, (G_X_OFF+LEN_AX_X)*SCALE, G_Y_OFF*SCALE, ax_col);
+    sprintf(s, "%d", max_range);
     textout_ex(BM_GS, font, s, X_MAX_R_L*SCALE, Y_MAX_R_L*SCALE, txt_col,bkg_col);
-    sprintf(s,"%d",min_range);
+    sprintf(s,"%d", min_range);
     textout_ex(BM_GS, font, s, X_MIN_R_L*SCALE, Y_MIN_R_L*SCALE, txt_col, bkg_col);
 
     textout_ex(BM_GS, font, "Epoch", X_EPOCH_L*SCALE, Y_EPOCH_L*SCALE, txt_col, bkg_col);
     textout_ex(BM_GS, font, "Reward Plot", X_G_NAME*SCALE, Y_G_NAME*SCALE, txt_col, bkg_col);
 
 
-    //-------------------------------------------
-    //  Circular Array update adding a new reward 
-    //  if it isn't full or replacing the 
-    //  oldest reward memorized in it 
-    //-------------------------------------------
+    /*-------------------------------------------
+      Circular Array update adding a new reward 
+      if it isn't full or replacing the 
+      oldest reward memorized in it 
+    -------------------------------------------*/
     if(rew_count < (LEN_AX_X/LEN_LINE)){
         reward_p[rew_count] = reward;
         rew_count++;
     }else{
-        rew_begin = (rew_begin+1)%((LEN_AX_X/LEN_LINE));
-        reward_p[(rew_begin+(LEN_AX_X/LEN_LINE))%((LEN_AX_X/LEN_LINE))] = reward;
+        rew_begin = (rew_begin + 1) % ((LEN_AX_X/LEN_LINE));
+        reward_p[(rew_begin + (LEN_AX_X/LEN_LINE)) % ((LEN_AX_X/LEN_LINE))] = reward;
     }
 
-    //--------------------------------------------
-    //  Plot all the reward memorized in the 
-    //  circular array rescale it according to 
-    //  the lenght of Y axis and the saturation 
-    //  bound 
-    //--------------------------------------------
-    for(i=0;i<rew_count;i++){
-        cont_plot = (i+rew_begin)%(LEN_AX_X/LEN_LINE);
-        if(reward_p[cont_plot]>=max_range)
+    /*--------------------------------------------
+      Plot all the reward memorized in the 
+      circular array rescale it according to 
+      the lenght of Y axis and the saturation 
+      bound 
+    --------------------------------------------*/
+    for(i = 0; i < rew_count; i++){
+        cont_plot = (i + rew_begin) % (LEN_AX_X/LEN_LINE);
+        if(reward_p[cont_plot] >= max_range)
             val = (float)max_range;
-        else if(reward_p[cont_plot]<=min_range)
+        else if(reward_p[cont_plot] <= min_range)
             val = (float)min_range;
         else
             val = reward_p[cont_plot];
         
-        val = ((val-min_range)/(max_range-min_range))*(LEN_AX_Y*SCALE-1);
-        line(BM_GS,(G_X_OFF*SCALE+i*LEN_LINE*SCALE), (G_Y_OFF*SCALE-floor(val)),
-			(G_X_OFF*SCALE+(i+1)*LEN_LINE*SCALE),(G_Y_OFF*SCALE-floor(val)),plot_col);
+        val = ((val - min_range)/(max_range - min_range))*(LEN_AX_Y*SCALE - 1);
+        line(BM_GS,(G_X_OFF*SCALE + i*LEN_LINE*SCALE), (G_Y_OFF*SCALE - floor(val)),
+			(G_X_OFF*SCALE + (i + 1)*LEN_LINE*SCALE), (G_Y_OFF*SCALE - floor(val)), plot_col);
     }
     if(min_range <= 0 && max_range >= 0){
-        val =(float)(0-min_range)/((max_range-min_range))*(LEN_AX_Y*SCALE-1);
-        line(BM_GS,(G_X_OFF*SCALE), (G_Y_OFF*SCALE-floor(val)),
-            (G_X_OFF +LEN_AX_X) *SCALE,(G_Y_OFF*SCALE-floor(val)),ax_col);
+        val =(float)(0 - min_range)/((max_range - min_range))*(LEN_AX_Y*SCALE - 1);
+        line(BM_GS, (G_X_OFF*SCALE), (G_Y_OFF*SCALE - floor(val)),
+            (G_X_OFF + LEN_AX_X)*SCALE, (G_Y_OFF*SCALE - floor(val)), ax_col);
     }
 }
 
@@ -499,7 +501,7 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
 //  update of reward plot and joints state
 //  matrix in reset and not reset mode
 //-------------------------------------------
-void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int reset)
+void update_GRP_STAT(BITMAP* BM_GS, int state, float reward, int max_r, int min_r, int reset)
 {
     int border_col;
     int bkg_col;
@@ -507,17 +509,18 @@ void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,in
 	border_col = makecol(0,0,0);    //black
 	bkg_col = makecol(255,255,255); //white
 	clear_to_color(BM_GS, border_col);
-	rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
+	rectfill(BM_GS, BRD_THICK, BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
 	if(reset){
-		update_STAT(BM_GS,angles2state(0,0),reset);
-		update_graph(BM_GS,0,min_r,max_r,reset);
+		update_STAT(BM_GS, angles2state(0,0), reset);
+		update_graph(BM_GS, 0, min_r, max_r, reset);
 	}else{
-		update_STAT(BM_GS,state,reset);
-		update_graph(BM_GS,reward,min_r,max_r,reset);
+		update_STAT(BM_GS, state, reset);
+		update_graph(BM_GS, reward, min_r, max_r, reset);
 	}
-blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
-
+    blit(BM_GS, screen, 0, 0, X1*SCALE, Y1*SCALE, BM_GS->w, BM_GS->h);
+    
 }
+
 
 //-------------------------------------------
 //  The Following Function converts the 
@@ -527,19 +530,20 @@ blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
 int MToPx(double val, int flag)
 {
     if (flag == X)
-        return(((int)round(val*10)+W_CENTRE)*SCALE);
+        return(((int)round(val*10) + W_CENTRE)*SCALE);
     if (flag == Y)
-        return((Y1*SCALE)-((int)round(val*10)+H_FLOOR)*SCALE);
+        return((Y1*SCALE) - ((int)round(val*10) + H_FLOOR)*SCALE);
     else        
         return((int)round(val*10*SCALE));
 }
+
 
 //-------------------------------------------
 //  The Following Functions produces the 
 //  point in Pixel to draw the crawler from 
 //  its kinematics
 //-------------------------------------------
-void  body_kin(int position[],state s)
+void  body_kin(int position[], state s)
 {   
 	double rot_body[4];
 	double pos_body[2];
@@ -550,26 +554,28 @@ void  body_kin(int position[],state s)
     rot_body[2] = sin(s.q3);
     rot_body[3] = cos(s.q3);
     pos_body[1] = 1.5 + 3* cos(s.q3) + (15/2) *sin(s.q3);
-    position[0] = MToPx(rot_body[0]*(-D_BODY/2)+rot_body[1]*(-H_BODY/2)+pos_body[0],0);
-    position[1] = MToPx(rot_body[2]*(-D_BODY/2)+rot_body[3]*(-H_BODY/2)+pos_body[1],1);
-    position[2] = MToPx(rot_body[0]*(-D_BODY/2)+rot_body[1]*(H_BODY/2)+pos_body[0],0);
-    position[3] = MToPx(rot_body[2]*(-D_BODY/2)+rot_body[3]*(H_BODY/2)+pos_body[1],1);
-    position[4] = MToPx(rot_body[0]*(D_BODY/2)+rot_body[1]*(H_BODY/2)+pos_body[0],0);
-    position[5] = MToPx(rot_body[2]*(D_BODY/2)+rot_body[3]*(H_BODY/2)+pos_body[1],1);
-    position[6] = MToPx(rot_body[0]*(D_BODY/2)+rot_body[1]*(-H_BODY/2-2*R_WHEEL)+pos_body[0],0);
-    position[7] = MToPx(rot_body[2]*(D_BODY/2)+rot_body[3]*(-H_BODY/2-2*R_WHEEL)+pos_body[1],1);
-    position[8] = MToPx(rot_body[0]*(D_BODY/2-R_WHEEL)+rot_body[1]*(-H_BODY/2)+pos_body[0],0);
-    position[9] = MToPx(rot_body[2]*(D_BODY/2-R_WHEEL)+rot_body[3]*(-H_BODY/2)+pos_body[1],1);
-    position[10] = MToPx(rot_body[0]*(-D_BODY/2)+rot_body[1]*(-H_BODY/2-R_WHEEL)+pos_body[0],0);
-    position[11] = MToPx(rot_body[2]*(-D_BODY/2)+rot_body[3]*(-H_BODY/2-R_WHEEL)+pos_body[1],1);
+    position[0] = MToPx(rot_body[0]*(-D_BODY/2) + rot_body[1]*(-H_BODY/2) + pos_body[0], 0);
+    position[1] = MToPx(rot_body[2]*(-D_BODY/2) + rot_body[3]*(-H_BODY/2) + pos_body[1], 1);
+    position[2] = MToPx(rot_body[0]*(-D_BODY/2) + rot_body[1]*(H_BODY/2) + pos_body[0], 0);
+    position[3] = MToPx(rot_body[2]*(-D_BODY/2) + rot_body[3]*(H_BODY/2) + pos_body[1], 1);
+    position[4] = MToPx(rot_body[0]*(D_BODY/2) + rot_body[1]*(H_BODY/2) + pos_body[0], 0);
+    position[5] = MToPx(rot_body[2]*(D_BODY/2) + rot_body[3]*(H_BODY/2) + pos_body[1], 1);
+    position[6] = MToPx(rot_body[0]*(D_BODY/2) + rot_body[1]*(-H_BODY/2-2*R_WHEEL) + pos_body[0], 0);
+    position[7] = MToPx(rot_body[2]*(D_BODY/2) + rot_body[3]*(-H_BODY/2-2*R_WHEEL) + pos_body[1], 1);
+    position[8] = MToPx(rot_body[0]*(D_BODY/2-R_WHEEL) + rot_body[1]*(-H_BODY/2) + pos_body[0], 0);
+    position[9] = MToPx(rot_body[2]*(D_BODY/2-R_WHEEL) + rot_body[3]*(-H_BODY/2) + pos_body[1], 1);
+    position[10] = MToPx(rot_body[0]*(-D_BODY/2) + rot_body[1]*(-H_BODY/2-R_WHEEL) + pos_body[0], 0);
+    position[11] = MToPx(rot_body[2]*(-D_BODY/2) + rot_body[3]*(-H_BODY/2-R_WHEEL) + pos_body[1], 1);
 }
+
 void L1_kin(int position[],state s)
 {
     position[0] = position[4];
     position[1] = position[5];
-    position[2] = MToPx(-(15/2) + (15 *cos(s.q3))/2 + cos(s.q3) *(15/2 + 6 *cos(s.q4)) - 3.0* sin(s.q3) - sin(s.q3)*(3/2 + 6* sin(s.q4)),0);
-    position[3] = MToPx(1.5  + 3.0* cos(s.q3) + (15 *sin(s.q3))/2 + (15/2 + 6 *cos(s.q4)) *sin(s.q3) + cos(s.q3)* (1.5 + 6 *sin(s.q4)),1);  
+    position[2] = MToPx(-(15/2) + (15*cos(s.q3))/2 + cos(s.q3)*(15/2 + 6*cos(s.q4)) - 3.0*sin(s.q3) - sin(s.q3)*(3/2 + 6*sin(s.q4)), 0);
+    position[3] = MToPx(1.5  + 3.0*cos(s.q3) + (15*sin(s.q3))/2 + (15/2 + 6*cos(s.q4))*sin(s.q3) + cos(s.q3)*(1.5 + 6*sin(s.q4)), 1);  
 }
+
 void L2_kin(int position[],state s)
 {
     position[0] = position[2];
@@ -584,59 +590,66 @@ void L2_kin(int position[],state s)
 			sin(s.q3)*(15.0/2.0 + 6*cos(s.q4) + 6*sin(s.q4 + s.q5)),1);
 }
 
+
 //-------------------------------------------
 //  The Following Function updates the 
 //  drawing of crawler
 //-------------------------------------------
-void update_CR(BITMAP* BM_CR,state joint_v)
+void update_CR(BITMAP* BM_CR, state joint_v)
 {   
 int figure[12];
 int x_floor_offset, x_land_offset, sun_col, sun_border,border_col, body_col, wheel_col;
-    sun_col=makecol(255, 255, 0);         //yellow
-    sun_border = makecol(255, 165, 0);    //orange
-    border_col = makecol(0,0,0);
-    body_col = makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B);
-    wheel_col = makecol(CR_All_R,CR_All_G,CR_All_B);
+    sun_col = makecol(255, 255, 0);         //yellow
+    sun_border = makecol(255, 165, 0);      //orange
+    border_col = makecol(0,0,0);            //black
+    body_col = makecol(CR_CMP_R, CR_CMP_G, CR_CMP_B);
+    wheel_col = makecol(CR_All_R, CR_All_G, CR_All_B);
 
 
     // Landscape drawing
-	x_land_offset = MToPx(joint_v.q1/10, 2)%(TREE_SPACE*SCALE)+TREE_SPACE*SCALE;
+	x_land_offset = MToPx(joint_v.q1/10, 2) % (TREE_SPACE*SCALE) + TREE_SPACE*SCALE;
 	blit(landscape_bitmap, BM_CR, x_land_offset, 0, 0, 0, BM_CR->w, landscape_bitmap->h);
+
     // Sun drawing
-    circlefill(BM_CR,X_SUN*SCALE,(Y1-Y_SUN)*SCALE,RADIUS_SUN*SCALE,sun_col);
-    circle(BM_CR,X_SUN*SCALE,(Y1-Y_SUN)*SCALE,RADIUS_SUN*SCALE,sun_border);
+    circlefill(BM_CR, X_SUN*SCALE,(Y1 - Y_SUN)*SCALE, RADIUS_SUN*SCALE, sun_col);
+    circle(BM_CR, X_SUN*SCALE, (Y1 - Y_SUN)*SCALE, RADIUS_SUN*SCALE, sun_border);
+
     // Floor drawing
    	x_floor_offset = MToPx(joint_v.q1, 2)%(W_BLOCK*2*SCALE)+W_BLOCK*2*SCALE;
 	blit(floor_bitmap, BM_CR, x_floor_offset, 0, 0, BM_CR->h - H_FLOOR*SCALE, BM_CR->w, floor_bitmap->h);
-    line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
+    line(BM_CR, 0, (BM_CR->h - H_FLOOR*SCALE), (BM_CR->w), (BM_CR->h - H_FLOOR*SCALE), 1);
+
     // Body drawing
-    body_kin(figure,joint_v);
-    polygon(BM_CR,5,figure,body_col);
+    body_kin(figure, joint_v);
+    polygon(BM_CR, 5, figure, body_col);
     line(BM_CR, figure[0], figure[1], figure[2], figure[3], border_col);
     line(BM_CR, figure[2], figure[3], figure[4], figure[5], border_col);
     line(BM_CR, figure[4], figure[5], figure[6], figure[7], border_col);
     line(BM_CR, figure[6], figure[7], figure[8], figure[9], border_col);
     line(BM_CR, figure[8], figure[9], figure[0], figure[1], border_col);
+
     // Wheel drawing
-    circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),border_col); //very dark grey
-	circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2)/2,wheel_col);
+    circlefill(BM_CR, figure[10], figure[11], MToPx(R_WHEEL, 2), border_col); 
+	circlefill(BM_CR, figure[10], figure[11], MToPx(R_WHEEL, 2)/2, wheel_col);
+
     // First link drawing
-    circlefill(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),wheel_col);
-    circle(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),border_col);
-    L1_kin(figure,joint_v);
-    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,body_col);
-    //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    circlefill(BM_CR, figure[4], figure[5], MToPx(R_JOINT ,2), wheel_col);
+    circle(BM_CR, figure[4], figure[5], MToPx(R_JOINT, 2), border_col);
+    L1_kin(figure, joint_v);
+    thick_line(BM_CR, figure[0], figure[1], figure[2], figure[3], ARM_THICK*SCALE, body_col);
+
     // Second link drawing
-    circlefill(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),wheel_col);
-    circle(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),border_col);
-    L2_kin(figure,joint_v);
+    circlefill(BM_CR, figure[2], figure[3], MToPx(R_JOINT, 2), wheel_col);
+    circle(BM_CR, figure[2], figure[3], MToPx(R_JOINT, 2), border_col);
+    L2_kin(figure, joint_v);
+
     //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,body_col);
-    rectfill(BM_CR,0,BM_CR->h,BRD_THICK,0,border_col);
-    rectfill(BM_CR,0,BM_CR->h,BM_CR->w,BM_CR->h - BRD_THICK, border_col);
-    rectfill(BM_CR,0,BRD_THICK,BM_CR->w , 0 ,border_col);
-    rectfill(BM_CR,BM_CR->w - BRD_THICK, BM_CR-> h, BM_CR->w,0,border_col);
-    blit(BM_CR,screen,0,0,X1*SCALE, 0 ,BM_CR->w  ,BM_CR->h );
+    thick_line(BM_CR, figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,body_col);
+    rectfill(BM_CR, 0, BM_CR->h,BRD_THICK,0,border_col);
+    rectfill(BM_CR, 0, BM_CR->h,BM_CR->w,BM_CR->h - BRD_THICK, border_col);
+    rectfill(BM_CR, 0, BRD_THICK,BM_CR->w, 0, border_col);
+    rectfill(BM_CR, BM_CR->w - BRD_THICK, BM_CR-> h, BM_CR->w, 0, border_col);
+    blit(BM_CR, screen, 0, 0, X1*SCALE, 0, BM_CR->w, BM_CR->h );
 
 }
 
@@ -646,50 +659,48 @@ int x_floor_offset, x_land_offset, sun_col, sun_border,border_col, body_col, whe
 //  allow to tune the intensity of color 
 //  according on the values into Q Matrix
 //-----------------------------------------
-void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
+void update_MQ(BITMAP* BM_MQ, float* matrix, float step)
 {
-	int i,j,val,col,txt_col,bkg_col,border_col;
+	int i, j, val, col, txt_col, bkg_col, border_col;
     
-    bkg_col = makecol(200,200,200);
-    txt_col = makecol(0,0,0);
+    bkg_col = makecol(200,200,200); //light grey
+    txt_col = makecol(0,0,0);       //black
     border_col = makecol(0,0,0);    //black
     
     clear_to_color(BM_MQ, border_col);
-    rectfill(BM_MQ, BRD_THICK,BM_MQ->h - BRD_THICK, BM_MQ->w - BRD_THICK, BRD_THICK, bkg_col);
+    rectfill(BM_MQ, BRD_THICK, BM_MQ->h - BRD_THICK, BM_MQ->w - BRD_THICK, BRD_THICK, bkg_col);
     textout_ex(BM_MQ, font, "Matrice Q", X_TEXT*SCALE, Y_TEXT*SCALE, txt_col, bkg_col);
-    for(i=0;i<N_STATE;i++)
-    {
-        for(j=0;j<N_ACTION;j++)
-        { 
-            if(matrix[i*N_ACTION+j]>0)
-            {
-                    val = (int)floor(sqrt(matrix[i*N_ACTION+j])/step);
-                    if(val>255)
+
+    for(i = 0; i < N_STATE; i++){
+        for(j = 0; j < N_ACTION; j++){
+
+            if(matrix[i*N_ACTION + j] > 0){
+                    val = (int)floor(sqrt(matrix[i*N_ACTION + j])/step);
+                    if(val > 255)
                         val=255;
-                    col = makecol(255-val,255-val,255);
+                    col = makecol(255 - val, 255 - val, 255);
             }
-            else
-            {
-                val = (int)floor(-matrix[i*N_ACTION+j]/step);
-                if(val>255)
+            else{
+                val = (int)floor(-matrix[i*N_ACTION + j]/step);
+                if(val > 255)
                     val = 255;
-                col = makecol(255,255-val,255-val);
+                col = makecol(255, 255 - val, 255 - val);
             }
             rectfill(BM_MQ,
-                SCALE*((W_MQ)*j+X_OFF),
-                SCALE*(H_MQ*i+Y_OFF),
-                SCALE*(W_MQ*(j+1)+X_OFF),
-                SCALE*(H_MQ*(i+1)+Y_OFF),
+                SCALE*((W_MQ)*j + X_OFF),
+                SCALE*(H_MQ*i + Y_OFF),
+                SCALE*(W_MQ*(j + 1) + X_OFF),
+                SCALE*(H_MQ*(i + 1) + Y_OFF),
                 col);
             rect(BM_MQ,
-                SCALE*((W_MQ)*j+X_OFF),
-                SCALE*(H_MQ*i+Y_OFF),
-                SCALE*(W_MQ*(j+1)+X_OFF),
-                SCALE*(H_MQ*(i+1)+Y_OFF),
+                SCALE*((W_MQ)*j + X_OFF),
+                SCALE*(H_MQ*i + Y_OFF),
+                SCALE*(W_MQ*(j + 1) + X_OFF),
+                SCALE*(H_MQ*(i + 1) + Y_OFF),
                 txt_col);
         }
     }
-    blit(BM_MQ,screen,0,0,0,0,BM_MQ->w,BM_MQ->h);
+    blit(BM_MQ, screen, 0, 0, 0, 0, BM_MQ->w, BM_MQ->h);
 }
 
 
@@ -701,12 +712,12 @@ void init_floor_bitmap()
     floor_color1 = makecol(100, 200, 100);	//light green
     floor_color2 = makecol(100, 250, 100);	//dark green
 	clear_to_color(floor_bitmap, floor_color1);
-    for(i=0; i < BM_BLOCKS; i++){
+    for(i = 0; i < BM_BLOCKS; i++){
 		x1 = (i*2*W_BLOCK + W_BLOCK)*SCALE;
 		x2 = i*2*W_BLOCK*SCALE;
 		//printf("GRAPHIC: la x1 vale %d mentre x2 vale %d\n", x1, x2);
-        rectfill(floor_bitmap, x1, H_FLOOR/2*SCALE, ((i+1)*2*W_BLOCK)*SCALE, 0, floor_color2);
-		rectfill(floor_bitmap, x2, H_FLOOR*SCALE, ((i+1)*2*W_BLOCK - W_BLOCK)*SCALE, H_FLOOR/2*SCALE, floor_color2);
+        rectfill(floor_bitmap, x1, H_FLOOR/2*SCALE, ((i + 1)*2*W_BLOCK)*SCALE, 0, floor_color2);
+		rectfill(floor_bitmap, x2, H_FLOOR*SCALE, ((i + 1)*2*W_BLOCK - W_BLOCK)*SCALE, H_FLOOR/2*SCALE, floor_color2);
     }
 }
 
@@ -715,13 +726,13 @@ void draw_tree(int i)
 	int x1, x2, y1, y2, xc, yc;
 	int trunk_col = makecol(91, 58, 41);	//dark brown
 	int crown_col = makecol(49, 127, 67);	//dark green
-    int edge_col = makecol(0,0,0);
+    int edge_col = makecol(0,0,0);          //black
 	x1 = (i*TREE_SPACE-TREE_W/2)*SCALE;
 	x2 = (i*TREE_SPACE+TREE_W/2)*SCALE;
 	y1 = H_LAND*SCALE;
 	y2 = (H_LAND - TREE_H)*SCALE;
 	xc = i*TREE_SPACE*SCALE;
-	yc = y2-TREE_RADIUS*SCALE;
+	yc = y2 - TREE_RADIUS*SCALE;
 
 	rectfill(landscape_bitmap, x1, y1, x2, y2, trunk_col );
     rect(landscape_bitmap, x1, y1, x2, y2, edge_col );
@@ -736,7 +747,7 @@ void init_landscape_bitmap()
 
 	sky = makecol(8, 232, 222); //light blue
 	clear_to_color(landscape_bitmap, sky);
-    for(i=0; i < 7; i++)
+    for(i = 0; i < 7; i++)
 			draw_tree(i);
 }
 
@@ -762,7 +773,7 @@ void *update_graphic(void *arg)
     MQ = create_bitmap(X1*SCALE, Y1*SCALE);
     P_data = create_bitmap((W_WIN - X2)*SCALE, Y1*SCALE);
     GRP_STAT = create_bitmap((W_WIN - X1)*SCALE, Y1*SCALE);
-    CMD=create_bitmap(X1*SCALE,(H_WIN-Y1)*SCALE);
+    CMD = create_bitmap(X1*SCALE,(H_WIN-Y1)*SCALE);
     floor_bitmap = create_bitmap(2*W_BLOCK*BM_BLOCKS*SCALE, H_FLOOR*SCALE);
 	landscape_bitmap = create_bitmap(W_LAND*SCALE, H_LAND*SCALE);
 	//printf("GRAPHIC: le dimensioni della floor bitmap sono %d, %d\n", floor_bitmap->h, floor_bitmap->w);
@@ -774,11 +785,12 @@ void *update_graphic(void *arg)
 
     while (get_sys_state(&exec) != STOP){
 
-        if(exec != PAUSE) 
-		{
+        if(exec != PAUSE) {
             get_rs_for_plot(&rew_st);
+
             if(rew_st.flag == 1)
                 epoch++;
+
             if(!get_pause_graphic()){
                 get_state(&rob);
                 update_CR(CR,rob);
@@ -789,15 +801,16 @@ void *update_graphic(void *arg)
                 grap_dmiss = pt_get_dmiss(GRAPHIC);
                 epsilon = ql_get_epsilon();
 
-                if(exec == PLAY)
-                {
+                if(exec == PLAY){
                     update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
                     not_reset_command(CMD);
+
 					if(rew_st.flag){ 	               
                 		update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, 0);
                     	ql_get_Q(Matrix_Q);
                     	update_MQ(MQ,Matrix_Q, 0.1);
                 	}
+                    
                 }else{ //(exec == RESET)
                     get_parameter_values(values);
                     update_data_reset(P_data, values[0], values[1], values[3], values[4], values[2]);
