@@ -286,7 +286,7 @@ void ql_Q_to_file(char* filename)
 
 	for(i = 0; i < nsta; i++)
 		for(j = 0; j < nact; j++)
-			fprintf(fptr, "%f ", Q[i][j]);
+			fprintf(fptr, "%d %f\n", i*nact + j, Q[i][j]);
 
 	fclose(fptr);
 
@@ -300,11 +300,9 @@ void ql_Q_to_file(char* filename)
 // named "filename"; if this doesn't exist, the function
 // prints an Error Message.
 //-----------------------------------------------------
-void ql_Q_from_file(char* filename)
+int ql_Q_from_file(char* filename)
 {
-	int i, j;
-	float v;
-	char c;
+	int i, j, index;
 	FILE* fptr;
 		
 
@@ -312,28 +310,16 @@ void ql_Q_from_file(char* filename)
 
 	if(fptr == NULL){
 		printf("QLEARN: Error, file: %s doesn't exist!\n", filename);
-		return;
+		return 0;
 	}
 
-	
-	/*for(i = 0; i < nsta; i++){
-		for(j = 0; j < nact; j++){
-			fscanf(fptr, "%f", &v);
-			printf("%f ", v);
-		}
-		printf("\n");
-	}*/  
-	do {c = getc(fptr);} while (c != ':');
-
-	for(i = 0; i < 196; i++){
-		fscanf(fptr, "%f", &v);
-        printf("%f ", v);
-    }
-
-
+	for(i = 0; i < nsta; i++)
+		for(j = 0; j < nact; j++)
+			fscanf(fptr, "%d %f\n", &index, &Q[i][j]);
+			  
 	fclose(fptr);
 
-	return;
+	return 1;
 }
 
 

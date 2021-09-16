@@ -7,6 +7,8 @@
 #include "qlearn.h"
 #include "matrices.h"
 
+// Filename for saving/loading Q-Matrix
+#define Q_MATRIX_FILE	"./q_matrix.txt"
 
 // System State Constants
 #define RESET   0
@@ -17,9 +19,9 @@
 // Q-learning Parameters Change Constants
 #define NPARAM  5                  // Total Number of Possible Learning Parameters
 #define STEP    0.01               // Increase/Decrease Step of Learning Parameters
-#define ALPHA	0
-#define GAMMA	1
-#define	DECAY	2
+#define ALPHA		0
+#define GAMMA		1
+#define	DECAY		2
 #define EPS_MAX	3
 #define EPS_MIN	4
 
@@ -209,6 +211,24 @@ void key_manager(int exec)
 
 	switch(cm){
 
+		/* Writing/Reading Q-Matrix to/from file */
+		case KEY_F:
+		printf("INTERPRETER: hai premuto il tasto F\n");
+			if(exec == PAUSE){
+				ql_Q_to_file(Q_MATRIX_FILE);
+				printf("INTERPRETER: Salvata matrice Q su file\n");
+			}
+			break;
+
+		case KEY_L:
+		printf("INTERPRETER: hai premuto il tasto L\n");
+			if(exec == RESET){
+				if(ql_Q_from_file(Q_MATRIX_FILE) == 1)
+					printf("INTERPRETER: Letta matrice Q da file\n");
+			}
+			break;
+		/*---------------------------------------*/ 	
+
 		case KEY_R:
 			printf("INTERPRETER: hai premuto il tasto R\n");
 			set_sys_state(RESET);
@@ -232,7 +252,6 @@ void key_manager(int exec)
 		case KEY_E:
 			printf("INTERPRETER: hai premuto il tasto E\n");
 			set_sys_state(STOP);
-			//ql_Q_to_file("./prova.txt"); 
 			break;
 
 		case KEY_UP:
@@ -280,7 +299,7 @@ void key_manager(int exec)
 				pt_set_deadline(4, 1000);
 
 			} else{          			// accelerator enabled
-				set_dyn_dt(0.001);  // // setting dynamic integration dt
+				set_dyn_dt(0.001);  // setting dynamic integration dt
 				// setting qlearn task parameters
 				pt_set_period(3, 60000);
 				pt_set_deadline(3, 6000);
