@@ -269,20 +269,25 @@ void key_manager(int exec)
 			printf("INTERPRETER: hai premuto il tasto G\n");
 			change_pause_graphic();
 			pg = get_pause_graphic(); 
-			if(pg == 0){    // acceleratore non attivo
-				set_dyn_dt(0.001);   // settiamo il passo di integrazione della dinamica
-				//scale_fact = 100 è il fattore di scala per il periodo del qlearning rispetto al periodo del model 
-				pt_set_period(4, 1000); // settiamo il periodo del model
-				pt_set_period(3, 100000);  // settiamo il periodo del qlearning
-				pt_set_deadline(4, 1000); // settiamo la deadline relativa del model
-				pt_set_deadline(3, 100000);  // settiamo la deadline relativa del qlearning
-			}else{          // acceleratore attivo
-				set_dyn_dt(0.001);  // settiamo il passo di integrazione della dinamica
-				//scale_fact = 10 è il fattore di scala per il periodo del qlearning rispetto al periodo del model 
-				pt_set_period(4, 600); // settiamo il periodo del model
-				pt_set_period(3, 60000);  // settiamo il periodo del qlearning
-				pt_set_deadline(4, 600); // settiamo la deadline relativa del model
-				pt_set_deadline(3, 6000);  // settiamo la deadline relativa del qlearning
+
+			if(pg == 0){    			// accelerator disabled
+				set_dyn_dt(0.001);  // setting dynamic integration dt
+				// setting qlearn task parameters
+				pt_set_period(3, 100000);  
+				pt_set_deadline(3, 100000);
+				// setting model task parameters
+				pt_set_period(4, 1000); 
+				pt_set_deadline(4, 1000);
+
+			} else{          			// accelerator enabled
+				set_dyn_dt(0.001);  // // setting dynamic integration dt
+				// setting qlearn task parameters
+				pt_set_period(3, 60000);
+				pt_set_deadline(3, 6000);
+				// setting model task parameters
+				pt_set_period(4, 600); 
+				pt_set_deadline(4, 600); 
+				  
 			}
 		default: break;
 	}

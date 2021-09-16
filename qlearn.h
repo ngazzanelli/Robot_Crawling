@@ -9,7 +9,7 @@ extern void ql_init(int ns, int na);
 extern void ql_reduce_exploration();
 extern float ql_maxQ(int s);
 extern float ql_best_action(int s);
-extern int  ql_egreedy_policy (int s, int* random);
+extern int  ql_egreedy_policy (int s);
 extern float  ql_updateQ(int s, int a, int r, int snew);
 extern void ql_print_Qmatrix();
 

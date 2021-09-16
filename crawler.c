@@ -175,23 +175,20 @@ int angles2state(float t1, float t2){
 // The following Function computes reward for the
 // actual state
 //-----------------------------------------------------
-int get_reward(int s, int snew, int old_s, state robot, int random){
+int get_reward(int s, int snew, state robot){
 
     int r = 0;
 
     if(robot.dt3 > 0)
         r = round(20 * robot.dt3);
 
-    else if(robot.dt3 < 0) //&& robot.q3 != 0)
+    else if(robot.dt3 < 0) 
         r = round(21 * robot.dt3);
 
     else{    //robot.dt3 == 0
-        if(robot.energy > 0)
+        if(robot.energy != 0)
             r = round(10 * robot.energy);
     }
-    
-    if( old_s == snew) 
-        r -= 5;
 
     if (snew == s) 
         r += RHIT;        // hit the limit angle
@@ -240,9 +237,8 @@ int next_desired_state(int a){
 void* qlearning(void* arg){
 
     printf("QLEARN: task started\n");
-    int i;                              // thread index
+    int i;                    // thread index
     int s, snew, a, exec, r = 0, old_exec = 0;
-    int random;                         // random action flag
     long step = 0;
     //float newerr = 0;
     state robot;
@@ -255,7 +251,6 @@ void* qlearning(void* arg){
     //printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
     float old_dt3 = 0;
-    float old_s = 0;
     
     while (get_sys_state(&exec) != STOP){
 
@@ -283,7 +278,7 @@ void* qlearning(void* arg){
             s = angles2state(robot.q4, robot.q5);
             set_rs_for_plot(r,s);
             //printf("Quantizzato lo stato: s = %d\n", s);
-            a = ql_egreedy_policy(s, &random);
+            a = ql_egreedy_policy(s);
             //printf("Ottenuta l'azione\n");
             snew = next_desired_state(a);   //Questa funzione aggiorna 
                                             //anche le variabili di giunto desiderate "qd"
@@ -294,8 +289,7 @@ void* qlearning(void* arg){
         pt_wait_for_period(i);
 
         if(exec == PLAY){  
-            r = get_reward(s, snew,old_s, robot, random);
-            old_s = s;
+            r = get_reward(s, snew, robot);
             //printf("Ottenuto il reward r = %d\n", r);
             /*newerr =*/ ql_updateQ(s, a, r, snew);
             ql_copy_Q();
