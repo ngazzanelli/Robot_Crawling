@@ -143,7 +143,7 @@ int conv_col(int col, int cscale)
 
 
 //---------------------------------------------------------------------
-// DRAW A THICK LINE
+// The following function draws a thick line
 //---------------------------------------------------------------------
 
 void    thick_line(BITMAP *bmp, float x1, float y1, float x2, float y2, float thi, int color)
@@ -487,8 +487,8 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
 
 //-------------------------------------------
 //  The Following Function manages the 
-//  update of reward plot and ql_state 
-//  plot in reset and not reset mode
+//  update of reward plot and joints state
+//  matrix in reset and not reset mode
 //-------------------------------------------
 void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int flag,int reset)
 {
@@ -501,21 +501,15 @@ void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,in
         bkg_col = makecol(255,255,255); //white
         clear_to_color(BM_GS, border_col);
         rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
+	if(reset){
+	update_STAT(BM_GS,angles2state(0,0),reset);
+        update_graph(BM_GS,0,min_r,max_r,reset);
+	}else{
         update_STAT(BM_GS,state,reset);
         update_graph(BM_GS,reward,min_r,max_r,reset);
+	}
         blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
     }
-    if(reset)
-    {
-        border_col = makecol(0,0,0);    //black
-        bkg_col = makecol(255,255,255); //white
-        clear_to_color(BM_GS, border_col);
-        rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
-        update_STAT(BM_GS,angles2state(0,0),reset);
-        update_graph(BM_GS,0,min_r,max_r,reset);
-        blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
-    }
-
 }
 
 //-------------------------------------------
