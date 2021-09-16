@@ -111,7 +111,7 @@
 #define N_STATE_X_ANG 7
 #define N_ACTION 4
 
-//Reward struct to comunicate with Crawler.c
+//Reward and state struct to comunicate with Crawler.c
 typedef struct {
     int state;
     int reward;
@@ -138,22 +138,24 @@ static BITMAP*  floor_bitmap;
 static BITMAP*	landscape_bitmap;
 
 
-//-------------------------------------------
-// 
-//-------------------------------------------
-int conv_col(int col, int cscale)
+//---------------------------------------------
+//  The Following Function initializes the
+//  application's window
+//---------------------------------------------
+void init_screen()
 {
-    if(col*cscale >= 255)
-        return(255);
-    else
-        return(col*cscale);
+    allegro_init();
+    install_keyboard();
+    set_color_depth(32);
+    set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_WIN*SCALE,H_WIN*SCALE,0,0);
+    clear_to_color(screen,makecol(200,200,200));
 }
 
 
-//---------------------------------------------------------------------
+//--------------------------------------------
 // The following function draws a thick line
-//---------------------------------------------------------------------
-void    thick_line(BITMAP *bmp, float x1, float y1, float x2, float y2, float thi, int color)
+//--------------------------------------------
+void thick_line(BITMAP *bmp, float x1, float y1, float x2, float y2, float thi, int color)
 {
 float   dx = x1 - x2;
 float   dy = y1 - y2;
@@ -244,20 +246,6 @@ int border_col;
         textout_ex(BM_CMD, font,"Q Matrix to File", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 3*NL)*SCALE, txt_col, bkg_col);
     }
     blit(BM_CMD, screen, 0, 0, 0, Y1*SCALE, BM_CMD->w, BM_CMD->h);
-}
-
-
-//---------------------------------------------
-//  The Following Function initializes the
-//  application's window
-//---------------------------------------------
-void init_screen()
-{
-    allegro_init();
-    install_keyboard();
-    set_color_depth(32);
-    set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_WIN*SCALE,H_WIN*SCALE,0,0);
-    clear_to_color(screen,makecol(200,200,200));
 }
 
 
