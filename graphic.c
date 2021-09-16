@@ -803,7 +803,6 @@ void *update_graphic(void *arg)
                     update_data_reset(P_data, values[0], values[1], values[3], values[4], values[2]);
                     ql_get_Q(Matrix_Q);
                     update_MQ(MQ, Matrix_Q, 0.1);
-					//if(rew_st.flag)
 	                update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, 1);
                     reset_command(CMD);
                 }
