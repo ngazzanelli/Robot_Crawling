@@ -209,6 +209,8 @@ int border_col;
     textout_ex(BM_CMD, font, "Par. di Apprendimento ", X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 4*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "LEFT <--> Decremento", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 4*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "Par. di Apprendimento", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 5*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "L <--> Load Q Matrix", X_TEXT_DATA*SCALE, (Y_TEXT + 7*FB + 5*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font, "from File", X_TEXT_DATA*SCALE, (Y_TEXT + 7*FB + 6*NL)*SCALE, txt_col, bkg_col);
     blit(BM_CMD, screen, 0, 0, 0, Y1*SCALE, BM_CMD->w, BM_CMD->h);
     
 }
@@ -219,7 +221,7 @@ int border_col;
 //  keyboard commands allowed in all not 
 //  reset state   
 //-------------------------------------------
-void not_reset_command(BITMAP* BM_CMD)
+void not_reset_command(BITMAP* BM_CMD,int pause)
 {
 int txt_col;  
 int bkg_col;  
@@ -236,7 +238,11 @@ int border_col;
     textout_ex(BM_CMD, font, "R <--> Reset", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 3*FB + 2*NL)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "B <--> Boost", X_TEXT_DATA*SCALE, (Y_TEXT + 4*FB + 2*NL)*SCALE, txt_col, bkg_col);
-    textout_ex(BM_CMD, font,"P <--> Pause/Play",X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    textout_ex(BM_CMD, font,"P <--> Pause/Play", X_TEXT_DATA*SCALE, (Y_TEXT + 5*FB + 2*NL)*SCALE, txt_col, bkg_col);
+    if(pause){
+        textout_ex(BM_CMD, font,"F <--> Save", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 2*NL)*SCALE, txt_col, bkg_col);
+        textout_ex(BM_CMD, font,"Q Matrix to File", X_TEXT_DATA*SCALE, (Y_TEXT + 6*FB + 3*NL)*SCALE, txt_col, bkg_col);
+    }
     blit(BM_CMD, screen, 0, 0, 0, Y1*SCALE, BM_CMD->w, BM_CMD->h);
 }
 
@@ -803,7 +809,7 @@ void *update_graphic(void *arg)
 
                 if(exec == PLAY){
                     update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
-                    not_reset_command(CMD);
+                    not_reset_command(CMD, 0);
 
 					if(rew_st.flag){ 	               
                 		update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, 0);
@@ -821,6 +827,11 @@ void *update_graphic(void *arg)
                 }
             }
         }
+        else
+            if(exec != RESET)
+                not_reset_command(CMD, 1);
+
+        
         
         pt_deadline_miss(ti);
         pt_wait_for_period(ti);
