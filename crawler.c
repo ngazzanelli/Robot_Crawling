@@ -291,22 +291,21 @@ void* qlearning(void* arg){
         if(exec == PLAY){  
             r = get_reward(s, snew, robot);
             //printf("Ottenuto il reward r = %d\n", r);
-            /*newerr =*/ ql_updateQ(s, a, r, snew);
+            ql_updateQ(s, a, r, snew);
             ql_copy_Q();
             //printf("Aggioranta matrice Q\n");
-            //err +=  (newerr - err)/step;
-            //if (step % 100 == 0)
-                //ql_print_Qmatrix();
             if (step % 500 == 0)
                 ql_reduce_exploration();
               
         }
 
         if(exec == RESET){
-            old_exec = exec;
-            ql_init(NSTATES, NACTIONS);
-            ql_copy_Q();
-            reset_desired_joint();
+            if(old_exec != RESET){
+                ql_init(NSTATES, NACTIONS);
+                ql_copy_Q();
+                reset_desired_joint();
+                old_exec = exec;
+            }
         }
         
     }
@@ -348,7 +347,7 @@ int main(){
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
     pt_task_create( dynamics, MODEL, PER_D*1000, PER_D*1000, PRI);
     //printf("con il risultato %d\n",ris);
-    ql_Q_from_file("./prova.txt");    
+    //ql_Q_from_file("./prova.txt");    
 
     for(i = 1; i <= 4; i++){
           pt_wait_for_end(i);
