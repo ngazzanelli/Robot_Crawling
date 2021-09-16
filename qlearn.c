@@ -222,7 +222,7 @@ float ql_best_action(int s){
 // The following Function computes Epsilon-greedy
 // policy in a given state s
 //-----------------------------------------------------
-int ql_egreedy_policy (int s){
+int ql_egreedy_policy (int s, int* random){
 int ra, ba;
 float x, eps;
 
@@ -234,8 +234,14 @@ float x, eps;
 	pthread_mutex_lock(&mux_eps);
 	eps = epsilon;
 	pthread_mutex_unlock(&mux_eps);
-	if (x < eps) return ra;
-	else return ba;
+	if (x < eps){
+		*random = 1;	
+		return ra;
+	}
+	else{
+		*random = 0;
+		return ba;
+	}
 }
 
 

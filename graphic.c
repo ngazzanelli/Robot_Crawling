@@ -18,81 +18,86 @@
 #define MODEL       4
 
 // Window Dimensions Constants
-#define W_WIN   	640 
-#define H_WIN   	480 
-#define X1      	120 
-#define X2      	520 
-#define Y1      	300
+#define W_WIN   	640    // Window Width
+#define H_WIN   	480    // Window Height 
+#define X1      	120    
+#define X2      	520    
+#define Y1      	300    
+#define BRD_THICK   3
 
 // Scale Factor Constant 
 #define SCALE   	2 
 
 // Crawler plot Constants
-#define BKG         0
-#define CR_CMP_R    14
-#define CR_CMP_G    75
+#define BKG         0       
+#define CR_CMP_R    14      //Crawler's body and link color (Electric Blue) 
+#define CR_CMP_G    75 
 #define CR_CMP_B    239
-#define CR_All_R    105
+#define CR_All_R    105    //Crawler's joint and wheel color (Gray)
 #define CR_All_G    105
 #define CR_All_B    105
-#define H_FLOOR		50
-#define W_CENTRE	150
-#define D_BODY		15.0
-#define H_BODY		3.0
-#define R_WHEEL		1.5
-#define R_JOINT		0.75
-#define ARM_THICK   2
+#define H_FLOOR		50     // Floor offset 
+#define W_CENTRE	150    // 
+#define D_BODY		15.0   // Body Widht 
+#define H_BODY		3.0    // Body Height
+#define R_WHEEL		1.5    // Wheel Radius 
+#define R_JOINT		0.75   // Joint Radius 
+#define ARM_THICK   2      // Link Thickness
 #define N_BLOCKS    2       // # of big blocks shown in the floor 
 #define BM_BLOCKS	4		// # of big blocks in floor_bitmap 
 #define W_BLOCK     100     // length of little blocks (1 big block = 2x2 little block)
 #define X			0		// flag used in metres2pixel conversion
 #define Y			1		// flag used in metres2pixel conversion
-#define W_LAND		600
-#define H_LAND		250
+#define W_LAND		600     // Background Width 
+#define H_LAND		250     // Background Height 
 #define TREE_SPACE	100		// distance between trees
 #define TREE_RADIUS 35		// tree's crown radius
 #define TREE_W		20		// tree's trunk width
 #define TREE_H		100		// tree's trunk heigh
-#define X_SUN       300
-#define Y_SUN       250
-#define RADIUS_SUN  25
+#define X_SUN       300     // Sun's x offset 
+#define Y_SUN       250     // Sun's y offset 
+#define RADIUS_SUN  25      // Sun's Radius 
 
 // Text plot Constants
-#define X_TEXT_DATA 15
-#define Y_TEXT_DATA 50
-#define FB 15
-#define NL 5
+#define X_TEXT_DATA 15      // Text x offset
+#define Y_TEXT_DATA 50      // Text y offset
+#define FB 15               // Vertical offset between two string belong to different sentence 
+#define NL 5                // Vertical offset between two string belong to the same sentence 
 
 // QL_State plot Constants
-#define N_ST_SV		5
-#define X_MAT_S_OFF 370
-#define Y_MAT_S_OFF 25
-#define Y_LAB_S_OFF 5
-#define X_LAB_S_OFF 405
-#define W_MQ 		16 
-#define H_MQ	 	5
-#define X_OFF 		25 
+#define N_ST_SV		5      // # of state show in QL_state plot 
+#define X_MAT_S_OFF 370    // QL_State matrix x offset 
+#define Y_MAT_S_OFF 25     // QL_state matrix y offset 
+#define Y_LAB_S_OFF 5      // QL_state label x offset
+#define X_LAB_S_OFF 405    // QL_state label y offset 
+#define L_S_RECT    20     // Cell lenght 
+#define C_S_RECT    10     // Cell Centre from vertex 
+#define C_S_RAD     10     // State Circle Radius 
+
+
+//Matrix Q plot Constant
+#define W_MQ 		16     // Cell Widht 
+#define H_MQ	 	5      // Cell Height 
+#define X_OFF 		25     // Matrix Offset
 #define Y_OFF 		50
-#define X_TEXT 		35
+#define X_TEXT 		35     //Text Offset 
 #define Y_TEXT 		10
 
 // Graphic plot Constants
-#define G_X_OFF 	50
+#define G_X_OFF 	50      // grapich offset 
 #define G_Y_OFF 	165
-#define LEN_AX_X 	300
-#define LEN_LINE 	10
+#define LEN_LINE    10      // width of a single reward plot 
+#define LEN_AX_X 	300     // lenght of the axis 
 #define LEN_AX_Y 	141
-#define X_MAX_R_L 	20
+#define X_MAX_R_L 	20      //offset of max bound string 
 #define Y_MAX_R_L 	30
-#define X_MIN_R_L 	20
+#define X_MIN_R_L 	20      //offset of min bound string 
 #define Y_MIN_R_L 	160
-#define X_EPOCH_L 	300
+#define X_EPOCH_L 	300     //offset of epoch string 
 #define Y_EPOCH_L 	170
-#define X_G_NAME	100
+#define X_G_NAME	100     //offset of graphic name 
 #define Y_G_NAME 	10
-#define L_S_RECT 	20
-#define C_S_RECT	10
-#define C_S_RAD 	10
+
 
 //elementi da togliere perchè nella define di qlearning
 #define N_STATE 49
@@ -175,11 +180,17 @@ void reset_command(BITMAP* BM_CMD)
 {
 int bkg_col;
 int txt_col;
+int border_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
     txt_col = makecol(0, 0, 0);		//black
     //rectfill(BM_CMD, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
-    clear_to_color(BM_CMD,bkg_col);
+    border_col = makecol(0,0,0);    //black
+
+    clear_to_color(BM_CMD, border_col);
+    rectfill(BM_CMD, BRD_THICK,BM_CMD->h - BRD_THICK, BM_CMD->w - BRD_THICK, BRD_THICK, bkg_col);
+    clear_to_color(BM_CMD, border_col);
+    rectfill(BM_CMD, BRD_THICK,BM_CMD->h - BRD_THICK, BM_CMD->w - BRD_THICK, BRD_THICK, bkg_col);
     textout_ex(BM_CMD, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (BM_CMD->h- Y_TEXT + FB)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB + NL)*SCALE, txt_col, bkg_col);
@@ -205,12 +216,14 @@ void not_reset_command(BITMAP* BM_CMD)
 {
 int txt_col;  
 int bkg_col;  
-
+int border_col;
     txt_col = makecol(0, 0, 0);       //black
     bkg_col = makecol(200, 200, 200);   //grey
 
-    //rectfill(screen, 0, Y1*SCALE, X1*SCALE, H_WIN*SCALE, bkg_col);
-    clear_to_color(BM_CMD,bkg_col);
+    border_col = makecol(0,0,0);    //black
+
+    clear_to_color(BM_CMD, border_col);
+    rectfill(BM_CMD, BRD_THICK,BM_CMD->h - BRD_THICK, BM_CMD->w - BRD_THICK, BRD_THICK, bkg_col);
     textout_ex(BM_CMD, font, "Pulsanti di controllo:", X_TEXT_DATA*SCALE, (Y_TEXT + FB)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "E <--> Chiusura", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB)*SCALE, txt_col, bkg_col);
     textout_ex(BM_CMD, font, "del Programma", X_TEXT_DATA*SCALE, (Y_TEXT + 2*FB + NL)*SCALE, txt_col, bkg_col);
@@ -254,11 +267,15 @@ void update_data(BITMAP* BM_TXT,
     char str[25];
     int bkg_col;
     int txt_col;
+    int border_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
     txt_col = makecol(0, 0, 0);		//black
+    border_col = makecol(0,0,0);    //black
 
-    clear_to_color(BM_TXT, bkg_col);
+    clear_to_color(BM_TXT, border_col);
+    rectfill(BM_TXT, BRD_THICK,BM_TXT->h - BRD_THICK, BM_TXT->w - BRD_THICK, BRD_THICK, bkg_col);
+
     sprintf(str, ">Learning Rate:%.4f", alpha);
     textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + FB)*SCALE, txt_col, bkg_col);
     sprintf(str, ">Discount Factor:%.4f", gam);
@@ -303,24 +320,26 @@ void update_data_reset(BITMAP* BM_TXT,
     int txt_col;  
     int bkg_col;
     int slc_col;
+    int border_col;
 
     bkg_col = makecol(200, 200, 200);	//grey
     txt_col = makecol(0, 0, 0);		//black
-    slc_col = makecol(255, 0, 0);		//red
-
-    clear_to_color(BM_TXT, bkg_col);
+    slc_col = makecol(0, 0, 0);		//red
+    border_col = makecol(0,0,0);    //black
+    clear_to_color(BM_TXT, border_col);
+    rectfill(BM_TXT, BRD_THICK,BM_TXT->h - BRD_THICK, BM_TXT->w - BRD_THICK, BRD_THICK, bkg_col);
     select = get_parameter_selected();
     sprintf(str, ">Learning Rate:%.4f", alpha);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, txt_col, select == 0 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, Y_TEXT_DATA*SCALE, select == 0 ? bkg_col : txt_col, select == 0 ? slc_col : bkg_col);
     sprintf(str, ">Discount Factor:%.4f", gam);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 1*FB)*SCALE, txt_col, select == 1 ? slc_col : bkg_col);
-    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 1*FB)*SCALE, select == 1 ? bkg_col : txt_col, select == 1 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font,">Decay Rate for", X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB)*SCALE, select == 2 ? bkg_col : txt_col, select == 2 ? slc_col : bkg_col);
     sprintf(str, "Epsilon:%.4f", decay);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB + NL)*SCALE, txt_col, select == 2 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 2*FB + NL)*SCALE, select == 2 ? bkg_col : txt_col, select == 2 ? slc_col : bkg_col);
     sprintf(str,">Maximum Epsilon:%.4f",eps_in);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB + NL)*SCALE, txt_col, select == 3 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 3*FB + NL)*SCALE, select == 3 ? bkg_col : txt_col, select == 3 ? slc_col : bkg_col);
     sprintf(str, ">Minimum Epsilon:%.4f", eps_fi);
-    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + NL)*SCALE, txt_col, select == 4 ? slc_col : bkg_col);
+    textout_ex(BM_TXT, font, str, X_TEXT_DATA*SCALE, (Y_TEXT_DATA + 4*FB + NL)*SCALE, select == 4 ? bkg_col : txt_col, select == 4 ? slc_col : bkg_col);
 
     blit(BM_TXT, screen, 0, 0, X2*SCALE, 0, BM_TXT->w, BM_TXT->h);
 }
@@ -341,6 +360,11 @@ void update_STAT(BITMAP* BM_SG, int new_state, int reset)
     bkg_col = makecol(255, 255, 255);	//grey
     txt_col = makecol(0, 0, 0);			//white
 
+    //-------------------------------------------
+    //  Circular Array update adding a new state 
+    //  if it isn't full or replacing the 
+    //  oldest state memorized in it 
+    //-------------------------------------------
     if(reset){
         sl_count = 0;
         sl_begin = 0;
@@ -354,7 +378,13 @@ void update_STAT(BITMAP* BM_SG, int new_state, int reset)
         sl_begin = (sl_begin + 1) % N_ST_SV;
     }
     
-    
+    //-------------------------------------------
+    //  Plot N_STATE Cell and if the 
+    //  corrispond state is memorize into the 
+    //  array plot a circle inside, the level
+    // of brightness corrensond to the oldness 
+    // of the state 
+    //-------------------------------------------
     for(k = 0; k < sl_count; k++)
         ind = (k + sl_begin) % N_ST_SV; 
 
@@ -413,6 +443,13 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
 
     textout_ex(BM_GS, font, "Epoch", X_EPOCH_L*SCALE, Y_EPOCH_L*SCALE, txt_col, bkg_col);
     textout_ex(BM_GS, font, "Reward Plot", X_G_NAME*SCALE, Y_G_NAME*SCALE, txt_col, bkg_col);
+
+
+    //-------------------------------------------
+    //  Circular Array update adding a new reward 
+    //  if it isn't full or replacing the 
+    //  oldest reward memorized in it 
+    //-------------------------------------------
     if(rew_count < (LEN_AX_X/LEN_LINE)){
         reward_p[rew_count] = reward;
         rew_count++;
@@ -420,6 +457,13 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
         rew_begin = (rew_begin+1)%((LEN_AX_X/LEN_LINE));
         reward_p[(rew_begin+(LEN_AX_X/LEN_LINE))%((LEN_AX_X/LEN_LINE))] = reward;
     }
+
+    //--------------------------------------------
+    //  Plot all the reward memorized in the 
+    //  circular array rescale it according to 
+    //  the lenght of Y axis and the saturation 
+    //  bound 
+    //--------------------------------------------
     for(i=0;i<rew_count;i++){
         cont_plot = (i+rew_begin)%(LEN_AX_X/LEN_LINE);
         if(reward_p[cont_plot]>=max_range)
@@ -433,10 +477,11 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
         line(BM_GS,(G_X_OFF*SCALE+i*LEN_LINE*SCALE), (G_Y_OFF*SCALE-floor(val)),
 			(G_X_OFF*SCALE+(i+1)*LEN_LINE*SCALE),(G_Y_OFF*SCALE-floor(val)),plot_col);
     }
+    if(min_range <= 0 && max_range >= 0){
         val =(float)(0-min_range)/((max_range-min_range))*(LEN_AX_Y*SCALE-1);
         line(BM_GS,(G_X_OFF*SCALE), (G_Y_OFF*SCALE-floor(val)),
             (G_X_OFF +LEN_AX_X) *SCALE,(G_Y_OFF*SCALE-floor(val)),ax_col);
-
+    }
 }
 
 
@@ -447,16 +492,25 @@ void update_graph(BITMAP* BM_GS, float reward, int min_range, int max_range, int
 //-------------------------------------------
 void update_GRP_STAT(BITMAP* BM_GS,int state,float reward,int max_r,int min_r,int flag,int reset)
 {
+    int border_col;
+    int bkg_col;
+
     if(flag==1)
     {
-        clear_to_color(BM_GS,makecol(255,255,255));
+        border_col = makecol(0,0,0);    //black
+        bkg_col = makecol(255,255,255); //white
+        clear_to_color(BM_GS, border_col);
+        rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
         update_STAT(BM_GS,state,reset);
         update_graph(BM_GS,reward,min_r,max_r,reset);
         blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
     }
     if(reset)
     {
-        clear_to_color(BM_GS,makecol(255,255,255));
+        border_col = makecol(0,0,0);    //black
+        bkg_col = makecol(255,255,255); //white
+        clear_to_color(BM_GS, border_col);
+        rectfill(BM_GS, BRD_THICK,BM_GS->h - BRD_THICK, BM_GS->w - BRD_THICK, BRD_THICK, bkg_col);
         update_STAT(BM_GS,angles2state(0,0),reset);
         update_graph(BM_GS,0,min_r,max_r,reset);
         blit(BM_GS,screen,0,0,X1*SCALE,Y1*SCALE,BM_GS->w,BM_GS->h);
@@ -535,10 +589,14 @@ void L2_kin(int position[],state s)
 //-------------------------------------------
 void update_CR(BITMAP* BM_CR,state joint_v)
 {   
-	int figure[12];
-	int x_floor_offset, x_land_offset, sun_col, sun_border;
+int figure[12];
+int x_floor_offset, x_land_offset, sun_col, sun_border,border_col, body_col, wheel_col;
     sun_col=makecol(255, 255, 0);         //yellow
     sun_border = makecol(255, 165, 0);    //orange
+    border_col = makecol(0,0,0);
+    body_col = makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B);
+    wheel_col = makecol(CR_All_R,CR_All_G,CR_All_B);
+
 
     // Landscape drawing
 	x_land_offset = MToPx(joint_v.q1/10, 2)%(TREE_SPACE*SCALE)+TREE_SPACE*SCALE;
@@ -552,28 +610,32 @@ void update_CR(BITMAP* BM_CR,state joint_v)
     line(BM_CR,0,(BM_CR->h-H_FLOOR*SCALE),(BM_CR->w),(BM_CR->h-H_FLOOR*SCALE),1);
     // Body drawing
     body_kin(figure,joint_v);
-    polygon(BM_CR,5,figure,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    line(BM_CR, figure[0], figure[1], figure[2], figure[3], makecol(0,0,0));
-    line(BM_CR, figure[2], figure[3], figure[4], figure[5], makecol(0,0,0));
-    line(BM_CR, figure[4], figure[5], figure[6], figure[7], makecol(0,0,0));
-    line(BM_CR, figure[6], figure[7], figure[8], figure[9], makecol(0,0,0));
-    line(BM_CR, figure[8], figure[9], figure[0], figure[1], makecol(0,0,0));
+    polygon(BM_CR,5,figure,body_col);
+    line(BM_CR, figure[0], figure[1], figure[2], figure[3], border_col);
+    line(BM_CR, figure[2], figure[3], figure[4], figure[5], border_col);
+    line(BM_CR, figure[4], figure[5], figure[6], figure[7], border_col);
+    line(BM_CR, figure[6], figure[7], figure[8], figure[9], border_col);
+    line(BM_CR, figure[8], figure[9], figure[0], figure[1], border_col);
     // Wheel drawing
-    circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),makecol(10,10,10)); //very dark grey
-	circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2)/2,makecol(CR_All_R,CR_All_G,CR_All_B));
+    circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2),border_col); //very dark grey
+	circlefill(BM_CR,figure[10],figure[11],MToPx(R_WHEEL,2)/2,wheel_col);
     // First link drawing
-    circlefill(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
-    circle(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),makecol(0,0,0));
+    circlefill(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),wheel_col);
+    circle(BM_CR,figure[4],figure[5],MToPx(R_JOINT,2),border_col);
     L1_kin(figure,joint_v);
-    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
+    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,body_col);
     //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
     // Second link drawing
-    circlefill(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),makecol(CR_All_R,CR_All_G,CR_All_B));
-    circle(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),makecol(0, 0, 0));
+    circlefill(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),wheel_col);
+    circle(BM_CR,figure[2],figure[3],MToPx(R_JOINT,2),border_col);
     L2_kin(figure,joint_v);
     //line(BM_CR,figure[0],figure[1],figure[2],figure[3],makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,makecol(CR_CMP_R,CR_CMP_G,CR_CMP_B));
-    blit(BM_CR,screen,0,0,X1*SCALE,0,BM_CR->w,BM_CR->h);
+    thick_line(BM_CR,figure[0],figure[1],figure[2],figure[3],ARM_THICK*SCALE,body_col);
+    rectfill(BM_CR,0,BM_CR->h,BRD_THICK,0,border_col);
+    rectfill(BM_CR,0,BM_CR->h,BM_CR->w,BM_CR->h - BRD_THICK, border_col);
+    rectfill(BM_CR,0,BRD_THICK,BM_CR->w , 0 ,border_col);
+    rectfill(BM_CR,BM_CR->w - BRD_THICK, BM_CR-> h, BM_CR->w,0,border_col);
+    blit(BM_CR,screen,0,0,X1*SCALE, 0 ,BM_CR->w  ,BM_CR->h );
 
 }
 
@@ -585,16 +647,19 @@ void update_CR(BITMAP* BM_CR,state joint_v)
 //-----------------------------------------
 void update_MQ(BITMAP* BM_MQ,float * matrix,float step)
 {
-	int i,j,val,col,txt_col,bkg_col;
+	int i,j,val,col,txt_col,bkg_col,border_col;
     
     bkg_col = makecol(200,200,200);
     txt_col = makecol(0,0,0);
-    clear_to_color(BM_MQ,bkg_col);
+    border_col = makecol(0,0,0);    //black
+    
+    clear_to_color(BM_MQ, border_col);
+    rectfill(BM_MQ, BRD_THICK,BM_MQ->h - BRD_THICK, BM_MQ->w - BRD_THICK, BRD_THICK, bkg_col);
     textout_ex(BM_MQ, font, "Matrice Q", X_TEXT*SCALE, Y_TEXT*SCALE, txt_col, bkg_col);
     for(i=0;i<N_STATE;i++)
     {
         for(j=0;j<N_ACTION;j++)
-        {
+        { 
             if(matrix[i*N_ACTION+j]>0)
             {
                     val = (int)floor(sqrt(matrix[i*N_ACTION+j])/step);
@@ -692,7 +757,6 @@ void *update_graphic(void *arg)
     //inizializzo allegro e lo schermo 
     init_screen();
     //inizializzo le BITMAP
-
     CR = create_bitmap((X2 - X1)*SCALE, Y1*SCALE);
     MQ = create_bitmap(X1*SCALE, Y1*SCALE);
     P_data = create_bitmap((W_WIN - X2)*SCALE, Y1*SCALE);
@@ -707,44 +771,48 @@ void *update_graphic(void *arg)
     ti = pt_get_index(arg);
     pt_set_activation(ti);
 
-    while (get_sys_state(&exec) != STOP)
-    {
-        if(exec==PLAY || exec==RESET/*&& !get_pause_graphic()*/) //decommenta se vuoi vedere la grafica che si ferma
+    while (get_sys_state(&exec) != STOP){
+
+        if(exec==PLAY || exec==RESET ) //decommenta se vuoi vedere la grafica che si ferma
         {
             //printf("GRAPHIC: dentro if di update_graphic\n");
-            get_state(&rob);
-            update_CR(CR,rob);
-            
-            int_dmiss = pt_get_dmiss(INTERFACE);
-            mod_dmiss = pt_get_dmiss(MODEL);
-            craw_dmiss = pt_get_dmiss(CRAWLER);
-            grap_dmiss = pt_get_dmiss(GRAPHIC);
-            epsilon = ql_get_epsilon();
-
-            if(exec == PLAY)
-            {
-                update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
-                not_reset_command(CMD);
-            }
-
-            if (exec == RESET)
-            {
-                get_parameter_values(values);
-                update_data_reset(P_data, values[0], values[1], values[3], values[4], values[2]);
-                ql_get_Q(Matrix_Q);
-                update_MQ(MQ, Matrix_Q, 0.1);
-                update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 1);
-                reset_command(CMD);
-            }
-
             get_rs_for_plot(&rew_st);
-            update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 0);
-            
             if(rew_st.flag == 1)
-            {
-                ql_get_Q(Matrix_Q);
-                update_MQ(MQ,Matrix_Q, 0.1);
                 epoch++;
+            if(!get_pause_graphic()){
+                get_state(&rob);
+                update_CR(CR,rob);
+                
+                int_dmiss = pt_get_dmiss(INTERFACE);
+                mod_dmiss = pt_get_dmiss(MODEL);
+                craw_dmiss = pt_get_dmiss(CRAWLER);
+                grap_dmiss = pt_get_dmiss(GRAPHIC);
+                epsilon = ql_get_epsilon();
+
+                if(exec == PLAY)
+                {
+                    update_data(P_data, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
+                    not_reset_command(CMD);
+                }
+
+                if (exec == RESET)
+                {
+                    get_parameter_values(values);
+                    update_data_reset(P_data, values[0], values[1], values[3], values[4], values[2]);
+                    ql_get_Q(Matrix_Q);
+                    update_MQ(MQ, Matrix_Q, 0.1);
+                    update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 1);
+                    reset_command(CMD);
+                }
+
+                
+                update_GRP_STAT(GRP_STAT, rew_st.state, rew_st.reward, 50, -50, rew_st.flag, 0);
+                
+                if(rew_st.flag == 1)
+                {
+                    ql_get_Q(Matrix_Q);
+                    update_MQ(MQ,Matrix_Q, 0.1);
+                }
             }
         }
         

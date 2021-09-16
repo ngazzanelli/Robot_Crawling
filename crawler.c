@@ -28,8 +28,8 @@
 #define TH2DW   3       // Action move down link 2
 #define TH1MAX  1.40    // max theta1 angle [rad]
 #define TH1MIN  -0.7    // min theta1 angle [rad]
-#define TH2MAX  1.05    // max theta2 angle [rad]
-#define TH2MIN  -1.05   // min theta2 angle [rad]
+#define TH2MAX  1.40    // max theta2 angle [rad]
+#define TH2MIN  -0.7    // min theta2 angle [rad]
 #define DTH1    0.35    // theta1 quantization step [rad]
 #define DTH2    0.35    // theta2 quantization step [rad]
 #define PRI     10      // Tasks priority 
@@ -175,24 +175,25 @@ int angles2state(float t1, float t2){
 // The following Function computes reward for the
 // actual state
 //-----------------------------------------------------
-int get_reward(int s, int snew, state robot){
+int get_reward(int s, int snew, int old_s, state robot, int random){
 
     int r = 0;
 
     if(robot.dt3 > 0)
-        r = round(13 * robot.dt3);
-    else if(robot.dt3 < 0)
         r = round(20 * robot.dt3);
+    else if(robot.dt3 < 0) //&& robot.q3 != 0)
+        r = round(20 * robot.dt3);
+    else    //robot.dt3 == 0
+        r = round(10 * robot.energy);
     
-    else{
-        if(robot.energy > 0) //old_dt3
-            r = round(5 * robot.energy);
-    }
-
-    r -= 5;
+    
+    if( old_s == snew && random == 1)
+        r -= 5;
 
     if (snew == s) 
         r += RHIT;        // hit the limit angle
+
+    r -= 1;
 
     return r;
 }
@@ -238,6 +239,7 @@ void* qlearning(void* arg){
     printf("QLEARN: task started\n");
     int i;                              // thread index
     int s, snew, a, exec, r = 0, old_exec = 0;
+    int random;                         // random action flag
     long step = 0;
     //float newerr = 0;
     state robot;
@@ -250,6 +252,7 @@ void* qlearning(void* arg){
     //printf("QLEARN: inizio ciclo while\n");
     float old_q1 = 0;
     float old_dt3 = 0;
+    float old_s = 0;
     
     while (get_sys_state(&exec) != STOP){
 
@@ -267,17 +270,17 @@ void* qlearning(void* arg){
 
             get_state(&robot);
 
-            old_dt3 = robot.dt3;
-            robot.energy = old_dt3;
-
             robot.dt3 = robot.q1 - old_q1;
+            robot.energy = old_dt3;
             old_q1 = robot.q1;
+            old_dt3 = robot.dt3;
+            
 
             //printf("Ottenuto stato attuale variabili di giunto del robot\n");
             s = angles2state(robot.q4, robot.q5);
             set_rs_for_plot(r,s);
             //printf("Quantizzato lo stato: s = %d\n", s);
-            a = ql_egreedy_policy(s);
+            a = ql_egreedy_policy(s, &random);
             //printf("Ottenuta l'azione\n");
             snew = next_desired_state(a);   //Questa funzione aggiorna 
                                             //anche le variabili di giunto desiderate "qd"
@@ -288,7 +291,8 @@ void* qlearning(void* arg){
         pt_wait_for_period(i);
 
         if(exec == PLAY){  
-            r = get_reward(s, snew, robot);
+            r = get_reward(s, snew,old_s, robot, random);
+            old_s = s;
             //printf("Ottenuto il reward r = %d\n", r);
             /*newerr =*/ ql_updateQ(s, a, r, snew);
             ql_copy_Q();
@@ -296,7 +300,7 @@ void* qlearning(void* arg){
             //err +=  (newerr - err)/step;
             //if (step % 100 == 0)
                 //ql_print_Qmatrix();
-            if (step % 100 == 0)
+            if (step % 500 == 0)
                 ql_reduce_exploration();
               
         }
