@@ -38,6 +38,7 @@
 #define PER_D   1       // Dynamic task peirod [ms] 
 #define RHIT    -10     // Reward for hitting limit angles
 #define RSCALE  10      // Reward scale factor 
+#define RED_EPS 500     // Decay period for epsilon
 
 
 // Actual Robot State  (SI PUÒ INCLUDERE ANCHE MATRICES.H)
@@ -241,7 +242,6 @@ void* qlearning(void* arg){
     int i;                    // thread index
     int s, snew, a, exec, r = 0, old_exec = 0;
     long step = 0;
-    //float newerr = 0;
     state robot;
 
     i = pt_get_index(arg);
@@ -264,23 +264,23 @@ void* qlearning(void* arg){
 
             //float period = pt_get_period(3);
             //printf("QLEARN: il mio periodo vale %f\n", period);
-            //printf("QLEARN: sono dentro all'if\n");
+            
             step++;
 
             get_state(&robot);
-
+            //printf("QLEARN: Ottenuto stato attuale variabili di giunto del robot\n");
+            
             robot.dt3 = robot.q1 - old_q1;
             robot.energy = old_dt3;
             old_q1 = robot.q1;
             old_dt3 = robot.dt3;
-            
-
-            //printf("Ottenuto stato attuale variabili di giunto del robot\n");
+           
             s = angles2state(robot.q4, robot.q5);
+            //printf("QLEARN: Quantizzato lo stato: s = %d\n", s);
             set_rs_for_plot(r,s);
-            //printf("Quantizzato lo stato: s = %d\n", s);
+            //printf("QLEARN: comunicato il nuovo stato e la reward alla grafica\n");
             a = ql_egreedy_policy(s);
-            //printf("Ottenuta l'azione\n");
+            //printf("QLEARN: Ottenuta l'azione\n");
             snew = next_desired_state(a);   //Questa funzione aggiorna 
                                             //anche le variabili di giunto desiderate "qd"
             //printf("QLEARN: Ottenuto il nuovo stato\n");
@@ -295,7 +295,7 @@ void* qlearning(void* arg){
             ql_updateQ(s, a, r, snew);
             ql_copy_Q();
             //printf("Aggioranta matrice Q\n");
-            if (step % 500 == 0)
+            if (step % RED_EPS == 0)
                 ql_reduce_exploration();
               
         }
