@@ -62,7 +62,6 @@ void init_state()
     global_robot.q4 = 0;
     global_robot.q5 = 0;
     global_robot.q6 = 0;
-    global_robot.energy = 0;
     global_robot.dt3 = 0;
     pthread_mutex_unlock(&mux);
 
@@ -83,7 +82,6 @@ void get_state(state* s)
     s->q4 = global_robot.q4;
     s->q5 = global_robot.q5;
     s->q6 = global_robot.q6;
-    s->energy = global_robot.energy;
     s->dt3 = global_robot.dt3;
     pthread_mutex_unlock(&mux);
 }
@@ -97,7 +95,6 @@ void set_state(state s)
     global_robot.q4 = s.q4;
     global_robot.q5 = s.q5;
     global_robot.q6 = s.q6 ;
-    global_robot.energy = s.energy;
     global_robot.dt3 = s.dt3;
     pthread_mutex_unlock(&mux);
 }

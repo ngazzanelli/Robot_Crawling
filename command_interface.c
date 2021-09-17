@@ -19,17 +19,17 @@
 // Q-learning Parameters Change Constants
 #define NPARAM  5                  // Total Number of Possible Learning Parameters
 #define STEP    0.01               // Increase/Decrease Step of Learning Parameters
-#define ALPHA		0
-#define GAMMA		1
-#define	DECAY		2
+#define ALPHA	0
+#define GAMMA	1
+#define	DECAY	2
 #define EPS_MAX	3
 #define EPS_MIN	4
 
 // Functions from other modules
-extern void init_state();
-extern int next_desired_state(int a);
-extern void set_dyn_dt(float dt);
-extern float get_dyn_dt();
+extern int next_desired_state(int a);	//from crawler.c
+extern void init_state();				//from model.c
+extern void set_dyn_dt(float dt);		//from model.c
+extern float get_dyn_dt();				//from model.c
 
 
 // Mutexes
@@ -42,7 +42,7 @@ static pthread_mutex_t mux_pause_graphic		= PTHREAD_MUTEX_INITIALIZER;
 // Static Variables
 static int		sys_state;
 static int		pause_graphic;
-static int		parameter_selected;		// Selected Parameter
+static int		parameter_selected;		// Selected QLearning Parameter
 static float	values[5];				// Values of QLearning Parameters
 //  value[0] -> alpha
 //  value[1] -> gamma

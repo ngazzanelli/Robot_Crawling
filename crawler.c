@@ -48,8 +48,7 @@ typedef struct {
     float q3;
     float q4;
     float q5;
-    float q6;
-    float energy;   
+    float q6;   
     float dt3;      
 } state;
 
@@ -61,7 +60,7 @@ typedef struct {
 } target;
 
 
-// Reward Management Struct
+// Actual reward and state for graphic
 typedef struct {
     int state;
     int reward;
@@ -95,7 +94,7 @@ static float t1max, t2max;
 static float dt1, dt2;
 static int n2;              // # of theta2 quantiations 
 static target qd;
-static rs_for_plot rw;
+static rs_for_plot rs;
 
 
 //-----------------------------------------------------
@@ -141,18 +140,18 @@ void get_desired_joint(target* t){
 //-----------------------------------------------------
 void get_rs_for_plot(rs_for_plot* t){
   pthread_mutex_lock(&mux_reward);
-  t->state = rw.state;
-  t->reward = rw.reward;  
-  t->flag = rw.flag;
-  rw.flag = 0;
+  t->state = rs.state;
+  t->reward = rs.reward;  
+  t->flag = rs.flag;
+  rs.flag = 0;
   pthread_mutex_unlock(&mux_reward);
 }
 
 void set_rs_for_plot(int r,int s){
   pthread_mutex_lock(&mux_reward);
-  rw.state = s;
-  rw.reward = r;  
-  rw.flag = 1;
+  rs.state = s;
+  rs.reward = r;  
+  rs.flag = 1;
   pthread_mutex_unlock(&mux_reward);
 }
 
@@ -177,20 +176,16 @@ int angles2state(float t1, float t2){
 // The following Function computes reward for the
 // actual state
 //-----------------------------------------------------
-int get_reward(int s, int snew, state robot){
+int get_reward(int s, int snew, state robot, int old_dt3){
 
     int r = 0;
 
     if(robot.dt3 > 0)
         r = round(20 * robot.dt3);
-
     else if(robot.dt3 < 0) 
         r = round(21 * robot.dt3);
-
-    else{    //robot.dt3 == 0
-        if(robot.energy != 0)
-            r = round(10 * robot.energy);
-    }
+    else    //robot.dt3 == 0
+        r = round(10 * old_dt3);
 
     if (snew == s) 
         r += RHIT;        // hit the limit angle
@@ -270,11 +265,10 @@ void* qlearning(void* arg){
             get_state(&robot);
             //printf("QLEARN: Ottenuto stato attuale variabili di giunto del robot\n");
             
-            robot.dt3 = robot.q1 - old_q1;
-            robot.energy = old_dt3;
-            old_q1 = robot.q1;
             old_dt3 = robot.dt3;
-           
+            robot.dt3 = robot.q1 - old_q1;
+            old_q1 = robot.q1;
+            
             s = angles2state(robot.q4, robot.q5);
             //printf("QLEARN: Quantizzato lo stato: s = %d\n", s);
             set_rs_for_plot(r,s);
@@ -290,7 +284,7 @@ void* qlearning(void* arg){
         pt_wait_for_period(i);
 
         if(exec == PLAY){  
-            r = get_reward(s, snew, robot);
+            r = get_reward(s, snew, robot, old_dt3);
             //printf("Ottenuto il reward r = %d\n", r);
             ql_updateQ(s, a, r, snew);
             ql_copy_Q();
