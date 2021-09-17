@@ -116,6 +116,7 @@
 typedef struct {
     int state;
     int reward;
+    int epoch;
     int flag;
 } rs_for_plot;
 
@@ -765,7 +766,7 @@ void *update_graphic(void *arg)
 {
    
     printf("GRAPHIC: task started\n");    
-    int ti, int_dmiss, mod_dmiss, craw_dmiss, grap_dmiss, epoch = 0, exec;
+    int ti, int_dmiss, mod_dmiss, craw_dmiss, grap_dmiss, exec;
     state rob;
     rs_for_plot rew_st;
     float Matrix_Q[49*4];
@@ -793,11 +794,7 @@ void *update_graphic(void *arg)
     while (get_sys_state(&exec) != STOP){
 
         if(exec != PAUSE) {
-            get_rs_for_plot(&rew_st);
-
-            if(rew_st.flag == 1)
-                epoch++;
-
+            
             if(!get_pause_graphic()){
                 get_state(&rob);
                 update_crawler(crawler_bitmap,rob);
@@ -809,7 +806,8 @@ void *update_graphic(void *arg)
                 epsilon = ql_get_epsilon();
 
                 if(exec == PLAY){
-                    update_parameter(parameter_bitmap, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, epoch);
+                    get_rs_for_plot(&rew_st);
+                    update_parameter(parameter_bitmap, values[0], values[1], epsilon,values[2], rob.q1, mod_dmiss, craw_dmiss, int_dmiss, grap_dmiss, rew_st.epoch);
                     not_reset_command(command_bitmap, PLAY);
 
 					if(rew_st.flag){ 	               
@@ -819,7 +817,6 @@ void *update_graphic(void *arg)
                 	}
                     
                 }else{ //(exec == RESET)
-                    epoch = 0;
                     get_parameter_values(values);
                     update_parameter_reset(parameter_bitmap, values[0], values[1], values[3], values[4], values[2]);
                     ql_get_Q(Matrix_Q);

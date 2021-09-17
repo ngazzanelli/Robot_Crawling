@@ -69,6 +69,7 @@ typedef struct {
 typedef struct {
     int state;
     int reward;
+    int epoch;
     int flag;
 } rs_for_plot;
 
@@ -148,14 +149,16 @@ void get_rs_for_plot(rs_for_plot* t){
   t->state = rs.state;
   t->reward = rs.reward;  
   t->flag = rs.flag;
+  t->epoch = rs.epoch;
   rs.flag = 0;
   pthread_mutex_unlock(&mux_reward);
 }
 
-void set_rs_for_plot(int r,int s){
+void set_rs_for_plot(int r,int s, int e){
   pthread_mutex_lock(&mux_reward);
   rs.state = s;
-  rs.reward = r;  
+  rs.reward = r;
+  rs.epoch = e;  
   rs.flag = 1;
   pthread_mutex_unlock(&mux_reward);
 }
@@ -240,7 +243,7 @@ void* qlearning(void* arg){
 
     printf("QLEARN: task started\n");
     int i;                    // thread index
-    int s, snew, a, exec, r = 0, old_exec = 0;
+    int s, snew, a, exec, r = 0, old_exec = 0, epoch = 0;
     long step = 0;
     state robot;
 
@@ -276,7 +279,7 @@ void* qlearning(void* arg){
             
             s = angles2state(robot.q4, robot.q5);
             //printf("QLEARN: Quantizzato lo stato: s = %d\n", s);
-            set_rs_for_plot(r,s);
+            set_rs_for_plot(r, s, epoch);
             //printf("QLEARN: comunicato il nuovo stato e la reward alla grafica\n");
             a = ql_egreedy_policy(s);
             //printf("QLEARN: Ottenuta l'azione\n");
@@ -296,11 +299,13 @@ void* qlearning(void* arg){
             //printf("Aggioranta matrice Q\n");
             if (step % RED_EPS == 0)
                 ql_reduce_exploration();
+            epoch++;
               
         }
 
         if(exec == RESET){
             if(old_exec != RESET){
+                epoch = 0;
                 ql_init(NSTATES, NACTIONS);
                 ql_copy_Q();
                 reset_desired_joint();
