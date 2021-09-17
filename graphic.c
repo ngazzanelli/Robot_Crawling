@@ -68,8 +68,8 @@
 // Text plot Constants
 #define X_TEXT_DATA 15      // Text x offset
 #define Y_TEXT_DATA 50      // Text y offset
-#define FB 15               // Vertical offset between two string belong to different sentence 
-#define NL 5                // Vertical offset between two string belong to the same sentence 
+#define FB          15      // Vertical offset between two string belong to different sentence 
+#define NL          5       // Vertical offset between two string belong to the same sentence 
 
 // QL_State plot Constants
 #define N_ST_SV		5      // # of state show in QL_state plot 
@@ -108,9 +108,9 @@
 #define MIN_REW    -50      //min saturation bound for reward plotting
 
 //elementi da togliere perchè nella define di qlearning
-#define N_STATE 49
-#define N_STATE_X_ANG 7
-#define N_ACTION 4
+#define N_STATE         49
+#define N_STATE_X_ANG   7
+#define N_ACTION        4
 
 //Reward and state struct to comunicate with Crawler.c
 typedef struct {
@@ -148,8 +148,8 @@ void init_screen()
     allegro_init();
     install_keyboard();
     set_color_depth(32);
-    set_gfx_mode(GFX_AUTODETECT_WINDOWED,W_WIN*SCALE,H_WIN*SCALE,0,0);
-    clear_to_color(screen,makecol(200,200,200));
+    set_gfx_mode(GFX_AUTODETECT_WINDOWED, W_WIN*SCALE, H_WIN*SCALE, 0, 0);
+    clear_to_color(screen, makecol(200, 200, 200));
 }
 
 
@@ -819,6 +819,7 @@ void *update_graphic(void *arg)
                 	}
                     
                 }else{ //(exec == RESET)
+                    epoch = 0;
                     get_parameter_values(values);
                     update_parameter_reset(parameter_bitmap, values[0], values[1], values[3], values[4], values[2]);
                     ql_get_Q(Matrix_Q);

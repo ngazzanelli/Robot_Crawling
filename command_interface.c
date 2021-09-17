@@ -18,32 +18,32 @@
 
 // Task identifier Constants
 #define INTERPRETER   1
-#define GRAPHIC     2
-#define CRAWLER     3
-#define MODEL       4
+#define GRAPHIC     	2
+#define CRAWLER     	3
+#define MODEL       	4
 
 // Q-learning Parameters Change Constants
 #define NPARAM  5                  // Total Number of Possible Learning Parameters
 #define STEP    0.01               // Increase/Decrease Step of Learning Parameters
-#define ALPHA	0
-#define GAMMA	1
-#define	DECAY	2
+#define ALPHA		0
+#define GAMMA		1
+#define	DECAY		2
 #define EPS_MAX	3
 #define EPS_MIN	4
 
 // Dynamics task period and integration step constants
 // Remember for setting crawler period: PER_C = T/DT * PER_D
-#define	PER_STD		1	//[ms]
-#define PER_FAST	0.6	//[ms]
+#define	PER_STD		1			//[ms]
+#define PER_FAST	0.6		//[ms]
 #define DT_STD		0.001	//[s]
 #define DT_FAST		0.01	//[s]
-#define	T			0.1 	//[s] time to go from a state to the next
+#define	T					0.1 	//[s] time to go from a state to the next
 
 // Functions from other modules
 extern int next_desired_state(int a);	//from crawler.c
-extern void init_state();				//from model.c
-extern void set_dyn_dt(float dt);		//from model.c
-extern float get_dyn_dt();				//from model.c
+extern void init_state();							//from model.c
+extern void set_dyn_dt(float dt);			//from model.c
+extern float get_dyn_dt();						//from model.c
 
 
 // Mutexes
@@ -227,40 +227,50 @@ void key_manager(int exec)
 
 		/* Writing/Reading Q-Matrix to/from file */
 		case KEY_F:
-		printf("INTERPRETER: hai premuto il tasto F\n");
-			if(exec == PAUSE){
-				ql_Q_to_file(Q_MATRIX_FILE);
-				printf("INTERPRETER: Salvata matrice Q su file\n");
+			if(!get_pause_graphic()){
+				printf("INTERPRETER: hai premuto il tasto F\n");
+				if(exec == PAUSE){
+					ql_Q_to_file(Q_MATRIX_FILE);
+					printf("INTERPRETER: Salvata matrice Q su file\n");
+				}
 			}
 			break;
 
 		case KEY_L:
-		printf("INTERPRETER: hai premuto il tasto L\n");
-			if(exec == RESET){
-				if(ql_Q_from_file(Q_MATRIX_FILE) == 1)
-					printf("INTERPRETER: Letta matrice Q da file\n");
+			if(!get_pause_graphic()){
+				printf("INTERPRETER: hai premuto il tasto L\n");
+				if(exec == RESET){
+					if(ql_Q_from_file(Q_MATRIX_FILE) == 1)
+						printf("INTERPRETER: Letta matrice Q da file\n");
+				}
 			}
 			break;
 		/*---------------------------------------*/ 	
 
 		case KEY_R:
-			printf("INTERPRETER: hai premuto il tasto R\n");
-			set_sys_state(RESET);
-			init_state();
+			if(!get_pause_graphic()){
+				printf("INTERPRETER: hai premuto il tasto R\n");
+				set_sys_state(RESET);
+				init_state();
+			}
 			break;
 
 		case KEY_S:
-			printf("INTERPRETER: hai premuto il tasto S\n");
-			if(exec == RESET)
-				set_sys_state(PLAY);
+			if(!get_pause_graphic()){
+				printf("INTERPRETER: hai premuto il tasto S\n");
+				if(exec == RESET)
+					set_sys_state(PLAY);
+			}
 			break;
 
 		case KEY_P:
-			printf("INTERPRETER: hai premuto il tasto P\n");
-			if(exec == PLAY)
-				set_sys_state(PAUSE);
-			else if(exec == PAUSE)
-				set_sys_state(PLAY);
+			if(!get_pause_graphic()){
+				printf("INTERPRETER: hai premuto il tasto P\n");
+				if(exec == PLAY)
+					set_sys_state(PAUSE);
+				else if(exec == PAUSE)
+					set_sys_state(PLAY);
+			}
 			break;
 
 		case KEY_E:
@@ -322,6 +332,8 @@ void key_manager(int exec)
 				pt_set_deadline(MODEL, PER_FAST*1000);
 				  
 			}
+			break;
+
 		default: break;
 	}
 }
