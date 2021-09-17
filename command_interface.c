@@ -16,6 +16,12 @@
 #define PAUSE   2
 #define STOP    3
 
+// Task identifier Constants
+#define INTERPRETER   1
+#define GRAPHIC     2
+#define CRAWLER     3
+#define MODEL       4
+
 // Q-learning Parameters Change Constants
 #define NPARAM  5                  // Total Number of Possible Learning Parameters
 #define STEP    0.01               // Increase/Decrease Step of Learning Parameters
@@ -24,6 +30,14 @@
 #define	DECAY	2
 #define EPS_MAX	3
 #define EPS_MIN	4
+
+// Dynamics task period and integration step constants
+// Remember for setting crawler period: PER_C = T/DT * PER_D
+#define	PER_STD		1	//[Ms]
+#define PER_FAST	0.6	//[Ms]
+#define DT_STD		0.001	//[s]
+#define DT_FAST		0.01	//[s]
+#define	T			0.1 	//[s] time to go from a state to the next
 
 // Functions from other modules
 extern int next_desired_state(int a);	//from crawler.c
@@ -290,22 +304,22 @@ void key_manager(int exec)
 			pg = get_pause_graphic(); 
 
 			if(pg == 0){    			// accelerator disabled
-				set_dyn_dt(0.001);  // setting dynamic integration dt
+				set_dyn_dt(DT_STD);  // setting dynamic integration dt
 				// setting qlearn task parameters
-				pt_set_period(3, 100000);  
-				pt_set_deadline(3, 100000);
+				pt_set_period(CRAWLER, T/DT_STD*PER_STD*1000);  
+				pt_set_deadline(CRAWLER, T/DT_STD*PER_STD*1000);
 				// setting model task parameters
-				pt_set_period(4, 1000); 
-				pt_set_deadline(4, 1000);
+				pt_set_period(MODEL, PER_STD*1000); 
+				pt_set_deadline(MODEL, PER_STD*1000);
 
 			} else{          			// accelerator enabled
-				set_dyn_dt(0.001);  // setting dynamic integration dt
+				set_dyn_dt(DT_FAST);  // setting dynamic integration dt
 				// setting qlearn task parameters
-				pt_set_period(3, 60000);
-				pt_set_deadline(3, 6000);
+				pt_set_period(CRAWLER, T/DT_FAST*PER_FAST*1000);  
+				pt_set_deadline(CRAWLER, T/DT_FAST*PER_FAST*1000);
 				// setting model task parameters
-				pt_set_period(4, 600); 
-				pt_set_deadline(4, 600); 
+				pt_set_period(MODEL, PER_FAST*1000); 
+				pt_set_deadline(MODEL, PER_FAST*1000);
 				  
 			}
 		default: break;
