@@ -33,9 +33,14 @@
 #define DTH1    0.35    // theta1 quantization step [rad]
 #define DTH2    0.35    // theta2 quantization step [rad]
 #define PRI     10      // Tasks priority 
-#define DL      20      // Tasks deadline [ms]
-#define PER     20      // Tasks period [ms]
-#define PER_D   1       // Dynamic task peirod [ms] 
+#define DL_I    100     // Interface task period [ms]
+#define DL_C    100     // Qlearning task period [ms]
+#define DL_G    20      // Graphic tasks period [ms]
+#define DL_D    1       // Dynamic task peirod [ms]
+#define PER_I   100     // Interface task period [ms]
+#define PER_C   100     // Qlearning task period [ms]
+#define PER_G   20      // Graphic tasks period [ms]
+#define PER_D   1       // Dynamic task peirod [ms]
 #define RHIT    -10     // Reward for hitting limit angles
 #define RSCALE  10      // Reward scale factor 
 #define RED_EPS 500     // Decay period for epsilon
@@ -323,24 +328,24 @@ int main(){
 
     
     printf("MAIN: creo il task di gestione della grafica\n");
-    pt_task_create( update_graphic, GRAPHIC, PER*1000, DL*1000, PRI);
+    pt_task_create( update_graphic, GRAPHIC, PER_G*1000, DL_G*1000, PRI);
     //printf("con il risultato %d\n",ris);
     
     if(mode == 1){
         printf("MAIN: creo il task di interpretazione dei comandi\n");
-        pt_task_create( interpreter, INTERPRETER, PER*1000, DL*1000, PRI);
+        pt_task_create( interpreter, INTERPRETER, PER_I*1000, DL_I*1000, PRI);
         //printf("con il risultato %d\n",ris);
         printf("MAIN: creo il task di qlearning\n");
-        pt_task_create( qlearning, CRAWLER, 100*PER_D*1000, 100*PER_D*1000, PRI); //occhio a quanto valgono T e DT in model.c
+        pt_task_create( qlearning, CRAWLER, PER_C*1000, DL_C*1000, PRI);
         //printf("con il risultato %d\n",ris);
     }
     else{
         printf("MAIN: creo il task di interpretazione dei comandi\n");
-        pt_task_create( manual_interpreter, INTERPRETER, PER*1000, DL*1000, PRI);
+        pt_task_create( manual_interpreter, INTERPRETER, PER_I*1000, DL_I*1000, PRI);
         //printf("con il risultato %d\n",ris);
     }
     printf("MAIN: creo il task per la risoluzione della dinamica\n");
-    pt_task_create( dynamics, MODEL, PER_D*1000, PER_D*1000, PRI);
+    pt_task_create( dynamics, MODEL, PER_D*1000, DL_D*1000, PRI);
     //printf("con il risultato %d\n",ris);
     //ql_Q_from_file("./prova.txt");    
 
