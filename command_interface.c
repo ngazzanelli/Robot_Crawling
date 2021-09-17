@@ -36,7 +36,7 @@
 #define	PER_STD		1			//[ms]
 #define PER_FAST	0.6		//[ms]
 #define DT_STD		0.001	//[s]
-#define DT_FAST		0.01	//[s]
+#define DT_FAST		0.001	//[s]
 #define	T					0.1 	//[s] time to go from a state to the next
 
 // Functions from other modules
@@ -47,17 +47,17 @@ extern float get_dyn_dt();						//from model.c
 
 
 // Mutexes
-static pthread_mutex_t mux_sys_state			= PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mux_parameter_values     = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_sys_state					= PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_parameter_values   = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mux_parameter_selected	= PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mux_pause_graphic		= PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mux_pause_graphic			= PTHREAD_MUTEX_INITIALIZER;
 
 
 // Static Variables
 static int		sys_state;
 static int		pause_graphic;
 static int		parameter_selected;		// Selected QLearning Parameter
-static float	values[5];				// Values of QLearning Parameters
+static float	values[5];						// Values of QLearning Parameters
 //  value[0] -> alpha
 //  value[1] -> gamma
 //  value[2] -> decay

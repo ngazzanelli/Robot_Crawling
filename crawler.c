@@ -17,9 +17,9 @@
 
 // Task identifier Constants
 #define INTERPRETER   1
-#define GRAPHIC     2
-#define CRAWLER     3
-#define MODEL       4
+#define GRAPHIC       2
+#define CRAWLER       3
+#define MODEL         4
 
 // Global definitions
 #define TH1UP   0       // Action move up link 1
@@ -265,9 +265,6 @@ void* qlearning(void* arg){
                 old_exec = PLAY;
             }
 
-            //float period = pt_get_period(3);
-            //printf("QLEARN: il mio periodo vale %f\n", period);
-            
             step++;
 
             get_state(&robot);
@@ -283,8 +280,8 @@ void* qlearning(void* arg){
             //printf("QLEARN: comunicato il nuovo stato e la reward alla grafica\n");
             a = ql_egreedy_policy(s);
             //printf("QLEARN: Ottenuta l'azione\n");
-            snew = next_desired_state(a);   //Questa funzione aggiorna 
-                                            //anche le variabili di giunto desiderate "qd"
+            snew = next_desired_state(a);   // This function also updates
+                                            // desired joint variables "qd"
             //printf("QLEARN: Ottenuto il nuovo stato\n");
         }
             
@@ -321,7 +318,7 @@ void* qlearning(void* arg){
 
 int main(){
        
-    int i;      //ris;
+    int i;      
     int mode;	// Manual or Qlearning mode decided from user
 
 
