@@ -33,8 +33,8 @@
 
 // Dynamics task period and integration step constants
 // Remember for setting crawler period: PER_C = T/DT * PER_D
-#define	PER_STD		1	//[Ms]
-#define PER_FAST	0.6	//[Ms]
+#define	PER_STD		1	//[ms]
+#define PER_FAST	0.6	//[ms]
 #define DT_STD		0.001	//[s]
 #define DT_FAST		0.01	//[s]
 #define	T			0.1 	//[s] time to go from a state to the next
